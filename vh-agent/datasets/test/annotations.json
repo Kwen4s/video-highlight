@@ -1,0 +1,649 @@
+[
+  {
+    "video_id": "vid_77020431396e89ed",
+    "annotation_method": "manual_multimodal_review",
+    "annotation_status": "labeled",
+    "annotator_ids": [
+      "codex"
+    ],
+    "notes": "逐帧接触表、ASR、OCR 和声音事件联合复核。",
+    "highlights": [
+      {
+        "start_sec": 4.24,
+        "end_sec": 18.5,
+        "highlight_type": "conflict",
+        "description": "女子继续殴打倒地老人，并以对方冒充未来公公为由拒绝停手。",
+        "reason": "直接人身冲突和人物傲慢立场集中爆发。",
+        "confidence": 0.88
+      },
+      {
+        "start_sec": 22.64,
+        "end_sec": 30.8,
+        "highlight_type": "reveal",
+        "description": "药瓶被认出是董事长从医院购买的特效药，众人开始怀疑老人确是首富父亲。",
+        "reason": "新物证推翻了老人冒充身份的既有判断。",
+        "confidence": 0.94
+      }
+    ]
+  },
+  {
+    "video_id": "vid_12d940df0d3a370c",
+    "annotation_method": "manual_multimodal_review",
+    "annotation_status": "labeled",
+    "annotator_ids": [
+      "codex"
+    ],
+    "notes": "逐帧接触表、ASR、OCR 和声音事件联合复核。",
+    "highlights": [
+      {
+        "start_sec": 21.6,
+        "end_sec": 38.5,
+        "highlight_type": "reveal",
+        "description": "妹妹指控昭昭偷走十亿珠宝，内心独白却暴露珠宝是她亲手栽赃放入床上的。",
+        "reason": "公开指控与隐藏真相形成强反差，揭露陷害计划。",
+        "confidence": 0.97
+      }
+    ]
+  },
+  {
+    "video_id": "vid_6478f31e6ed6dd2e",
+    "annotation_method": "manual_multimodal_review",
+    "annotation_status": "labeled",
+    "annotator_ids": [
+      "codex"
+    ],
+    "notes": "逐帧接触表、ASR、OCR 和声音事件联合复核；本地阈值未检出该视频高光。",
+    "highlights": [
+      {
+        "start_sec": 8.13,
+        "end_sec": 30.18,
+        "highlight_type": "conflict",
+        "description": "男子进门被要求全身搜查，林溪出面打破规矩让他进入。",
+        "reason": "羞辱性阻拦被关键人物直接终止，体现权力介入。",
+        "confidence": 0.78
+      },
+      {
+        "start_sec": 40.66,
+        "end_sec": 44.4,
+        "highlight_type": "reveal",
+        "description": "女子追问男子为何不像其他人一样称她为大小姐。",
+        "reason": "一句称谓问题揭示双方关系和身份权力并不寻常。",
+        "confidence": 0.72
+      }
+    ]
+  },
+  {
+    "video_id": "vid_59aacb337d4b60bb",
+    "annotation_method": "manual_multimodal_review",
+    "annotation_status": "labeled",
+    "annotator_ids": [
+      "codex"
+    ],
+    "notes": "逐帧接触表、ASR、OCR 和声音事件联合复核；属于中等强度人物冲突。",
+    "highlights": [
+      {
+        "start_sec": 26.68,
+        "end_sec": 45.66,
+        "highlight_type": "conflict",
+        "description": "饭局上有人以外交司翻译没有技术含量为由挖苦宋知意，她平静说明还承担协调工作。",
+        "reason": "围绕职业地位的公开贬低建立人物对立，但尚未出现强反转。",
+        "confidence": 0.66
+      }
+    ]
+  },
+  {
+    "video_id": "vid_d3431501c9bf32ef",
+    "annotation_method": "manual_multimodal_review",
+    "annotation_status": "labeled",
+    "annotator_ids": [
+      "codex"
+    ],
+    "notes": "逐帧接触表、ASR、OCR 和声音事件联合复核。",
+    "highlights": [
+      {
+        "start_sec": 15.47,
+        "end_sec": 40.77,
+        "highlight_type": "reveal",
+        "description": "罗峰意识到自己回到三年前，并回忆妻弟掏空公司、妻子背叛导致自己一无所有。",
+        "reason": "完整交代重生前的失败因果和人物真实动机。",
+        "confidence": 0.95
+      },
+      {
+        "start_sec": 42.23,
+        "end_sec": 50.85,
+        "highlight_type": "reversal",
+        "description": "面对升任妻弟或离婚的逼迫，罗峰确认自己重生回到三年前，一切仍来得及改变。",
+        "reason": "从被迫妥协的旧命运切换为掌握未来信息的新认知。",
+        "confidence": 0.98
+      }
+    ]
+  },
+  {
+    "video_id": "vid_dd4a6d68d0154644",
+    "annotation_method": "independent_uniform_timeline_vlm_silver",
+    "annotation_status": "silver",
+    "annotator_ids": [
+      "Qwen/Qwen3-VL-32B-Instruct",
+      "Qwen/Qwen3.5-397B-A17B"
+    ],
+    "notes": "Whisper ASR + 10-second uniform frames + overlapping 90-second VLM review; independent of candidate generation. Requires human review for gold evaluation.",
+    "highlights": [
+      {
+        "start_sec": 52.4,
+        "end_sec": 60.8,
+        "highlight_type": "reveal",
+        "description": "女主明确指出清宁是她与陆恒宇的孩子，且认为住在贺怀清家不合适，直接挑战贺怀清的权威与情感立场",
+        "reason": "此为剧情核心冲突爆发点，身份真相被公开，关系紧张升级，贺怀清的沉默与‘随便你’的回应暗示其内心挣扎与愤怒",
+        "evidence": [
+          "52.4-56.4 清宁是我跟陆恒宇的孩子",
+          "56.4-58.3 住在你这儿不合适",
+          "58.3-60.8 随便你"
+        ],
+        "confidence": 0.95
+      },
+      {
+        "start_sec": 89.2,
+        "end_sec": 111.1,
+        "highlight_type": "reveal",
+        "description": "小女孩清宁向母亲揭露自己曾目睹父亲用烟灰缸砸母亲头部的暴力事件，并表达对父亲的憎恨",
+        "reason": "这一段直接揭露了家庭暴力的真相，改变了观众对家庭关系的认知，同时展现了清宁作为孩子的创伤与坚强，引发强烈情感共鸣",
+        "evidence": [
+          "89.2-91.5 叔叔被抢过",
+          "104.0-106.6 他那夜会杠杂你的头",
+          "106.6-108.2 你流了好多血",
+          "108.2-111.1 我讨厌他"
+        ],
+        "confidence": 0.95
+      },
+      {
+        "start_sec": 158.8,
+        "end_sec": 168.88,
+        "highlight_type": "conflict",
+        "description": "男主角贺律师突然出现，与母亲对峙，言语中充满矛盾与情感张力，暗示两人关系的复杂性与即将爆发的冲突",
+        "reason": "贺律师的出现打破了母女情感修复的平静，引入新的冲突点，同时其台词“我就是你”“我和你不一样”等充满隐喻，制造悬念，为后续剧情发展埋下伏笔",
+        "evidence": [
+          "158.8-159.8 我找你了",
+          "160.0-161.2 你这个人",
+          "164.2-164.8 我就是你",
+          "167.3-167.8 吗",
+          "167.8-169.0 我才没有你"
+        ],
+        "confidence": 0.92
+      }
+    ]
+  },
+  {
+    "video_id": "vid_1d4854029e6d4e7b",
+    "annotation_method": "independent_uniform_timeline_vlm_silver",
+    "annotation_status": "silver",
+    "annotator_ids": [
+      "Qwen/Qwen3-VL-32B-Instruct",
+      "Qwen/Qwen3.5-397B-A17B"
+    ],
+    "notes": "Whisper ASR + 10-second uniform frames + overlapping 90-second VLM review; independent of candidate generation. Requires human review for gold evaluation.",
+    "highlights": [
+      {
+        "start_sec": 30.0,
+        "end_sec": 45.8,
+        "highlight_type": "conflict",
+        "description": "外婆提出以孙辈一年内拿到毕业证为条件，否则将捐出全部家产，形成关键转折与压力施加。",
+        "reason": "该段对话直接改变剧情走向，将家庭危机转化为可量化的个人挑战，迫使主角做出重大抉择，同时揭示外婆的底线与情感矛盾。",
+        "evidence": [
+          "30.6-32.4] 那你就回去上大学",
+          "32.4-34.5] 只要你一年之内",
+          "34.5-35.8] 拿到毕业证",
+          "35.8-37.8] 外婆就为了你",
+          "37.8-40.5] 把这个家再撑一年",
+          "40.5-41.8] 如果拿不到",
+          "41.8-44.5] 我就把全部家产捐给百乐门"
+        ],
+        "confidence": 0.9
+      },
+      {
+        "start_sec": 70.6,
+        "end_sec": 84.4,
+        "highlight_type": "reveal",
+        "description": "霍南风揭示家族账目危机，指出若无人接管将三个月内破产，并嘲讽主角年轻可要饭但外婆无法承受，制造强烈悬念与紧迫感。",
+        "reason": "该信息直接揭露隐藏的财务危机，改变观众对家庭现状的认知，同时为后续行动提供动机；后半段台词结合跪地视觉证据，将冲突从财务层面升级为人身威胁与情感压迫。",
+        "evidence": [
+          "70.6-72.5] 我看了你家的账",
+          "72.5-75.0] 如果再没人管的话",
+          "75.0-77.5] 最多三个月就要破产",
+          "77.5-80.8] 你年轻倒是可以要饭",
+          "80.8-84.4] 就是不知道你外婆要不要的动啊",
+          "图片：角色跪地，眼神惊恐，周围有高跟鞋压迫，暗示被威胁"
+        ],
+        "confidence": 0.9
+      }
+    ]
+  },
+  {
+    "video_id": "vid_44dfd61a25d47260",
+    "annotation_method": "independent_uniform_timeline_vlm_silver",
+    "annotation_status": "silver",
+    "annotator_ids": [
+      "Qwen/Qwen3-VL-32B-Instruct",
+      "Qwen/Qwen3.5-397B-A17B"
+    ],
+    "notes": "Whisper ASR + 10-second uniform frames + overlapping 90-second VLM review; independent of candidate generation. Requires human review for gold evaluation.",
+    "highlights": [
+      {
+        "start_sec": 62.099999999999994,
+        "end_sec": 86.1,
+        "highlight_type": "reveal",
+        "description": "祝雨表明自己是周复之的同学，周母态度转变并询问其姓名，同时透露周复之从未提过奶奶和眼睛看不见的隐情，引发观众对周复之背景的疑问。",
+        "reason": "该片段首次揭示周复之存在隐藏的个人秘密（失明、家庭关系疏离），并推动周母从警惕到接纳的转变，改变观众对周复之家庭的认知，为后续剧情发展提供关键信息。",
+        "evidence": [
+          "63.4-65.7] 我是周富之的同学",
+          "83.8-85.4] 你叫什么名字",
+          "54.6-56.2] 更没说过",
+          "56.2-57.6] 他的眼睛看不见"
+        ],
+        "confidence": 0.9
+      },
+      {
+        "start_sec": 187.8,
+        "end_sec": 211.7,
+        "highlight_type": "reveal",
+        "description": "女主角得知周富之与当年制服歹徒余温盛有关联，决定前往其废品回收站，周富之主动提出骑车送她并叮嘱慢点，两人关系升温。",
+        "reason": "合并了真相揭露与随后的行动决策及情感互动。揭露关键人物关联推动剧情转向，男主角的主动护送将剧情从单纯的信息获取升级为情感推进与共同行动，符合高光合并条件。",
+        "evidence": [
+          "189.1-192.2 你当年制服的那个歹徒余温盛",
+          "192.2-198.7 他们家的废品回收站在哪啊",
+          "204.1-208.3 我骑车送你",
+          "210.7-211.7 慢点"
+        ],
+        "confidence": 0.9
+      }
+    ]
+  },
+  {
+    "video_id": "vid_428e26f8b0c39135",
+    "annotation_method": "independent_uniform_timeline_vlm_silver",
+    "annotation_status": "silver",
+    "annotator_ids": [
+      "Qwen/Qwen3-VL-32B-Instruct",
+      "Qwen/Qwen3.5-397B-A17B"
+    ],
+    "notes": "Whisper ASR + 10-second uniform frames + overlapping 90-second VLM review; independent of candidate generation. Requires human review for gold evaluation.",
+    "highlights": [
+      {
+        "start_sec": 50.7,
+        "end_sec": 73.9,
+        "highlight_type": "reveal",
+        "description": "女主角揭露对方冒充深河集团总裁并骗取合同，同时以‘他杀伐果断’制造威慑，暗示将揭露真相引发严重后果，制造强烈悬念。",
+        "reason": "该段首次明确揭露对方身份欺诈，引入‘深河集团总裁’这一关键人物，并通过‘杀伐果断’的描述制造强烈威胁，改变观众对局势的认知，推动剧情走向高潮。",
+        "evidence": [
+          "50.7-53.3 你不认 别怪我不义",
+          "53.3-55.5 你们冒充深河集团总裁",
+          "55.5-57.2 骗我签合同",
+          "61.5-63.1 他最烦有人打着他的名义",
+          "63.1-64.5 你一旦让他知道",
+          "64.5-67.4 他杀伐果断 绝不留情",
+          "70.4-73.3 你们会有什么下场"
+        ],
+        "confidence": 0.9
+      }
+    ]
+  },
+  {
+    "video_id": "vid_6bbe1b6649934d49",
+    "annotation_method": "independent_uniform_timeline_vlm_silver",
+    "annotation_status": "silver",
+    "annotator_ids": [
+      "Qwen/Qwen3-VL-32B-Instruct",
+      "Qwen/Qwen3.5-397B-A17B"
+    ],
+    "notes": "Whisper ASR + 10-second uniform frames + overlapping 90-second VLM review; independent of candidate generation. Requires human review for gold evaluation.",
+    "highlights": [
+      {
+        "start_sec": 48.0,
+        "end_sec": 68.6,
+        "highlight_type": "conflict",
+        "description": "夏夏向玉卿哭诉男友胡志明出轨，并揭露对方威胁其偿还恋爱花费、起诉及让其在校扫地，情绪崩溃求助。",
+        "reason": "直接揭露核心冲突，剧情从表面平静急转直下进入情感危机，明确推动故事发展。",
+        "evidence": [
+          "48.0-50.4 玉卿：胡子明他出轨了",
+          "55.4-60.8 他说如果要是分手的话 就让我在恋爱期间花他的钱全都还给他",
+          "62.8-64.6 要让我在学校严密扫地"
+        ],
+        "confidence": 0.95
+      },
+      {
+        "start_sec": 72.0,
+        "end_sec": 90.0,
+        "highlight_type": "action",
+        "description": "玉卿答应帮忙后立刻致电张妈，暗示将动用资源介入解决危机。",
+        "reason": "剧情关键转折点，角色从被动求助转向主动应对，制造悬念并开启新剧情阶段。",
+        "evidence": [
+          "72.0-73.4 好 我帮你想办法",
+          "73.8-92.7 喂 张妈"
+        ],
+        "confidence": 0.9
+      },
+      {
+        "start_sec": 104.9,
+        "end_sec": 111.1,
+        "highlight_type": "reveal",
+        "description": "张妈震惊得知邵夫人欲与少爷离婚，向傅家询问擅长情感关系的律师却被告知没有。",
+        "reason": "揭露核心家庭矛盾（婚姻危机），通过人物震惊反应强化剧情张力，改变观众对家庭关系的认知。",
+        "evidence": [
+          "104.9-106.5 难怪今天早晨气氛那么低",
+          "104.9-106.5 邵夫人这是要和少爷离婚",
+          "109.5-111.1 傅家没有这样的律师"
+        ],
+        "confidence": 0.9
+      }
+    ]
+  },
+  {
+    "video_id": "vid_ebe018d21dd7dc4d",
+    "annotation_method": "independent_uniform_timeline_vlm_silver",
+    "annotation_status": "silver",
+    "annotator_ids": [
+      "Qwen/Qwen3-VL-32B-Instruct",
+      "Qwen/Qwen3.5-397B-A17B"
+    ],
+    "notes": "Whisper ASR + 10-second uniform frames + overlapping 90-second VLM review; independent of candidate generation. Requires human review for gold evaluation.",
+    "highlights": [
+      {
+        "start_sec": 0.0,
+        "end_sec": 10.0,
+        "highlight_type": "reveal",
+        "description": "太子妃认出太子身份，揭示两人曾有交集，引发情感转折",
+        "reason": "太子妃说出‘是你’‘你竟是太子’，并提及‘当年在公主府一见’，直接揭露身份与过往关联，改变观众对两人关系的认知",
+        "evidence": [
+          "[0.4-1.3] 是你",
+          "[1.3-3.9] 你竟是太子",
+          "[3.9-6.2] 当年在公主府一见"
+        ],
+        "confidence": 0.9
+      },
+      {
+        "start_sec": 170.325,
+        "end_sec": 194.325,
+        "highlight_type": "reveal",
+        "description": "女主角在匪窝中微笑凝视，展现冷眼旁观的复仇姿态并留下悬念",
+        "reason": "女主角身处匪窝却面带微笑，与传统受害者形象形成反差，揭示其重生后掌握主动权的真实心态；画面定格制造强烈悬念，暗示后续复仇行动即将展开",
+        "evidence": [
+          "170.0s 画面：女主角身着华丽古装，身处匪窝环境，面带微笑",
+          "180.0s 画面：女主角微笑凝视，背景为匪窝环境"
+        ],
+        "confidence": 0.95
+      }
+    ]
+  },
+  {
+    "video_id": "vid_869f35bf9bb32602",
+    "annotation_method": "independent_uniform_timeline_vlm_silver",
+    "annotation_status": "silver",
+    "annotator_ids": [
+      "Qwen/Qwen3-VL-32B-Instruct",
+      "Qwen/Qwen3.5-397B-A17B"
+    ],
+    "notes": "Whisper ASR + 10-second uniform frames + overlapping 90-second VLM review; independent of candidate generation. Requires human review for gold evaluation.",
+    "highlights": [
+      {
+        "start_sec": 41.5,
+        "end_sec": 63.4,
+        "highlight_type": "conflict",
+        "description": "男主角因安眠药事件质问女主角，她愤怒拒绝金钱补偿并哭诉只想要被爱，两人关系陷入信任危机。",
+        "reason": "直接揭示女主角情感核心诉求与男主角的不信任，通过激烈对话将冲突从误会升级为价值观对立，奠定全剧情感基调。",
+        "evidence": [
+          "[41.5-44.3] You are not leaving me for him. You understand me?",
+          "[50.1-50.8] I don't want your money!",
+          "[58.0-63.4] I want somebody who loves me and cares about me."
+        ],
+        "confidence": 0.9
+      },
+      {
+        "start_sec": 167.0,
+        "end_sec": 184.0,
+        "highlight_type": "reveal",
+        "description": "Bella 电话告知 Sophie 其与竞争对手的亲密照曝光且公司竞标失败，高层怀疑她是内鬼。",
+        "reason": "剧情重大转折点，瞬间将主角从私人生活危机推入职业生存危机，双重打击彻底改变人物处境。",
+        "evidence": [
+          "[167.0-168.1] Have you seen the news?",
+          "[169.1-173.4] Pictures of you and Derrick Lawson just splattered everywhere.",
+          "[180.5-184.0] The worst part is that we lost the bid on Maple Plaza to Lawson Group."
+        ],
+        "confidence": 0.95
+      },
+      {
+        "start_sec": 293.3,
+        "end_sec": 317.3,
+        "highlight_type": "emotion",
+        "description": "男主角以剥夺人生意义威胁女主角，女方绝望请求放手，男方反问并拒绝，展现极致的情感操控。",
+        "reason": "揭露两人关系本质为权力控制而非爱情，男方台词极具压迫感，将情感冲突推向高潮。",
+        "evidence": [
+          "[285.4-289.5] I gave you a purpose, and I can take that purpose away.",
+          "[321.1-322.7] If you don't love me, let me go.",
+          "[324.5-325.2] Let you go?"
+        ],
+        "confidence": 0.95
+      },
+      {
+        "start_sec": 482.0,
+        "end_sec": 500.3,
+        "highlight_type": "conflict",
+        "description": "新上司认出 Sophie 身份，羞辱性地命令她去街头派发传单，建立明显的职场霸凌关系。",
+        "reason": "身份揭露与权力压迫的直接碰撞，通过羞辱性指令确立反派形象，预示主角即将面临的艰难处境。",
+        "evidence": [
+          "[482.0-485.6] I know who you are.",
+          "[486.6-488.6] That girl from corporate office.",
+          "[489.1-500.3] Oh, take these and hand them out on the street and don't come back until you're done."
+        ],
+        "confidence": 0.95
+      },
+      {
+        "start_sec": 539.9,
+        "end_sec": 563.9,
+        "highlight_type": "reversal",
+        "description": "面对上司‘活不过一周’的威胁，Sophie 表面顺从，转身却在街头露出自信微笑，暗示反击开始。",
+        "reason": "通过肢体语言与表情的强烈反差，颠覆观众对主角软弱的预期，标志人物从被动承受转向主动应对。",
+        "evidence": [
+          "[533.8-536.8] Because you won't last a week here dressed like that.",
+          "[543.0-544.0] Uh, thank you.",
+          "[560.0-570.0] 画面：年轻女性在街头转身微笑离开，背景为城市街道"
+        ],
+        "confidence": 0.9
+      },
+      {
+        "start_sec": 878.9,
+        "end_sec": 889.4,
+        "highlight_type": "reversal",
+        "description": "面对父亲指责冷漠，Sophie 揭露曾替其偿还五十万赌债，反问父亲资格，彻底反转父女道德高位。",
+        "reason": "关键真相揭露，瞬间扭转观众对父女关系的认知，从女儿不孝转为父亲无耻，实现剧情强力反转。",
+        "evidence": [
+          "[878.9-883.4] The kind that paid off half a million dollars of gambling debt.",
+          "[885.9-887.9] You don't think that I should be the one asking that question?",
+          "[887.9-889.4] What kind of a father are you?"
+        ],
+        "confidence": 0.95
+      },
+      {
+        "start_sec": 942.6,
+        "end_sec": 966.1,
+        "highlight_type": "cliffhanger",
+        "description": "父亲揭露在监狱得罪黑帮，以女儿安全及曝光隐私为要挟，强行索要十万美金。",
+        "reason": "剧情从家庭矛盾升级为生死威胁，引入外部犯罪势力，将主角置于极度危险的境地，悬念陡增。",
+        "evidence": [
+          "[942.6-947.6] Daddy pissed off some really bad people in prison!",
+          "[955.1-961.1] You gotta sleep with James Knight... or you're gonna fuck your whole office!",
+          "[963.6-966.1] I need the money!"
+        ],
+        "confidence": 0.95
+      },
+      {
+        "start_sec": 1230.4,
+        "end_sec": 1244.4,
+        "highlight_type": "reversal",
+        "description": "Sophie 被解雇时揭露指令直接来自 CEO，愤然反抗称对方选错了霸凌对象。",
+        "reason": "责任归属瞬间明确，将职场霸凌直接指向最高层，主角从受害者转变为反抗者，冲突性质发生根本改变。",
+        "evidence": [
+          "[1230.4-1231.4] Directions from who?",
+          "[1231.4-1233.4] From you.",
+          "[1242.4-1244.4] You picked on the wrong person to bully."
+        ],
+        "confidence": 0.95
+      },
+      {
+        "start_sec": 1362.2,
+        "end_sec": 1369.2,
+        "highlight_type": "emotion",
+        "description": "Sophie 情绪爆发，坦白五年来一直在扮演角色，厌倦伪装并要求结束合同，做回真实的自己。",
+        "reason": "全剧情感最高潮，主角彻底撕下伪装，从被动服从转为主动决裂，宣告人格独立，彻底改变人物关系动态。",
+        "evidence": [
+          "[1362.2-1365.2] For the last five years, I have been playing a part.",
+          "[1365.2-1368.2] And I am so sick of it.",
+          "[1368.2-1369.2] Just go. Live your life."
+        ],
+        "confidence": 0.95
+      }
+    ]
+  },
+  {
+    "video_id": "vid_28b2913e9d3df694",
+    "annotation_method": "independent_uniform_timeline_vlm_silver",
+    "annotation_status": "silver",
+    "annotator_ids": [
+      "Qwen/Qwen3-VL-32B-Instruct",
+      "Qwen/Qwen3.5-397B-A17B"
+    ],
+    "notes": "Whisper ASR + 10-second uniform frames + overlapping 90-second VLM review; independent of candidate generation. Requires human review for gold evaluation.",
+    "highlights": [
+      {
+        "start_sec": 23.0,
+        "end_sec": 37.2,
+        "highlight_type": "reversal",
+        "description": "祖父揭露所谓 90 亿美元遗产是假账户，真实财富另有存放，彻底反转继承预期。",
+        "reason": "观众认知从‘巨额遗产’转向‘骗局与考验’，剧情核心从继承变为考验与真相揭露，改变故事走向。",
+        "evidence": [
+          "23.0-25.4: Oh, come on. That was a fake bank account.",
+          "32.6-37.2: Oh, come on. That was a fake bank account."
+        ],
+        "confidence": 0.95
+      },
+      {
+        "start_sec": 135.0,
+        "end_sec": 141.0,
+        "highlight_type": "action",
+        "description": "警察突然出现，宣布逮捕主角，指控其绑架、勒索和谋杀，剧情急转直下，真相开始浮现。",
+        "reason": "警察的介入和指控直接改变剧情走向，将主角从受害者转为嫌疑人，制造强烈反转，观众认知被彻底颠覆。",
+        "evidence": [
+          "135.3-139.0: You're under arrest for the kidnapping and extortion and murder of Danica Vaughn.",
+          "139.7-141.0: Who is that?"
+        ],
+        "confidence": 0.98
+      },
+      {
+        "start_sec": 386.1,
+        "end_sec": 409.3,
+        "highlight_type": "reversal",
+        "description": "Cindy 在狱中质问 Leo，Leo 冷酷回应‘我只想看你腐烂’，揭示其复仇动机，彻底反转角色关系。",
+        "reason": "Leo 的真实动机被揭露，从表面的‘救赎’转向冷酷复仇，彻底改变剧情走向与观众认知。",
+        "evidence": [
+          "386.1-387.3: Hello Aunt Cindy.",
+          "396.4-399.3: Tell him.",
+          "406.4-409.3: Because I just wanted to see you rot."
+        ],
+        "confidence": 0.98
+      }
+    ]
+  },
+  {
+    "video_id": "vid_01ef1d4b07bb940a",
+    "annotation_method": "independent_uniform_timeline_vlm_silver",
+    "annotation_status": "silver",
+    "annotator_ids": [
+      "Qwen/Qwen3-VL-32B-Instruct",
+      "Qwen/Qwen3.5-397B-A17B"
+    ],
+    "notes": "Whisper ASR + 10-second uniform frames + overlapping 90-second VLM review; independent of candidate generation. Requires human review for gold evaluation.",
+    "highlights": [
+      {
+        "start_sec": 17.3,
+        "end_sec": 41.3,
+        "highlight_type": "conflict",
+        "description": "金发女性在被挑衅后，公开宣告自己与 Kaz 的感情，并以坚定情感立场反击对方的金钱与地位攻击，直接反转了冲突的主动权。",
+        "reason": "此段是剧情转折点，金发女性从被动防御转为主动反击，用情感与道德高点压制对方，改变了观众对双方力量对比的认知，推动剧情从个人争执升级为价值观对抗。",
+        "evidence": [
+          "14.6-16.5: Excuse me?",
+          "16.5-20.9: No amount of money has ever or will ever make me change my mind.",
+          "20.9-27.4: Some of you may choose your mates based on power or money, but I'm staying with Kaz, not because he's an alpha, but because he cares about me as much as I care about him.",
+          "36.7-44.0: And since you so rudely barged into this dance that my mate's family is hosting, I think you should leave. Now."
+        ],
+        "confidence": 0.95
+      },
+      {
+        "start_sec": 68.1,
+        "end_sec": 90.3,
+        "highlight_type": "cliffhanger",
+        "description": "校长（祖母）突然登场，以“我是个老师”反复强调身份，强行介入冲突，场面从混乱转为权威压制，制造悬念。",
+        "reason": "此段是剧情转折点，权威人物介入打破冲突僵局，观众认知从个人对抗转向制度性干预，为后续发展埋下悬念——校长将如何处理这场事件？",
+        "evidence": [
+          "68.1-69.1: What's all this commotion going on?",
+          "69.1-70.1: It's the headmistress.",
+          "70.1-71.1: Grandmother?",
+          "71.1-72.1: What's with all this noise?",
+          "72.1-73.1: This is still technically a school event.",
+          "73.1-90.3: I'm a teacher. (重复多次)"
+        ],
+        "confidence": 0.9
+      }
+    ]
+  },
+  {
+    "video_id": "vid_6446b93e83190034",
+    "annotation_method": "independent_uniform_timeline_vlm_silver",
+    "annotation_status": "silver",
+    "annotator_ids": [
+      "Qwen/Qwen3-VL-32B-Instruct",
+      "Qwen/Qwen3.5-397B-A17B"
+    ],
+    "notes": "Whisper ASR + 10-second uniform frames + overlapping 90-second VLM review; independent of candidate generation. Requires human review for gold evaluation.",
+    "highlights": [
+      {
+        "start_sec": 30.0,
+        "end_sec": 40.0,
+        "highlight_type": "reveal",
+        "description": "婆婆发现戒指并确认为真钻，引发对西蒙富豪身份的怀疑",
+        "reason": "戒指真伪直接关联男主身份伏笔回收，改变观众对角色认知",
+        "evidence": [
+          "[33.3-34.9] Simon must really love you.",
+          "[36.6-39.7] Simon, where did you get this? It looks like a real diamond.",
+          "[45.0-47.6] It is a diamond."
+        ],
+        "confidence": 0.9
+      },
+      {
+        "start_sec": 50.0,
+        "end_sec": 68.3,
+        "highlight_type": "conflict",
+        "description": "维多利亚因未举行婚礼拒绝同居，婆婆以开放观念反转道德争议",
+        "reason": "传统观念与现代观念的冲突及反转，推动人物关系实质性进展",
+        "evidence": [
+          "[52.6-57.4] Ma, we haven't had our ceremony yet, so it would be totally inappropriate for us to sleep in the same bed.",
+          "[61.0-64.2] Oh, please. Do I look like a relic from the last century?",
+          "[64.8-68.3] Even your grandma wouldn't bat an eye at the two of you sleeping together."
+        ],
+        "confidence": 0.9
+      },
+      {
+        "start_sec": 160.0,
+        "end_sec": 176.9,
+        "highlight_type": "emotion",
+        "description": "女主角惊坐起情绪剧烈波动，同时传来奶奶额外航班的紧急消息",
+        "reason": "突发惊吓反应与关键人物即将抵达的悬念叠加，制造强烈剧情张力",
+        "evidence": [
+          "[160.0-170.0] 女主角惊坐起，表情惊恐",
+          "[161.9-164.7] Grandma's got an extra flight for you.",
+          "[165.1-166.8] That's grandma. That's grandma. Quick, get up here. Get up here.",
+          "[172.5-175.0] Are you okay?",
+          "[176.6-176.9] Oh!"
+        ],
+        "confidence": 0.85
+      }
+    ]
+  }
+]
