@@ -10,6 +10,7 @@ outputs/
 AGENTS.md
 vh-frontend/node_modules/
 vh-frontend/dist/
+vh-frontend/video-data/
 vh-frontend/*.tsbuildinfo
 vh-frontend/vite.config.js
 vh-frontend/vite.config.d.ts

@@ -1,0 +1,36 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "vh-backend"
+version = "0.1.0"
+description = "Local FastAPI orchestration service for Video Highlight"
+readme = "README.md"
+requires-python = ">=3.11,<3.13"
+dependencies = [
+  "fastapi>=0.116,<1",
+  "pydantic-settings>=2.10,<3",
+  "python-multipart>=0.0.20,<1",
+  "uvicorn[standard]>=0.35,<1",
+]
+
+[dependency-groups]
+dev = [
+  "httpx>=0.28,<1",
+  "pytest>=8,<10",
+  "ruff>=0.12,<1",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["app"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "SIM"]

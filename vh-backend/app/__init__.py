@@ -1,0 +1,1 @@
+"""Video Highlight backend package."""

@@ -5,3 +5,7 @@ contextBridge.exposeInMainWorld('desktopWindow', {
   toggleMaximize: () => ipcRenderer.send('window:toggle-maximize'),
   close: () => ipcRenderer.send('window:close'),
 })
+
+contextBridge.exposeInMainWorld('videoImports', {
+  prepare: (input) => ipcRenderer.invoke('video-imports:prepare', input),
+})
