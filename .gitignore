@@ -7,3 +7,9 @@ __pycache__/
 .ruff_cache/
 outputs/
 .cache/
+AGENTS.md
+vh-frontend/node_modules/
+vh-frontend/dist/
+vh-frontend/*.tsbuildinfo
+vh-frontend/vite.config.js
+vh-frontend/vite.config.d.ts
