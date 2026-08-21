@@ -95,15 +95,6 @@ class FrameSample(BaseModel):
     semantic_change_score: float = 0.0
 
 
-class ChapterContext(BaseModel):
-    chapter_id: str
-    start_sec: float
-    end_sec: float
-    transcript: str
-    audio_context: str = ""
-    frame_samples: list[FrameSample] = Field(default_factory=list)
-
-
 class CandidateWindow(BaseModel):
     start_sec: float
     end_sec: float
@@ -116,58 +107,88 @@ class CandidateWindow(BaseModel):
     filter_penalty: float = Field(default=0, ge=0, le=1)
     filter_reasons: list[str] = Field(default_factory=list)
     transcript: str = ""
-    audio_context: str = ""
-    frame_samples: list[FrameSample] = Field(default_factory=list)
 
 
-class EventCard(BaseModel):
+class SceneCard(BaseModel):
+    """A semantic scene assembled locally before cloud narrative mapping."""
+
+    scene_id: str
     start_sec: float
     end_sec: float
+    shot_ids: list[str] = Field(default_factory=list)
+    local_score: float = Field(default=0, ge=0, le=1)
+    transcript: str = ""
+    audio_context: str = ""
+    frame_samples: list[FrameSample] = Field(default_factory=list)
+    speakers: list[str] = Field(default_factory=list)
+    face_track_ids: list[str] = Field(default_factory=list)
     actors: list[str] = Field(default_factory=list)
     action: str = ""
-    event_type: list[HighlightType] = Field(default_factory=list)
+    event_type: list[str] = Field(default_factory=list)
+    claims: list[str] = Field(default_factory=list)
     state_before: str = ""
     new_evidence: str = ""
     state_after: str = ""
     relationship_change: str = ""
-    emotion: str = ""
+    emotion: list[str] = Field(default_factory=list)
     salience: float = Field(default=0.5, ge=0, le=1)
     uncertainty: float = Field(default=0.5, ge=0, le=1)
     evidence: list[str] = Field(default_factory=list)
 
 
-class HighlightHypothesis(BaseModel):
-    statement: str
-    event_type: list[HighlightType] = Field(default_factory=list)
+class SceneNarrative(BaseModel):
+    """Evidence-backed Scene Map fields returned for one pre-built SceneCard."""
+
+    scene_id: str
+    actors: list[str] = Field(default_factory=list)
+    action: str = ""
+    event_type: list[str] = Field(default_factory=list)
+    claims: list[str] = Field(default_factory=list)
     state_before: str = ""
-    trigger: str = ""
+    new_evidence: str = ""
     state_after: str = ""
-    relationship_effect: str = ""
-    expected_evidence: list[str] = Field(default_factory=list)
-    verification_gaps: list[str] = Field(default_factory=list)
+    relationship_change: str = ""
+    emotion: list[str] = Field(default_factory=list)
+    salience: float = Field(default=0.5, ge=0, le=1)
+    uncertainty: float = Field(default=0.5, ge=0, le=1)
+    evidence: list[str] = Field(default_factory=list)
 
 
-class StoryMemory(BaseModel):
+class EvidenceLedger(BaseModel):
+    """Unverified, time-bounded observations from prior Scene Map outputs."""
+
     characters: list[str] = Field(default_factory=list)
-    known_facts: list[str] = Field(default_factory=list)
-    relationship_states: list[str] = Field(default_factory=list)
-    open_questions: list[str] = Field(default_factory=list)
+    observations: list[str] = Field(default_factory=list)
+    relationships: list[str] = Field(default_factory=list)
+    open_threads: list[str] = Field(default_factory=list)
     recent_summaries: list[str] = Field(default_factory=list)
 
 
 class JudgeDecision(BaseModel):
-    hypothesis_supported: bool
-    is_highlight: bool
-    score: float = Field(ge=0, le=1)
+    map_supported: bool
+    is_highlight: bool = False
+    score: float = Field(default=0, ge=0, le=1)
     highlight_type: HighlightType = "other"
     description: str = ""
     reason: str = ""
-    confidence: float = Field(default=0.5, ge=0, le=1)
+    confidence: float = Field(default=0, ge=0, le=1)
+    evidence_grounding: float = Field(ge=0, le=1)
+    narrative_impact: float = Field(ge=0, le=1)
+    standalone_clarity: float = Field(ge=0, le=1)
+    clipability: float = Field(ge=0, le=1)
     start_sec: float | None = None
     end_sec: float | None = None
     evidence: list[str] = Field(default_factory=list)
+    setup_evidence_times_sec: list[float] = Field(default_factory=list)
     decisive_evidence_times_sec: list[float] = Field(default_factory=list)
     counter_evidence: list[str] = Field(default_factory=list)
+    continue_previous_scene: bool = False
+
+
+class JudgeConsensus(BaseModel):
+    decision: JudgeDecision
+    votes: list[JudgeDecision] = Field(min_length=2, max_length=3)
+    calls: int = Field(ge=2, le=3)
 
 
 class RankedHighlight(BaseModel):
@@ -199,8 +220,8 @@ class DetectionStats(BaseModel):
     transcript_segments: int
     ocr_segments: int
     audio_events: int
-    candidate_windows: int
-    chapter_map_calls: int
+    local_candidate_windows: int
+    scene_map_calls: int
     judge_calls: int
     listwise_calls: int
 
@@ -214,23 +235,41 @@ class PreprocessTrace(BaseModel):
     saliency_per_second: list[float]
 
 
+class PreprocessArtifacts(BaseModel):
+    """Reusable expensive local outputs for one exact preprocessing signature."""
+
+    cache_version: Literal["1"] = "1"
+    signature: str
+    scenes: list[SceneSegment]
+    transcript: list[TranscriptSegment]
+    audio_events: list[AudioEvent]
+    frame_samples: list[FrameSample]
+
+
+class SceneMapArtifact(BaseModel):
+    """One cached Scene Map response tied to its exact request signature."""
+
+    cache_version: Literal["1"] = "1"
+    signature: str
+    narrative: SceneNarrative
+
+
 class DecisionTrace(BaseModel):
-    candidate: CandidateWindow
-    event: EventCard
-    hypothesis: HighlightHypothesis
+    scene: SceneCard
     decision: JudgeDecision
+    votes: list[JudgeDecision] = Field(min_length=2, max_length=3)
 
 
 class ReasoningTrace(BaseModel):
-    events: list[EventCard]
+    scenes: list[SceneCard]
     decisions: list[DecisionTrace]
     ranking: GlobalRanking
 
 
 class DetectionTrace(BaseModel):
-    pipeline_version: Literal["0.13.0"] = "0.13.0"
+    pipeline_version: Literal["0.21.0"] = "0.21.0"
     preprocess: PreprocessTrace
-    candidates: list[CandidateWindow]
+    local_candidates: list[CandidateWindow]
     reasoning: ReasoningTrace
     stats: DetectionStats
     notes: list[str] = Field(default_factory=list)

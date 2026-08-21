@@ -5,55 +5,270 @@ import pytest
 from PIL import Image
 
 from vh_agent import reasoning as reasoning_module
-from vh_agent.config import Settings
+from vh_agent.config import PROJECT_ROOT, Settings
 from vh_agent.models import (
-    CandidateWindow,
-    ChapterContext,
-    EventCard,
+    EvidenceLedger,
     FrameSample,
+    JudgeDecision,
     RankedHighlight,
-    StoryMemory,
+    SceneCard,
     VideoInfo,
 )
 from vh_agent.reasoning import (
-    SiliconFlowReasoner,
-    build_highlight_hypothesis,
-    build_story_memories,
-    parse_judge_decision,
+    OpenAIReasoner,
+    _decode_json_object,
+    _needs_adjudication,
+    _score_decision,
+    build_evidence_ledgers,
+    validate_highlight_decision,
 )
 
 
-def test_parse_judge_decision_from_fenced_json() -> None:
-    raw = """```json
-    {"hypothesis_supported": true, "is_highlight": true, "score": 0.9, "highlight_type": ["reversal", "reveal"],
-     "description": "身份揭露", "reason": "旧认知被证据推翻", "confidence": 0.8,
-     "start_sec": 10, "end_sec": 18, "evidence": ["证件曝光"]}
-    ```"""
-    decision = parse_judge_decision(raw)
-    assert decision.is_highlight is True
-    assert decision.highlight_type == "reversal"
-    assert decision.score == 0.9
+def _scene(scene_id: str, start: float, end: float, **updates: object) -> SceneCard:
+    values: dict[str, object] = {
+        "scene_id": scene_id,
+        "start_sec": start,
+        "end_sec": end,
+        "state_before": "人物相信旧身份",
+        "new_evidence": "亲子鉴定公开",
+        "state_after": "人物确认真实身份",
+        "evidence": ["[12.00s ASR] 亲子鉴定公开"],
+    }
+    values.update(updates)
+    return SceneCard(**values)
 
 
-@pytest.mark.parametrize(
-    ("raw", "message"),
-    [
-        (
-            '{"hypothesis_supported": true, "is_highlight": true, "score": ["bad"], "highlight_type": "other"}',
-            None,
-        ),
-        (
-            '{"hypothesis_supported": true, "is_highlight": true, "confidence": 0.8, "highlight_type": "other"}',
-            "missing required fields",
-        ),
-    ],
-)
-def test_invalid_judge_response_is_rejected(raw: str, message: str | None) -> None:
-    with pytest.raises((TypeError, ValueError), match=message):
-        parse_judge_decision(raw)
+def _decision(**updates: object) -> JudgeDecision:
+    values: dict[str, object] = {
+        "map_supported": True,
+        "is_highlight": True,
+        "highlight_type": "reveal",
+        "description": "身份揭露",
+        "reason": "旧认知被证据推翻",
+        "evidence_grounding": 0.9,
+        "narrative_impact": 0.8,
+        "standalone_clarity": 0.8,
+        "clipability": 0.8,
+        "start_sec": 10,
+        "end_sec": 18,
+        "evidence": ["F03 12s 证件"],
+        "setup_evidence_times_sec": [10],
+        "decisive_evidence_times_sec": [12],
+    }
+    values.update(updates)
+    return JudgeDecision(**values)
 
 
-def test_chapter_map_and_judge_use_separate_models(monkeypatch, tmp_path) -> None:
+def test_judge_score_is_computed_from_required_dimensions() -> None:
+    decision = _score_decision(_decision())
+    assert decision.score == 0.83
+    with pytest.raises(ValueError):
+        JudgeDecision.model_validate({"map_supported": True})
+
+
+def test_json_decoder_accepts_only_plain_or_single_fenced_object() -> None:
+    assert _decode_json_object('{"ok": true}') == {"ok": True}
+    assert _decode_json_object('```json\n{"ok": true}\n```') == {"ok": True}
+    with pytest.raises(json.JSONDecodeError):
+        _decode_json_object('result:\n```json\n{"ok": true}\n```')
+
+
+def test_disagreement_triggers_adjudication_only_for_material_difference() -> None:
+    first = _score_decision(_decision())
+    close = _score_decision(_decision(narrative_impact=0.78))
+    rejected = _score_decision(_decision(map_supported=False))
+    assert _needs_adjudication(first, close, 0.65) is False
+    assert _needs_adjudication(first, rejected, 0.65) is True
+
+
+def test_settings_routes_gemini_models_over_openai_compatible_endpoint() -> None:
+    settings = Settings(
+        VH_REASONING_PROVIDER="gemini",
+        GEMINI_API_KEY="test",
+        GEMINI_BASE_URL="https://yetoken.vip/v1",
+        GEMINI_MAP_MODEL="gemini-3.1-flash-lite",
+        GEMINI_JUDGE_MODEL="gemini-3.7-flash",
+    )
+    assert settings.reasoning_api_key == "test"
+    assert settings.reasoning_base_url == "https://yetoken.vip/v1"
+
+
+def test_settings_uses_agent_project_env_file() -> None:
+    assert Settings.model_config["env_file"] == PROJECT_ROOT / ".env"
+
+
+def test_scene_gate_accepts_adjacent_scene_setup_but_not_ungrounded_map() -> None:
+    previous = _scene("scene_0001", 0, 14)
+    current = _scene("scene_0002", 14, 30)
+    complete = _decision(
+        score=0.9,
+        confidence=0.9,
+        start_sec=6,
+        end_sec=22,
+        setup_evidence_times_sec=[8],
+        decisive_evidence_times_sec=[18],
+    )
+    normalized = validate_highlight_decision(complete, current, previous)
+    assert normalized.is_highlight is True
+    assert normalized.start_sec == 6
+
+    unsupported = complete.model_copy(update={"map_supported": False})
+    assert validate_highlight_decision(unsupported, current, previous).is_highlight is False
+
+
+def test_scene_gate_keeps_judge_window_when_setup_is_far_from_the_event() -> None:
+    scene = _scene("scene_0001", 0, 40)
+    decision = _decision(
+        score=0.8,
+        confidence=0.9,
+        start_sec=20,
+        end_sec=36,
+        setup_evidence_times_sec=[3, 9, 21],
+        decisive_evidence_times_sec=[28, 33],
+    )
+    normalized = validate_highlight_decision(decision, scene, None)
+    assert normalized.is_highlight is True
+    assert normalized.start_sec == 20
+    assert normalized.end_sec == 36
+    assert normalized.setup_evidence_times_sec == [21.0]
+    assert normalized.end_sec - normalized.start_sec <= 24.0
+
+
+def test_scene_gate_trims_padding_but_rejects_an_overlong_causal_core() -> None:
+    scene = _scene("scene_0001", 0, 40)
+    padded = _decision(
+        score=0.8,
+        confidence=0.9,
+        highlight_type="reversal",
+        start_sec=4,
+        end_sec=40,
+        setup_evidence_times_sec=[16],
+        decisive_evidence_times_sec=[18, 28],
+    )
+    normalized = validate_highlight_decision(padded, scene, None)
+    assert normalized.is_highlight is True
+    assert normalized.end_sec - normalized.start_sec <= 24.0
+    assert normalized.start_sec <= 16 <= normalized.end_sec
+    assert normalized.start_sec <= 28 <= normalized.end_sec
+
+    too_long = _decision(
+        score=0.8,
+        confidence=0.9,
+        highlight_type="reversal",
+        start_sec=8,
+        end_sec=40,
+        setup_evidence_times_sec=[8],
+        decisive_evidence_times_sec=[10, 36],
+    )
+    assert validate_highlight_decision(too_long, scene, None).is_highlight is False
+
+
+def test_scene_gate_allows_unknown_state_before_when_setup_is_anchored() -> None:
+    scene = _scene("scene_0001", 14, 30, state_before="unknown")
+    decision = _decision(
+        score=0.8,
+        confidence=0.9,
+        start_sec=16,
+        end_sec=28,
+        setup_evidence_times_sec=[16],
+        decisive_evidence_times_sec=[20],
+    )
+    assert validate_highlight_decision(decision, scene, None).is_highlight is True
+
+
+def test_scene_gate_does_not_reinterpret_a_grounded_judge_decision_by_type() -> None:
+    scene = _scene("scene_0001", 14, 30, new_evidence="", state_after="规则被上级叫停")
+    decision = _decision(
+        score=0.8,
+        confidence=0.9,
+        highlight_type="conflict",
+        start_sec=16,
+        end_sec=28,
+        setup_evidence_times_sec=[16],
+        decisive_evidence_times_sec=[20],
+    )
+    assert validate_highlight_decision(decision, scene, None).is_highlight is True
+
+
+def test_scene_gate_does_not_require_a_setup_anchor() -> None:
+    scene = _scene("scene_0001", 14, 30)
+    decision = _decision(
+        start_sec=16,
+        end_sec=28,
+        setup_evidence_times_sec=[],
+        decisive_evidence_times_sec=[20],
+    )
+    assert validate_highlight_decision(decision, scene, None).is_highlight is True
+
+
+def test_system_prompts_state_core_contracts() -> None:
+    from vh_agent.reasoning import (
+        JUDGE_SYSTEM_PROMPT,
+        LISTWISE_SYSTEM_PROMPT,
+        MAP_SYSTEM_PROMPT,
+    )
+
+    assert "claims" in MAP_SYSTEM_PROMPT
+    assert "new_evidence" in MAP_SYSTEM_PROMPT
+    assert "unknown" in MAP_SYSTEM_PROMPT
+    assert "约束" in JUDGE_SYSTEM_PROMPT
+    assert "对抗" in JUDGE_SYSTEM_PROMPT
+    assert "叙事变化" in JUDGE_SYSTEM_PROMPT
+    assert "情绪或关系兑现" in JUDGE_SYSTEM_PROMPT
+    assert "动作峰值" in JUDGE_SYSTEM_PROMPT
+    assert "悬念钩子" in JUDGE_SYSTEM_PROMPT
+    assert "旧状态 → 决定性证据 → 新状态" in JUDGE_SYSTEM_PROMPT
+    assert "continue_previous_scene" in JUDGE_SYSTEM_PROMPT
+    assert "evidence_grounding" in JUDGE_SYSTEM_PROMPT
+    assert "搜身" not in MAP_SYSTEM_PROMPT + JUDGE_SYSTEM_PROMPT
+    assert "拦门" not in MAP_SYSTEM_PROMPT + JUDGE_SYSTEM_PROMPT
+    assert "不同叙事功能" in LISTWISE_SYSTEM_PROMPT
+    assert "P/Q/E 只是占位符" in reasoning_module.MAP_FEW_SHOT_MESSAGES[0]["content"]
+    assert len(reasoning_module.JUDGE_FEW_SHOT_MESSAGES) == 4
+
+
+def test_map_keeps_claims_separate_from_observed_evidence() -> None:
+    from vh_agent.models import SceneNarrative
+
+    narrative = SceneNarrative.model_validate(
+        {
+            "scene_id": "scene_0001",
+            "claims": ["你就是杀人凶手"],
+            "event_type": ["power_dynamics"],
+            "state_before": "unknown",
+            "new_evidence": "",
+            "state_after": "",
+            "salience": 0.2,
+            "uncertainty": 0.5,
+            "evidence": ["F02 8s 对峙"],
+        }
+    )
+    assert narrative.claims == ["你就是杀人凶手"]
+    assert narrative.state_before == "unknown"
+    assert narrative.new_evidence == ""
+    assert narrative.event_type == ["power_dynamics"]
+
+
+def test_evidence_ledger_is_unverified_and_time_ordered() -> None:
+    first = _scene(
+        "scene_0001",
+        1,
+        8,
+        actors=["女主"],
+        action="发现戒指",
+        claims=["这是你妈的戒指"],
+    )
+    second = _scene("scene_0002", 10, 18, actors=["女主", "母亲"], action="母女相认")
+    before, final = build_evidence_ledgers([first, second])
+    assert before["scene_0002"].observations[0] == (
+        "[1.00-8.00s] 亲子鉴定公开（证据：[12.00s ASR] 亲子鉴定公开）"
+    )
+    assert any("声称：这是你妈的戒指" in item for item in before["scene_0002"].observations)
+    assert "母女相认" in final.recent_summaries[-1]
+    assert EvidenceLedger() != final
+
+
+def test_openai_reasoner_maps_one_scene_and_verifies_without_rewriting(monkeypatch, tmp_path) -> None:
     calls: list[str] = []
     requests: list[dict[str, object]] = []
 
@@ -63,184 +278,84 @@ def test_chapter_map_and_judge_use_separate_models(monkeypatch, tmp_path) -> Non
             requests.append(kwargs)
             if "8B" in model:
                 payload = {
-                    "events": [
-                        {
-                            "start_sec": 10,
-                            "end_sec": 22,
-                            "actors": ["女主", "母亲"],
-                            "action": "母亲拿出亲子鉴定",
-                            "event_type": ["reveal"],
-                            "state_before": "女主认为自己是养女",
-                            "new_evidence": ["亲子鉴定", "名字一致"],
-                            "state_after": "女主得知自己是亲生女儿",
-                            "relationship_change": "母女身份确认",
-                            "emotion": ["震惊", "不敢置信"],
-                            "salience": 0.9,
-                            "uncertainty": 0.2,
-                            "evidence": ["F01 12.5s 亲子鉴定特写"],
-                        }
-                    ]
+                    "scene_id": "scene_0001",
+                    "actors": ["女主", "母亲"],
+                    "action": "母亲拿出亲子鉴定",
+                    "event_type": ["reveal"],
+                    "state_before": "女主认为自己是养女",
+                    "new_evidence": "亲子鉴定上的名字一致",
+                    "state_after": "女主得知自己是亲生女儿",
+                    "relationship_change": "母女身份确认",
+                    "emotion": ["震惊"],
+                    "salience": 0.9,
+                    "uncertainty": 0.2,
+                    "evidence": ["F01 12.5s 亲子鉴定特写"],
                 }
-            elif "listwise" in kwargs["messages"][0]["content"]:
+            elif "ranked_highlight_ids" in kwargs["messages"][1]["content"]:
                 payload = {
                     "ranked_highlight_ids": ["hl_reveal", "hl_emotion"],
                     "selected_highlight_ids": ["hl_reveal"],
-                    "rationale": "揭露造成明确状态变化，另一条仅为重复反应",
+                    "rationale": "揭露造成明确状态变化",
                 }
             else:
                 payload = {
-                    "hypothesis_supported": True,
-                    "is_highlight": True,
-                    "score": 0.95,
-                    "highlight_type": ["reversal", "reveal"],
-                    "description": ["身世真相", "身份揭露"],
+                    "map_supported": True,
+                    "highlight_type": "reveal",
+                    "description": "身世真相揭露",
                     "reason": "养女认知被亲子鉴定推翻",
-                    "confidence": 0.9,
+                    "evidence_grounding": 0.95,
+                    "narrative_impact": 0.95,
+                    "standalone_clarity": 0.9,
+                    "clipability": 0.9,
                     "start_sec": 9,
-                    "end_sec": 24,
-                    "evidence": ["亲子鉴定", "女主震惊反应"],
+                    "end_sec": 20,
+                    "evidence": ["F01 12.5s 亲子鉴定特写"],
+                    "setup_evidence_times_sec": [9],
+                    "decisive_evidence_times_sec": [12],
+                    "continue_previous_scene": False,
                 }
-            message = SimpleNamespace(content=json.dumps(payload, ensure_ascii=False))
-            return SimpleNamespace(choices=[SimpleNamespace(message=message)])
+            return SimpleNamespace(choices=[SimpleNamespace(message=SimpleNamespace(content=json.dumps(payload)))])
 
     class FakeClient:
-        def __init__(self, **kwargs):
+        def __init__(self, **_kwargs):
             self.chat = SimpleNamespace(completions=FakeCompletions())
 
     monkeypatch.setattr(reasoning_module, "OpenAI", FakeClient)
-    frame = tmp_path / "frame.jpg"
-    Image.new("RGB", (64, 64), "red").save(frame)
+    image = tmp_path / "frame.jpg"
+    Image.new("RGB", (64, 64), "red").save(image)
     settings = Settings(
+        VH_REASONING_PROVIDER="siliconflow",
         SILICONFLOW_API_KEY="test",
         SILICONFLOW_MAP_MODEL="Qwen/Qwen3-VL-8B-Instruct",
         SILICONFLOW_JUDGE_MODEL="Qwen/Qwen3-VL-32B-Instruct",
     )
-    reasoner = SiliconFlowReasoner(settings)
-    video = VideoInfo(
-        path=tmp_path / "video.mp4",
-        duration_sec=60,
-        width=480,
-        height=852,
-        fps=25,
-        has_audio=True,
-        title="测试短剧",
+    video = VideoInfo(path=tmp_path / "video.mp4", duration_sec=60, width=480, height=852, fps=25, has_audio=True)
+    scene = _scene(
+        "scene_0001", 8, 24, transcript="[10.00-12.00s OCR] 原来我才是亲生女儿",
+        frame_samples=[FrameSample(timestamp_sec=12.5, path=image)],
     )
-    chapter = ChapterContext(
-        chapter_id="chapter_001",
-        start_sec=0,
-        end_sec=60,
-        transcript="[10.00-12.00s OCR] 原来我才是你的亲生女儿",
-        frame_samples=[FrameSample(timestamp_sec=12.5, path=frame)],
-    )
-    card = reasoner.map_chapter(video, chapter)[0]
-    candidate = CandidateWindow(
-        start_sec=8,
-        end_sec=24,
-        local_score=0.7,
-        transcript="原来我才是你的亲生女儿",
-        frame_samples=[FrameSample(timestamp_sec=12.5, path=frame)],
-    )
-    hypothesis = build_highlight_hypothesis(card)
-    memory = StoryMemory(known_facts=["女主一直被当作养女"])
-    decision = reasoner.judge(
-        video, candidate, hypothesis, memory, "此前她被当作养女", "亲子鉴定出现", "母女相认"
-    )
+    reasoner = OpenAIReasoner(settings)
+    mapped = reasoner.map_scene(video, scene)
+    decision = reasoner.judge(video, scene, None, EvidenceLedger())
     ranking = reasoner.rank_highlights(
         video,
         [
-            RankedHighlight(
-                highlight_id="hl_reveal",
-                start_sec=9,
-                end_sec=24,
-                score=0.9,
-                local_score=0.7,
-                judge_score=0.95,
-                highlight_type="reveal",
-                description="亲子鉴定揭露身世",
-                reason="新证据改变人物身份认知",
-                evidence=["亲子鉴定"],
-                confidence=0.9,
-            ),
-            RankedHighlight(
-                highlight_id="hl_emotion",
-                start_sec=24,
-                end_sec=30,
-                score=0.75,
-                local_score=0.6,
-                judge_score=0.78,
-                highlight_type="emotion",
-                description="女主震惊",
-                reason="揭露后的情绪反应",
-                evidence=["女主震惊反应"],
-                confidence=0.8,
-            ),
+            RankedHighlight(highlight_id="hl_reveal", start_sec=9, end_sec=20, score=0.9, local_score=0.7, judge_score=0.95, highlight_type="reveal", description="揭露", reason="反转", confidence=0.9),
+            RankedHighlight(highlight_id="hl_emotion", start_sec=24, end_sec=30, score=0.75, local_score=0.6, judge_score=0.78, highlight_type="emotion", description="震惊", reason="反应", confidence=0.8),
         ],
         max_selected=1,
     )
-
-    assert card.state_after == "女主得知自己是亲生女儿"
-    assert card.new_evidence == "亲子鉴定；名字一致"
-    assert card.emotion == "震惊；不敢置信"
-    assert decision.highlight_type == "reversal"
-    assert ranking.ranked_highlight_ids == ["hl_reveal", "hl_emotion"]
+    assert mapped.state_after == "女主得知自己是亲生女儿"
+    assert decision.decision.map_supported is True
+    assert len(decision.votes) == 2
+    assert all(vote.is_highlight for vote in decision.votes)
+    assert decision.calls == 2
     assert ranking.selected_highlight_ids == ["hl_reveal"]
     assert calls == [
         "Qwen/Qwen3-VL-8B-Instruct",
         "Qwen/Qwen3-VL-32B-Instruct",
         "Qwen/Qwen3-VL-32B-Instruct",
+        "Qwen/Qwen3-VL-32B-Instruct",
     ]
-    map_content = requests[0]["messages"][1]["content"]
-    assert "所有有证据的独立原子事件" in map_content[-1]["text"]
-    judge_content = requests[1]["messages"][1]["content"]
-    assert "事件核心字幕：亲子鉴定出现" in judge_content[-1]["text"]
-    assert "decisive_evidence_times_sec" in judge_content[-1]["text"]
-    assert judge_content[0]["text"] == "F01  12.5s"
-    assert judge_content[1]["image_url"]["url"].startswith("data:image/jpeg;base64,")
-    assert requests[2]["messages"][1]["content"].startswith("视频：测试短剧")
-    assert "因果相连本身既不代表重复，也不代表独立" in requests[2]["messages"][0]["content"]
-
-
-def test_story_memory_is_available_before_next_event() -> None:
-    first = EventCard(
-        start_sec=1,
-        end_sec=5,
-        actors=["女主"],
-        evidence=["[2.00s OCR] 戒指刻有名字"],
-        action="发现戒指",
-        new_evidence="戒指刻有名字",
-        state_after="戒指属于女主母亲",
-    )
-    second = EventCard(
-        start_sec=10,
-        end_sec=15,
-        actors=["女主", "母亲"],
-        action="母女相认",
-        relationship_change="确认母女关系",
-        evidence=["[12.00s ASR] 我们是母女"],
-    )
-    before, final = build_story_memories([first, second])
-    assert any("戒指刻有名字" in fact for fact in before[id(second)].known_facts)
-    assert any("确认母女关系" in fact for fact in final.relationship_states)
-
-
-def test_unverified_event_does_not_pollute_story_memory() -> None:
-    event = EventCard(
-        start_sec=1,
-        end_sec=5,
-        actors=["未知说话者", "女主"],
-        action="猜测隐藏身份",
-        state_after="女主身份改变",
-        uncertainty=0.9,
-    )
-    before, final = build_story_memories([event])
-    assert before[id(event)].known_facts == []
-    assert final == StoryMemory()
-
-
-def test_rejected_hypothesis_can_yield_a_revised_highlight() -> None:
-    decision = parse_judge_decision(
-        '{"hypothesis_supported": false, "is_highlight": true, '
-        '"score": 0.95, "confidence": 0.9, "highlight_type": "reveal"}'
-    )
-    assert decision.hypothesis_supported is False
-    assert decision.is_highlight is True
+    assert "SceneCard" in requests[1]["messages"][0]["content"]
+    assert "scene_0001" in requests[0]["messages"][-1]["content"][-1]["text"]

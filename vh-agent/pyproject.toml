@@ -4,8 +4,8 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "vh-agent"
-version = "0.13.0"
-description = "Event-aware highlight detection pipeline for short dramas"
+version = "0.21.0"
+description = "Scene-aware highlight detection pipeline for short dramas"
 readme = "README.md"
 requires-python = ">=3.11,<3.13"
 dependencies = [

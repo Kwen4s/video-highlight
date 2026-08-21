@@ -7,6 +7,7 @@ from dataclasses import dataclass
 
 import numpy as np
 
+from .config import MAX_HIGHLIGHT_SEC
 from .models import (
     AudioEvent,
     CandidateWindow,
@@ -156,7 +157,6 @@ def build_candidates(
     audio_energy: list[float],
     transcript: list[TranscriptSegment],
     scenes: list[SceneSegment],
-    audio_events: list[AudioEvent],
     window_sec: float,
     stride_sec: float,
     max_candidates: int,
@@ -186,7 +186,6 @@ def build_candidates(
     raw_scenes: list[float] = []
     raw_cues: list[float] = []
     texts: list[str] = []
-    audio_contexts: list[str] = []
 
     for start in starts_list:
         end = min(start + window_sec, duration_sec)
@@ -199,7 +198,6 @@ def build_candidates(
         raw_scenes.append(float(sum(start < cut < end for cut in cut_points)))
         raw_cues.append(float(len(NARRATIVE_CUES.findall(text))))
         texts.append(text)
-        audio_contexts.append(audio_event_text(audio_events, start, end))
 
     signal_args = (starts_list, window_sec, segment_sec)
     audio_scores = _segment_scale(raw_audio, *signal_args)
@@ -228,13 +226,12 @@ def build_candidates(
             scene_score=scene_scores[index],
             cue_score=cue_scores[index],
             transcript=texts[index],
-            audio_context=audio_contexts[index],
         )
         windows.append(apply_content_filter(candidate, duration_sec))
 
     windows.extend(
         _build_short_scene_candidates(
-            duration_sec, frames, audio_energy, transcript, audio_events, cut_points, window_sec
+            duration_sec, frames, audio_energy, transcript, cut_points, window_sec
         )
     )
     target_count = candidate_budget(
@@ -259,7 +256,6 @@ def _build_short_scene_candidates(
     frames: list[FrameSample],
     audio_energy: list[float],
     transcript: list[TranscriptSegment],
-    audio_events: list[AudioEvent],
     cut_points: set[float],
     window_sec: float,
 ) -> list[CandidateWindow]:
@@ -302,7 +298,6 @@ def _build_short_scene_candidates(
                     scene_score=1.0,
                     cue_score=cue_score,
                     transcript=text,
-                    audio_context=audio_event_text(audio_events, start, end),
                 ),
                 duration_sec,
             )
@@ -427,26 +422,6 @@ def build_saliency_curve(
     return np.round(np.clip(curve, 0, 1), 4).tolist()
 
 
-def attach_storyboards(
-    candidates: list[CandidateWindow],
-    frames: list[FrameSample],
-) -> list[CandidateWindow]:
-    for candidate in candidates:
-        frame_count = 8 if max(candidate.semantic_score, candidate.scene_score) >= 0.6 else 4
-        available = [
-            frame
-            for frame in frames
-            if candidate.start_sec <= frame.timestamp_sec <= candidate.end_sec
-        ]
-        if len(available) <= frame_count:
-            chosen = available
-        else:
-            indices = np.linspace(0, len(available) - 1, frame_count).astype(int)
-            chosen = [available[index] for index in indices]
-        candidate.frame_samples = chosen
-    return candidates
-
-
 def _intersection_over_union(left: CandidateWindow, right: CandidateWindow) -> float:
     overlap = max(0.0, min(left.end_sec, right.end_sec) - max(left.start_sec, right.start_sec))
     union = max(left.end_sec, right.end_sec) - min(left.start_sec, right.start_sec)
@@ -485,6 +460,7 @@ def refine_boundaries(
     duration_sec: float,
     transcript: list[TranscriptSegment],
     saliency_curve: list[float],
+    setup_evidence_times_sec: list[float],
     decisive_evidence_times_sec: list[float],
 ) -> tuple[float, float]:
     """Snap semantic boundaries to nearby valleys without discarding evidence."""
@@ -492,7 +468,7 @@ def refine_boundaries(
     end = max(start + 0.5, min(end_sec + 0.5, duration_sec))
     anchors = sorted(
         value
-        for value in decisive_evidence_times_sec
+        for value in [*setup_evidence_times_sec, *decisive_evidence_times_sec]
         if start <= value <= end and 0 <= value <= duration_sec
     )
 
@@ -504,15 +480,15 @@ def refine_boundaries(
         second = min(range(low, high + 1), key=lambda index: saliency_curve[index])
         return float(second)
 
-    if end - start > 24.0:
+    if end - start > MAX_HIGHLIGHT_SEC:
         if anchors:
             start = max(start, anchors[0] - 6.0)
             end = min(end, anchors[-1] + 6.0)
         else:
             center = (start + end) / 2.0
-            start = max(0.0, center - 12.0)
-            end = min(duration_sec, start + 24.0)
-            start = max(0.0, end - 24.0)
+            start = max(0.0, center - MAX_HIGHLIGHT_SEC / 2.0)
+            end = min(duration_sec, start + MAX_HIGHLIGHT_SEC)
+            start = max(0.0, end - MAX_HIGHLIGHT_SEC)
     if anchors and end - start > max(10.0, anchors[-1] - anchors[0] + 8.0):
         start = max(start, anchors[0] - 4.0)
         end = min(end, anchors[-1] + 4.0)
@@ -547,12 +523,13 @@ def refine_boundaries(
     if end_edges:
         end = min(end_edges, key=lambda value: abs(value - end))
 
-    if end - start > 24.0:
+    if end - start > MAX_HIGHLIGHT_SEC:
         if anchors:
-            center = (anchors[0] + anchors[-1]) / 2.0
+            start = max(0.0, anchors[0] - 1.0)
+            end = min(duration_sec, max(start + 6.0, anchors[-1] + 1.0))
         else:
             center = (start + end) / 2.0
-        start = max(0.0, center - 12.0)
-        end = min(duration_sec, start + 24.0)
-        start = max(0.0, end - 24.0)
+            start = max(0.0, center - MAX_HIGHLIGHT_SEC / 2.0)
+            end = min(duration_sec, start + MAX_HIGHLIGHT_SEC)
+            start = max(0.0, end - MAX_HIGHLIGHT_SEC)
     return round(start, 3), round(end, 3)

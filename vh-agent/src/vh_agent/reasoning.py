@@ -1,144 +1,325 @@
 import base64
+import hashlib
 import json
-import re
 from io import BytesIO
 
 from openai import OpenAI
 from PIL import Image, ImageDraw
 
-from .config import Settings
+from .config import MAX_HIGHLIGHT_SEC, SETUP_LEAD_SEC, Settings
 from .models import (
-    CandidateWindow,
-    ChapterContext,
-    EventCard,
+    EvidenceLedger,
     FrameSample,
     GlobalRanking,
-    HighlightHypothesis,
+    JudgeConsensus,
     JudgeDecision,
     RankedHighlight,
-    StoryMemory,
+    SceneCard,
+    SceneNarrative,
     VideoInfo,
 )
 
-MAP_SYSTEM_PROMPT = """你是短剧章节事件映射模型。根据章节内带时间戳的关键帧、ASR、OCR 和声音信息，抽取所有有原始证据的独立原子事件。
-只记录人物行动、事实披露、身份/关系/目标变化、冲突升级、情绪转折和因果结果，不做最终高光裁决，不续写剧情。
-每个事件必须给出最小必要时间范围并引用输入中的画面、字幕或声音证据；没有具体证据的推测不得输出。
-无法确认说话人时 actors 写“未知说话者”并提高 uncertainty；state_before 或 state_after 不确定时留空。
-普通对话也可以作为事件输出，但 salience 必须校准。不得只输出章节中最显著的一个事件，也不得把同一事件拆成重复项。
-只输出一个包含 events 数组的 JSON 对象，不要 Markdown。"""
+MAP_SYSTEM_PROMPT = """从当前 SceneCard 中抽取可核验的场景事实。只描述输入中可见或可听的内容，不裁决它是不是高光。
 
-JUDGE_SYSTEM_PROMPT = """你是短剧高光叙事裁决模型。根据关键帧、ASR/OCR、声音事件、待验证假设和剧情记忆作最终判断。
-高光包括冲突、反转、真相或身份揭露、伏笔回收、强情绪、关键动作、感情推进和集尾悬念。
-输入来自高召回预筛选，其中相当一部分应判为非高光；不得因事件已被章节 Map 抽取而默认通过。
-把待验证假设视为不可信命题：先寻找原始材料中的支持证据和反证，再判断事件是否真实发生、是否造成叙事状态变化。证据不足时必须否决，不得用假设本身证明假设。
-原假设不成立但原始材料支持另一个高光事件时，hypothesis_supported 为 false，is_highlight 仍可为 true，并在 description 中给出证据支持的修正事件；counter_evidence 说明原假设为何不成立。
-反转必须存在“此前认知 -> 新证据 -> 新认知”；冲突必须升级风险、权力或关系；动作必须改变后续因果。普通大声对话、信息重复、日常安慰和无后果动作均判 false。不得使用材料之外的剧情常识。
-分数必须校准：普通内容 0.1-0.4，有意义但不够独立成段 0.4-0.6，明确高光 0.65-0.85，罕见的全片核心事件才可超过 0.9。is_highlight 仅在 score >= 0.65 且存在具体证据时为 true。
-时间边界必须依据输入字幕或关键帧的秒数选择，不得照抄候选窗；只包含最短必要铺垫、核心事件和紧随其后的反应。
-只输出一个 JSON 对象，不要 Markdown。"""
+action 记录可观察行为；claims 记录人物说出的事实性主张，主张本身是可观察言语，但其内容仍未证实；state_before 和 state_after 记录人物或观众在认知、关系、目标、风险、权力或选择上的前后状态，材料不足时填 unknown；new_evidence 记录造成变化的可观察触发；relationship_change 和 emotion 只写本场可支持的结果。
 
-LISTWISE_SYSTEM_PROMPT = """你是短剧高光的全局 listwise 排序模型。输入均已通过多模态 Judge 验证并完成时间边界精修。
-你只能比较相对叙事价值、独立性、剧情覆盖和重复程度，不能修改事实、类型或时间边界。
-召回优先于强行精简，但每个入选片段必须能独立理解，拥有自己的触发证据，并产生不同于其他候选的叙事状态变化。反转需要旧认知、新证据和新认知；揭露需要改变已有认知；冲突需要改变风险、权力、关系或目标。只有称呼、立场重述、过场、普通反应或没有后果的升级不单独入选。
-核心证据和状态变化被另一候选完整覆盖时才算重复。时间相邻或因果相连本身既不代表重复，也不代表独立；因果链中的行动、转折和后果仅在各自造成不同状态变化时分别保留。
-选择数量由满足判据的独立高光数量决定，不为填满预算保留弱片段，也不因其弱于全片最强高潮而删除。只输出 JSON，不要 Markdown。"""
+event_type 使用一到两个简短场景标签，可优先使用 conflict、reversal、reveal、payoff、emotion、action、romance、cliffhanger，也可使用更准确的开放标签。salience 衡量本场对叙事推进的强度，uncertainty 衡量解释的不确定性。每项核心判断引用带时间戳的帧、字幕或声音证据。人物无法可靠识别时使用稳定的角色描述。scene_id 与输入一致。
+只输出符合指定结构的 JSON。"""
+
+JUDGE_SYSTEM_PROMPT = """判断当前 SceneCard 是否具备独立短视频高光价值。只核验 Scene Map 已提出的核心事件；更早账本仅用于定位背景，事实依据来自当前场或紧邻前场。
+
+高光可由五种通用结构成立：
+1. 叙事变化：旧状态 → 决定性证据 → 新状态。
+2. 冲突兑现：约束或目标分歧 → 对抗 → 可见后果。
+3. 情绪或关系兑现：必要铺垫 → 触发 → 明确反应或关系变化。
+4. 动作峰值：风险或目标建立 → 峰值行为 → 可见结果。
+5. 悬念钩子：关键信息出现 → 高风险问题成立且仍未解决。
+
+人物主张的真实性与戏剧作用分开处理：缺少独立证据时仍可把言语行为作为冲突或情绪触发，但不能把主张内容写成已证实事实。
+
+分别给出四项 0 到 1 的分数：evidence_grounding 衡量核心解释是否有直接证据；narrative_impact 衡量状态、风险、关系、情绪或悬念变化的强度；standalone_clarity 衡量脱离全片后是否能看懂；clipability 衡量必要铺垫、触发和结果能否在 24 秒内形成完整片段。分数只反映各维度，不围绕通过阈值打分。
+
+播放窗口覆盖最短必要铺垫、当前场的决定性证据和已有反应。当前场承接紧邻前场的同一事件时 continue_previous_scene=true。counter_evidence 记录削弱核心解释或独立成片价值的材料。
+只输出符合指定结构的 JSON。"""
+
+EVIDENCE_JUDGE_PROMPT = (
+    JUDGE_SYSTEM_PROMPT
+    + """
+
+本次以证据核验为主：优先检查 Scene Map 的核心事件、时间锚点和前后状态是否被输入直接支持；证据不足时降低 evidence_grounding，不补写缺失事实。"""
+)
+
+EDITOR_JUDGE_PROMPT = (
+    JUDGE_SYSTEM_PROMPT
+    + """
+
+本次以成片判断为主：优先检查事件是否造成值得保留的变化、脱离全片是否可懂、24 秒内能否形成完整观看单元；不要因为台词激烈或情绪外显而自动判为高光。"""
+)
+
+ADJUDICATOR_SYSTEM_PROMPT = """你是高光标注仲裁者。比较两份独立 Judge 结果，并重新核对同一份 SceneCard 证据。选择证据更充分的解释；两份都不成立时明确否决，两份都成立但类型不同则选择最能描述核心变化的类型。保持通用判据，不引入输入之外的剧情。输出与 Judge 相同结构的 JSON。"""
+
+LISTWISE_SYSTEM_PROMPT = """对已通过证据核验的候选进行全片级选择。保留不重复的核心事件并覆盖不同叙事功能；同一决定性证据或相互包含的完整事件视为重复。按证据充分性、叙事影响、独立可懂性和成片完整性综合排序，只选择值得最终出片的最强组合。数量预算是上限而非配额，可以少选或不选。候选的事实、类型和时间边界保持不变。只输出 JSON。"""
+
+MAP_FEW_SHOT_MESSAGES = [
+    {
+        "role": "user",
+        "content": """合成结构示例，P/Q/E 只是占位符，实际任务必须改写为输入中的具体事实：
+SceneCard scene_example [0.00, 9.00]
+[1.00s ASR] 角色甲主张命题 P，并据此维持决定 Q。
+[5.00s FRAME] 可见证据 E 直接否定 P。
+[7.00s ASR] 角色甲承认证据并改变决定。""",
+    },
+    {
+        "role": "assistant",
+        "content": json.dumps(
+            {
+                "scene_id": "scene_example",
+                "actors": ["角色甲"],
+                "action": "角色甲看到证据后改变决定",
+                "claims": ["命题 P"],
+                "event_type": ["reversal"],
+                "state_before": "角色甲相信 P 并维持 Q",
+                "new_evidence": "可见证据 E 否定 P",
+                "state_after": "角色甲不再相信 P，并改变 Q",
+                "relationship_change": "",
+                "emotion": ["震惊"],
+                "salience": 0.88,
+                "uncertainty": 0.08,
+                "evidence": [
+                    "[1.00s ASR] 角色甲主张 P",
+                    "[5.00s FRAME] 证据 E 否定 P",
+                    "[7.00s ASR] 角色甲改变决定",
+                ],
+            },
+            ensure_ascii=False,
+        ),
+    },
+]
+
+JUDGE_FEW_SHOT_MESSAGES = [
+    {
+        "role": "user",
+        "content": """合成正例：Scene Map 显示旧状态 Q 在 1 秒成立，5 秒出现直接证据 E，7 秒出现明确的新状态与反应；证据均来自当前场。请按 Judge 合同裁决。""",
+    },
+    {
+        "role": "assistant",
+        "content": json.dumps(
+            {
+                "map_supported": True,
+                "highlight_type": "reversal",
+                "description": "证据推翻旧认知并改变决定",
+                "reason": "形成旧状态、决定性证据和新状态的完整叙事变化",
+                "evidence_grounding": 0.95,
+                "narrative_impact": 0.9,
+                "standalone_clarity": 0.88,
+                "clipability": 0.92,
+                "start_sec": 1.0,
+                "end_sec": 8.0,
+                "evidence": ["[1.00s] 旧状态 Q", "[5.00s] 证据 E", "[7.00s] 新状态"],
+                "setup_evidence_times_sec": [1.0],
+                "decisive_evidence_times_sec": [5.0, 7.0],
+                "counter_evidence": [],
+                "continue_previous_scene": False,
+            },
+            ensure_ascii=False,
+        ),
+    },
+    {
+        "role": "user",
+        "content": """合成负例：当前场只有角色甲重复主张 P，没有独立证据、可见后果、关系变化、动作结果或未解决的高风险问题。请按 Judge 合同裁决。""",
+    },
+    {
+        "role": "assistant",
+        "content": json.dumps(
+            {
+                "map_supported": True,
+                "highlight_type": "other",
+                "description": "角色重复一项未经证实的主张",
+                "reason": "只有主张，没有形成五种通用高光结构中的任一种",
+                "evidence_grounding": 0.9,
+                "narrative_impact": 0.18,
+                "standalone_clarity": 0.55,
+                "clipability": 0.35,
+                "start_sec": None,
+                "end_sec": None,
+                "evidence": ["[3.00s ASR] 角色甲主张 P"],
+                "setup_evidence_times_sec": [],
+                "decisive_evidence_times_sec": [],
+                "counter_evidence": ["没有证据或可见状态变化"],
+                "continue_previous_scene": False,
+            },
+            ensure_ascii=False,
+        ),
+    },
+]
 
 
-class SiliconFlowReasoner:
-    """Cloud reasoner coordinating chapter mapping, judging, and global ranking."""
+def scene_map_request_fingerprint(settings: Settings, video: VideoInfo, scene: SceneCard) -> str:
+    frame_files = [
+        {
+            "path": str(frame.path),
+            "size": frame.path.stat().st_size,
+            "mtime_ns": frame.path.stat().st_mtime_ns,
+        }
+        for frame in scene.frame_samples[:3]
+    ]
+    payload = {
+        "provider": settings.reasoning_provider,
+        "base_url": settings.reasoning_base_url,
+        "model": settings.reasoning_map_model,
+        "system_prompt": MAP_SYSTEM_PROMPT,
+        "few_shot": MAP_FEW_SHOT_MESSAGES,
+        "user_prompt": _scene_map_prompt(video, scene),
+        "scene": scene.model_dump(mode="json"),
+        "frame_files": frame_files,
+        "max_frames": 3,
+        "detail": "low",
+    }
+    encoded = json.dumps(payload, ensure_ascii=False, sort_keys=True).encode()
+    return hashlib.sha256(encoded).hexdigest()
+
+
+class OpenAIReasoner:
+    """Cloud reasoner coordinating Scene Map, evidence verification, and ranking."""
 
     def __init__(self, settings: Settings) -> None:
         self.settings = settings
-        if not settings.siliconflow_api_key:
-            raise ValueError("SILICONFLOW_API_KEY is empty")
+        if not settings.reasoning_api_key:
+            raise ValueError(f"{settings.reasoning_provider.upper()}_API_KEY is empty")
         self.client = OpenAI(
-            api_key=settings.siliconflow_api_key,
-            base_url=settings.siliconflow_base_url,
+            api_key=settings.reasoning_api_key,
+            base_url=settings.reasoning_base_url,
             timeout=settings.request_timeout_sec,
             max_retries=settings.request_max_retries,
         )
 
-    def map_chapter(self, video: VideoInfo, chapter: ChapterContext) -> list[EventCard]:
-        response = self.client.chat.completions.create(
-            model=self.settings.siliconflow_map_model,
-            messages=[
-                {"role": "system", "content": MAP_SYSTEM_PROMPT},
-                {
-                    "role": "user",
-                    "content": _multimodal_content(
-                        chapter, _chapter_prompt(video, chapter), max_frames=16, detail="low"
-                    ),
-                },
-            ],
-            temperature=0.1,
-            max_tokens=5000,
-        )
-        payload = _parse_json_object(response.choices[0].message.content or "")
-        raw_events = payload.get("events")
-        if not isinstance(raw_events, list) or not raw_events:
-            raise ValueError("Chapter map response must contain a non-empty events list")
-        events: list[EventCard] = []
-        for raw_event in raw_events:
-            if not isinstance(raw_event, dict):
-                raise TypeError("Chapter event must be a JSON object")
-            event = EventCard.model_validate(_normalize_event_payload(raw_event))
-            if (
-                event.start_sec < chapter.start_sec - 0.5
-                or event.end_sec > chapter.end_sec + 0.5
-                or event.start_sec >= event.end_sec
-            ):
-                raise ValueError("Chapter event timestamps are outside the chapter")
-            event = event.model_copy(
-                update={
-                    "start_sec": max(chapter.start_sec, event.start_sec),
-                    "end_sec": min(chapter.end_sec, event.end_sec),
-                }
+    def map_scene(self, video: VideoInfo, scene: SceneCard) -> SceneNarrative:
+        try:
+            payload = self._json_completion(
+                model=self.settings.reasoning_map_model,
+                messages=[
+                    {"role": "system", "content": MAP_SYSTEM_PROMPT},
+                    *MAP_FEW_SHOT_MESSAGES,
+                    {
+                        "role": "user",
+                        "content": _multimodal_content(
+                            scene,
+                            _scene_map_prompt(video, scene),
+                            max_frames=3,
+                            detail="low",
+                        ),
+                    },
+                ],
+                max_tokens=self._map_output_tokens(),
             )
-            if not event.evidence:
-                raise ValueError("Chapter event must cite original evidence")
-            events.append(event)
-        return events
+        except Exception as exc:
+            raise RuntimeError(
+                f"Scene Map failed for {scene.scene_id} "
+                f"[{scene.start_sec:.2f}, {scene.end_sec:.2f}]: {exc}"
+            ) from exc
+        narrative = SceneNarrative.model_validate(payload)
+        if narrative.scene_id != scene.scene_id:
+            raise ValueError("Scene Map response scene_id does not match the submitted SceneCard")
+        return narrative
 
     def judge(
         self,
         video: VideoInfo,
-        candidate: CandidateWindow,
-        hypothesis: HighlightHypothesis,
-        story_memory: StoryMemory,
-        context_before: str,
-        context_core: str,
-        context_after: str,
+        scene: SceneCard,
+        previous_scene: SceneCard | None,
+        evidence_ledger: EvidenceLedger,
+    ) -> JudgeConsensus:
+        first = self._judge_once(
+            video,
+            scene,
+            previous_scene,
+            evidence_ledger,
+            EVIDENCE_JUDGE_PROMPT,
+        )
+        second = self._judge_once(
+            video,
+            scene,
+            previous_scene,
+            evidence_ledger,
+            EDITOR_JUDGE_PROMPT,
+        )
+        votes = [first, second]
+        if _needs_adjudication(first, second, self.settings.final_threshold):
+            votes.append(
+                self._adjudicate(
+                    video,
+                    scene,
+                    previous_scene,
+                    evidence_ledger,
+                    first,
+                    second,
+                )
+            )
+        decision = _consensus_decision(votes, self.settings.final_threshold)
+        return JudgeConsensus(decision=decision, votes=votes, calls=len(votes))
+
+    def _judge_once(
+        self,
+        video: VideoInfo,
+        scene: SceneCard,
+        previous_scene: SceneCard | None,
+        evidence_ledger: EvidenceLedger,
+        system_prompt: str,
     ) -> JudgeDecision:
-        response = self.client.chat.completions.create(
-            model=self.settings.siliconflow_judge_model,
+        payload = self._json_completion(
+            model=self.settings.reasoning_judge_model,
             messages=[
-                {"role": "system", "content": JUDGE_SYSTEM_PROMPT},
+                {"role": "system", "content": system_prompt},
+                *JUDGE_FEW_SHOT_MESSAGES,
                 {
                     "role": "user",
                     "content": _multimodal_content(
-                        candidate,
+                        scene,
                         _judge_prompt(
                             video,
-                            candidate,
-                            hypothesis,
-                            story_memory,
-                            context_before,
-                            context_core,
-                            context_after,
+                            scene,
+                            previous_scene,
+                            evidence_ledger,
                         ),
                         max_frames=8,
                         detail="high",
                     ),
                 },
             ],
-            temperature=0.1,
-            max_tokens=1200,
+            max_tokens=self._judge_output_tokens(),
         )
-        return JudgeDecision.model_validate(
-            _normalize_decision_payload(
-                _parse_json_object(response.choices[0].message.content or "")
+        return _finalize_vote(JudgeDecision.model_validate(payload), self.settings.final_threshold)
+
+    def _adjudicate(
+        self,
+        video: VideoInfo,
+        scene: SceneCard,
+        previous_scene: SceneCard | None,
+        evidence_ledger: EvidenceLedger,
+        first: JudgeDecision,
+        second: JudgeDecision,
+    ) -> JudgeDecision:
+        prompt = _judge_prompt(video, scene, previous_scene, evidence_ledger)
+        prompt += (
+            "\n两份独立裁决：\n"
+            + json.dumps(
+                [first.model_dump(mode="json"), second.model_dump(mode="json")],
+                ensure_ascii=False,
             )
+            + "\n重新核对原始证据后输出最终裁决。"
         )
+        payload = self._json_completion(
+            model=self.settings.reasoning_judge_model,
+            messages=[
+                {"role": "system", "content": ADJUDICATOR_SYSTEM_PROMPT},
+                {
+                    "role": "user",
+                    "content": _multimodal_content(scene, prompt, max_frames=8, detail="high"),
+                },
+            ],
+            max_tokens=self._judge_output_tokens(),
+        )
+        return _finalize_vote(JudgeDecision.model_validate(payload), self.settings.final_threshold)
 
     def rank_highlights(
         self,
@@ -161,100 +342,136 @@ class SiliconFlowReasoner:
         ]
         prompt = (
             f"视频：{video.title}，时长 {video.duration_sec:.2f}s\n"
-            f"最多选择 {max_selected} 条。候选："
+            f"最多选择 {max_selected} 条，不为填满预算保留弱候选。\n"
+            "候选："
             + json.dumps(candidates, ensure_ascii=False)
-            + "\n输出 JSON：ranked_highlight_ids 必须包含全部候选 ID 的完整排序；"
-            "selected_highlight_ids 是最终选择；rationale 是简短全局理由。"
+            + "\n输出 JSON：ranked_highlight_ids 为全部候选的完整排序；"
+            "selected_highlight_ids 为最终选择；rationale 为简短理由。"
         )
-        response = self.client.chat.completions.create(
-            model=self.settings.siliconflow_judge_model,
+        payload = self._json_completion(
+            model=self.settings.reasoning_judge_model,
             messages=[
                 {"role": "system", "content": LISTWISE_SYSTEM_PROMPT},
                 {"role": "user", "content": prompt},
             ],
-            temperature=0.1,
-            max_tokens=1200,
+            max_tokens=self._judge_output_tokens(),
         )
-        ranking = GlobalRanking.model_validate(
-            _parse_json_object(response.choices[0].message.content or "")
-        )
+        ranking = GlobalRanking.model_validate(payload)
         expected = [item.highlight_id for item in highlights]
         if len(ranking.ranked_highlight_ids) != len(expected) or set(
             ranking.ranked_highlight_ids
         ) != set(expected):
             raise ValueError("Listwise ranking must be a complete candidate permutation")
         if (
-            not ranking.selected_highlight_ids
-            or len(ranking.selected_highlight_ids) > max_selected
+            len(ranking.selected_highlight_ids) > max_selected
             or len(set(ranking.selected_highlight_ids)) != len(ranking.selected_highlight_ids)
             or not set(ranking.selected_highlight_ids).issubset(expected)
         ):
             raise ValueError("Listwise selection is invalid")
         return ranking
 
+    def _json_completion(
+        self,
+        *,
+        model: str,
+        messages: list[dict[str, object]],
+        max_tokens: int,
+    ) -> dict[str, object]:
+        response = self.client.chat.completions.create(
+            model=model,
+            messages=messages,
+            temperature=0,
+            max_tokens=max_tokens,
+            response_format={"type": "json_object"},
+        )
+        content = response.choices[0].message.content
+        if not content:
+            usage = response.usage
+            raise ValueError(
+                "Empty model completion: "
+                f"model={model}, finish_reason={response.choices[0].finish_reason}, "
+                f"completion_tokens={getattr(usage, 'completion_tokens', None)}"
+            )
+        return _decode_json_object(content)
 
-def _chapter_prompt(video: VideoInfo, chapter: ChapterContext) -> str:
+    def _map_output_tokens(self) -> int:
+        return 3000 if self.settings.reasoning_provider == "gemini" else 1600
+
+    def _judge_output_tokens(self) -> int:
+        return 2400 if self.settings.reasoning_provider == "gemini" else 1200
+
+
+def _decode_json_object(content: str) -> dict[str, object]:
+    text = content.strip()
+    if text.startswith("```json\n") and text.endswith("\n```"):
+        text = text[len("```json\n") : -len("\n```")]
+    payload = json.loads(text)
+    if not isinstance(payload, dict):
+        raise TypeError("Model response is not a JSON object")
+    return payload
+
+
+def _scene_map_prompt(video: VideoInfo, scene: SceneCard) -> str:
+    scene_payload = {
+        "scene_id": scene.scene_id,
+        "time": [scene.start_sec, scene.end_sec],
+        "transcript": scene.transcript or "[无字幕]",
+        "audio_context": scene.audio_context or "[无声音事件]",
+        "speakers": scene.speakers,
+    }
     return f"""视频：{video.title}
-章节：{chapter.chapter_id}，{chapter.start_sec:.2f}s - {chapter.end_sec:.2f}s
-带时间戳字幕（ASR+OCR）：
-{chapter.transcript or "[无字幕]"}
-声音理解：{chapter.audio_context or "[无声音事件]"}
+输入 SceneCard：{json.dumps(scene_payload, ensure_ascii=False)}
 
-逐一输出本章节内所有有证据的独立原子事件：
+输出：
 {{
-  "events": [
-    {{
-      "start_sec": 数字, "end_sec": 数字, "actors": ["人物"],
-      "action": "可观察的核心行动",
-      "event_type": ["conflict|reversal|reveal|payoff|emotion|action|romance|cliffhanger|other"],
-      "state_before": "事件前已知状态", "new_evidence": "新出现的证据或台词",
-      "state_after": "事件后状态", "relationship_change": "关系或权力变化",
-      "emotion": "主要情绪", "salience": 0到1, "uncertainty": 0到1,
-      "evidence": ["F编号或带时间戳的字幕/声音证据"]
-    }}
-  ]
+  "scene_id": "输入 ID", "actors": ["人物或 speaker 标识"],
+  "action": "画面和声音里实际发生的动作",
+  "claims": ["人物声称但未经本场独立证实的内容"],
+  "event_type": ["一到两个简短场景标签"],
+  "state_before": "开场可见的旧状态，否则 unknown",
+  "new_evidence": "本场可独立观察的证据",
+  "state_after": "本场证据支持的新状态与当场反应",
+  "relationship_change": "关系或权力变化",
+  "emotion": ["本场可直接观察的主要情绪"],
+  "salience": 0到1, "uncertainty": 0到1,
+  "evidence": ["F编号或带时间戳的字幕/声音证据"]
 }}"""
 
 
 def _judge_prompt(
     video: VideoInfo,
-    candidate: CandidateWindow,
-    hypothesis: HighlightHypothesis,
-    story_memory: StoryMemory,
-    context_before: str,
-    context_core: str,
-    context_after: str,
+    scene: SceneCard,
+    previous_scene: SceneCard | None,
+    evidence_ledger: EvidenceLedger,
 ) -> str:
-    hypothesis_payload = hypothesis.model_dump(mode="json")
     return f"""视频：{video.title}
-候选窗：{candidate.start_sec:.2f}s - {candidate.end_sec:.2f}s
-事件前字幕：{context_before or "[无前文字幕]"}
-事件核心字幕：{context_core or "[无候选字幕]"}
-事件后字幕：{context_after or "[无后文字幕]"}
-声音理解：{candidate.audio_context or "[无声音事件]"}
-内容过滤提示：{candidate.filter_reasons or "[无]"}
-待验证假设（不是事实）：{json.dumps(hypothesis_payload, ensure_ascii=False)}
-候选发生前的有证据剧情记忆（仍以原始材料为准）：{json.dumps(story_memory.model_dump(mode="json"), ensure_ascii=False)}
+当前场景：{json.dumps(scene.model_dump(mode="json", exclude={"frame_samples"}), ensure_ascii=False)}
+紧邻前场，可供铺垫：{json.dumps(previous_scene.model_dump(mode="json", exclude={"frame_samples"}) if previous_scene else {}, ensure_ascii=False)}
+更早场次的未验证账本：{json.dumps(evidence_ledger.model_dump(mode="json"), ensure_ascii=False)}
 
-关键帧左上角的 F 编号和秒数是证据标识。只引用确实支持结论的帧、字幕或声音，不得把事件抽取模型的判断当作证据。
+关键帧左上角的 F 编号和秒数是证据标识。evidence 引用支持核心状态变化的帧、字幕或声音。
 
 输出：
 {{
-  "hypothesis_supported": true, "is_highlight": true, "score": 0到1,
+  "map_supported": true,
   "highlight_type": "conflict|reversal|reveal|payoff|emotion|action|romance|cliffhanger|other",
-  "description": "发生了什么", "reason": "为何构成高光；反转需写明认知变化",
-  "confidence": 0到1, "start_sec": 数字,
-  "end_sec": 数字, "evidence": ["F编号、带时间台词或声音证据"],
-  "decisive_evidence_times_sec": [真正使该事件构成高光的证据秒数],
-  "counter_evidence": ["不支持假设的证据；没有则为空"]
+  "description": "可观察到的核心事件", "reason": "符合哪一种通用高光结构及其证据",
+  "evidence_grounding": 0到1, "narrative_impact": 0到1,
+  "standalone_clarity": 0到1, "clipability": 0到1,
+  "start_sec": 数字或 null, "end_sec": 数字或 null,
+  "evidence": ["带时间戳的帧、台词或声音证据"],
+  "setup_evidence_times_sec": [证明旧状态或必要铺垫的秒数，可在当前场或紧邻前场],
+  "decisive_evidence_times_sec": [造成状态变化的证据秒数，须在当前场],
+  "counter_evidence": ["与核心解释冲突、或降低独立性的证据"],
+  "continue_previous_scene": false
 }}"""
 
 
 def _multimodal_content(
-    candidate: CandidateWindow | ChapterContext, prompt: str, *, max_frames: int, detail: str
+    scene: SceneCard, prompt: str, *, max_frames: int, detail: str
 ) -> list[dict[str, object]]:
     content: list[dict[str, object]] = []
-    frame_samples = candidate.frame_samples
+    frame_samples = scene.frame_samples
     if len(frame_samples) > max_frames:
         indices = [
             round(index * (len(frame_samples) - 1) / (max_frames - 1))
@@ -287,185 +504,247 @@ def _image_data_url(frame: FrameSample, label: str) -> str:
     return f"data:image/jpeg;base64,{encoded}"
 
 
-def _parse_json_object(raw: str) -> dict[str, object]:
-    fence = chr(96) * 3
-    cleaned = raw.strip().removeprefix(fence + "json").removeprefix(fence).removesuffix(fence)
-    try:
-        payload = json.loads(cleaned)
-    except json.JSONDecodeError:
-        match = re.search(r"\{.*\}", cleaned, re.DOTALL)
-        if match is None:
-            raise ValueError(f"Model returned invalid JSON: {raw[:200]}")
-        payload = json.loads(match.group(0))
-    if not isinstance(payload, dict):
-        raise TypeError("Model response is not a JSON object")
-    return payload
+def _score_decision(decision: JudgeDecision) -> JudgeDecision:
+    score = (
+        0.30 * decision.evidence_grounding
+        + 0.30 * decision.narrative_impact
+        + 0.20 * decision.standalone_clarity
+        + 0.20 * decision.clipability
+    )
+    return decision.model_copy(update={"score": round(score, 4)})
 
 
-def parse_judge_decision(raw: str) -> JudgeDecision:
-    return JudgeDecision.model_validate(_normalize_decision_payload(_parse_json_object(raw)))
-
-
-_EVENT_TYPES = {
-    "conflict",
-    "reversal",
-    "reveal",
-    "payoff",
-    "emotion",
-    "action",
-    "romance",
-    "cliffhanger",
-    "other",
-}
-
-
-def _normalize_event_payload(payload: dict[str, object]) -> dict[str, object]:
-    normalized = dict(payload)
-    for key in (
-        "action",
-        "state_before",
-        "new_evidence",
-        "state_after",
-        "relationship_change",
-        "emotion",
-    ):
-        normalized[key] = _as_text(normalized.get(key, ""))
-    normalized["actors"] = _as_string_list(normalized.get("actors", []))
-    normalized["evidence"] = _as_string_list(normalized.get("evidence", []))
-    event_types = _as_string_list(normalized.get("event_type", []))
-    normalized["event_type"] = [item for item in event_types if item in _EVENT_TYPES] or ["other"]
-    score_keys = ("salience", "uncertainty")
-    missing = [key for key in score_keys if key not in normalized]
-    if missing:
-        raise ValueError(f"Event response is missing required fields: {missing}")
-    for key in score_keys:
-        normalized[key] = _clamp_score(normalized[key])
-    return normalized
-
-
-def _normalize_decision_payload(payload: dict[str, object]) -> dict[str, object]:
-    normalized = dict(payload)
-    normalized["description"] = _as_text(normalized.get("description", ""))
-    normalized["reason"] = _as_text(normalized.get("reason", ""))
-    normalized["evidence"] = _as_string_list(normalized.get("evidence", []))
-    times = normalized.get("decisive_evidence_times_sec", [])
-    if not isinstance(times, list):
-        raise TypeError("decisive_evidence_times_sec must be a list")
-    normalized["decisive_evidence_times_sec"] = [float(value) for value in times]
-    normalized["counter_evidence"] = _as_string_list(normalized.get("counter_evidence", []))
-    kinds = _as_string_list(normalized.get("highlight_type", "other"))
-    normalized["highlight_type"] = next((item for item in kinds if item in _EVENT_TYPES), "other")
-    required = ("hypothesis_supported", "is_highlight", "score", "confidence")
-    missing = [key for key in required if key not in normalized]
-    if missing:
-        raise ValueError(f"Judge response is missing required fields: {missing}")
-    normalized["score"] = _clamp_score(normalized["score"])
-    normalized["confidence"] = _clamp_score(normalized["confidence"])
-    for key in ("hypothesis_supported", "is_highlight"):
-        value = normalized[key]
-        if isinstance(value, str):
-            normalized[key] = value.strip().lower() in {"true", "1", "yes", "是"}
-        elif not isinstance(value, bool):
-            normalized[key] = bool(value)
-    return normalized
-
-
-def _as_text(value: object) -> str:
-    if value is None:
-        return ""
-    if isinstance(value, list):
-        return "；".join(_as_text(item) for item in value if _as_text(item))
-    if isinstance(value, dict):
-        return json.dumps(value, ensure_ascii=False)
-    return str(value).strip()
-
-
-def _as_string_list(value: object) -> list[str]:
-    if value is None:
-        return []
-    if isinstance(value, list):
-        return [text for item in value if (text := _as_text(item))]
-    text = _as_text(value)
-    return [text] if text else []
-
-
-def _clamp_score(value: object) -> float:
-    return max(0.0, min(1.0, float(value)))
-
-
-def build_highlight_hypothesis(event: EventCard) -> HighlightHypothesis:
-    gaps: list[str] = []
-    for field_name, value in (
-        ("state_before", event.state_before),
-        ("trigger", event.new_evidence),
-        ("state_after", event.state_after or event.relationship_change),
-        ("evidence", event.evidence),
-    ):
-        if not value:
-            gaps.append(field_name)
-    statement = event.action or event.new_evidence or "候选窗可能包含叙事状态变化"
-    return HighlightHypothesis(
-        statement=statement,
-        event_type=event.event_type,
-        state_before=event.state_before,
-        trigger=event.new_evidence,
-        state_after=event.state_after,
-        relationship_effect=event.relationship_change,
-        expected_evidence=event.evidence,
-        verification_gaps=gaps,
+def _provisional_highlight(decision: JudgeDecision, threshold: float) -> bool:
+    return bool(
+        decision.map_supported
+        and decision.highlight_type != "other"
+        and decision.score >= threshold
+        and decision.evidence
+        and decision.decisive_evidence_times_sec
     )
 
 
-class StoryMemoryStore:
-    """Compact narrative state available before each candidate event."""
+def _finalize_vote(decision: JudgeDecision, threshold: float) -> JudgeDecision:
+    scored = _score_decision(decision)
+    return scored.model_copy(update={"is_highlight": _provisional_highlight(scored, threshold)})
+
+
+def _needs_adjudication(
+    first: JudgeDecision,
+    second: JudgeDecision,
+    threshold: float,
+) -> bool:
+    first_passes = _provisional_highlight(first, threshold)
+    second_passes = _provisional_highlight(second, threshold)
+    if first.map_supported != second.map_supported or first_passes != second_passes:
+        return True
+    if first_passes and first.highlight_type != second.highlight_type:
+        return True
+    if abs(first.score - second.score) >= 0.15:
+        return True
+    if first_passes and _decision_window_iou(first, second) < 0.5:
+        return True
+    return False
+
+
+def _decision_window_iou(first: JudgeDecision, second: JudgeDecision) -> float:
+    if None in (first.start_sec, first.end_sec, second.start_sec, second.end_sec):
+        return 0.0
+    overlap = max(
+        0.0,
+        min(first.end_sec, second.end_sec) - max(first.start_sec, second.start_sec),
+    )
+    union = max(first.end_sec, second.end_sec) - min(first.start_sec, second.start_sec)
+    return overlap / union if union > 0 else 0.0
+
+
+def _consensus_decision(votes: list[JudgeDecision], threshold: float) -> JudgeDecision:
+    chosen = (
+        votes[-1]
+        if len(votes) == 3
+        else max(
+            votes,
+            key=lambda item: (item.evidence_grounding, item.score),
+        )
+    )
+    chosen_passes = _provisional_highlight(chosen, threshold)
+    agreeing = sum(
+        _provisional_highlight(vote, threshold) == chosen_passes
+        and (not chosen_passes or vote.highlight_type == chosen.highlight_type)
+        for vote in votes
+    )
+    score_spread = max(vote.score for vote in votes) - min(vote.score for vote in votes)
+    confidence = 0.75 * (agreeing / len(votes)) + 0.25 * (1.0 - score_spread)
+    return chosen.model_copy(
+        update={
+            "is_highlight": chosen_passes,
+            "confidence": round(max(0.0, min(1.0, confidence)), 4),
+        }
+    )
+
+
+def validate_highlight_decision(
+    decision: JudgeDecision,
+    scene: SceneCard,
+    previous_scene: SceneCard | None,
+) -> JudgeDecision:
+    """Keep the Judge event window if the causal core fits in 24s.
+
+    Distant setup may locate old cognition but must not stretch the clip.
+    If the event-local core itself exceeds 24s, the clip fails.
+    """
+    if not decision.map_supported:
+        return decision.model_copy(update={"is_highlight": False})
+    if not decision.is_highlight:
+        return decision
+    setup_floor = previous_scene.start_sec if previous_scene is not None else scene.start_sec
+    setup_times = [
+        time for time in decision.setup_evidence_times_sec if setup_floor <= time <= scene.end_sec
+    ]
+    decisive_times = [
+        time
+        for time in decision.decisive_evidence_times_sec
+        if scene.start_sec <= time <= scene.end_sec
+    ]
+    if not decision.evidence or not decisive_times:
+        return decision.model_copy(update={"is_highlight": False})
+
+    start_sec = decision.start_sec if decision.start_sec is not None else scene.start_sec
+    end_sec = decision.end_sec if decision.end_sec is not None else scene.end_sec
+    event_setup = _event_local_setup_times(setup_times, decisive_times, start_sec, end_sec)
+    fitted = _fit_playable_window(
+        start_sec,
+        end_sec,
+        floor=setup_floor,
+        ceiling=scene.end_sec,
+        core_times=[*event_setup, *decisive_times],
+    )
+    if fitted is None:
+        return decision.model_copy(update={"is_highlight": False})
+    start_sec, end_sec = fitted
+    if end_sec - start_sec < 0.5:
+        return decision.model_copy(update={"is_highlight": False})
+    return decision.model_copy(
+        update={
+            "start_sec": start_sec,
+            "end_sec": end_sec,
+            "setup_evidence_times_sec": [
+                time for time in setup_times if start_sec <= time <= end_sec
+            ],
+            "decisive_evidence_times_sec": [
+                time for time in decisive_times if start_sec <= time <= end_sec
+            ],
+        }
+    )
+
+
+def _event_local_setup_times(
+    setup_times: list[float],
+    decisive_times: list[float],
+    window_start: float,
+    window_end: float,
+) -> list[float]:
+    """Setup may reshape a clip only if it already sits in the Judge window or
+    immediately precedes the first decisive time. Earlier scene context stays
+    evidence of old cognition, not extra padding.
+    """
+    first_decisive = min(decisive_times) if decisive_times else window_start
+    last_decisive = max(decisive_times) if decisive_times else window_end
+    return [
+        time
+        for time in setup_times
+        if window_start <= time <= window_end
+        or first_decisive - SETUP_LEAD_SEC <= time <= last_decisive
+    ]
+
+
+def _fit_playable_window(
+    start_sec: float,
+    end_sec: float,
+    *,
+    floor: float,
+    ceiling: float,
+    core_times: list[float],
+    max_span: float = MAX_HIGHLIGHT_SEC,
+) -> tuple[float, float] | None:
+    """Keep the causal core. Fail if that core itself cannot fit in max_span."""
+    start_sec = max(floor, min(start_sec, ceiling))
+    end_sec = max(start_sec, min(end_sec, ceiling))
+    if not core_times:
+        if end_sec - start_sec > max_span:
+            return None
+        return start_sec, end_sec
+    core_start = max(floor, min(min(core_times), ceiling))
+    core_end = max(core_start, min(max(core_times), ceiling))
+    if core_end - core_start > max_span:
+        return None
+    start_sec = max(floor, min(start_sec, core_start))
+    end_sec = min(ceiling, max(end_sec, core_end))
+    if end_sec - start_sec <= max_span:
+        return start_sec, end_sec
+    extra = max_span - (core_end - core_start)
+    lead = min(extra, max(0.0, core_start - start_sec))
+    start_sec = core_start - lead
+    extra -= lead
+    end_sec = min(ceiling, core_end + extra)
+    return max(floor, start_sec), end_sec
+
+
+class EvidenceLedgerStore:
+    """Compact, explicitly unverified observations from preceding Scene Maps."""
 
     def __init__(self) -> None:
-        self.memory = StoryMemory()
+        self.ledger = EvidenceLedger()
 
-    def snapshot(self) -> StoryMemory:
-        return self.memory.model_copy(deep=True)
+    def snapshot(self) -> EvidenceLedger:
+        return self.ledger.model_copy(deep=True)
 
-    def update(self, event: EventCard) -> None:
-        if not event.evidence:
+    def update(self, scene: SceneCard) -> None:
+        if not scene.evidence:
             return
-        stamp = f"[{event.start_sec:.2f}-{event.end_sec:.2f}s]"
-        source = "；".join(event.evidence[:2])
+        stamp = f"[{scene.start_sec:.2f}-{scene.end_sec:.2f}s]"
+        source = "；".join(scene.evidence[:2])
         citation = f"（证据：{source}）"
 
-        observed_characters = [actor for actor in event.actors if actor and actor != "未知说话者"]
-        self.memory.characters = _unique(self.memory.characters + observed_characters)[-30:]
+        self.ledger.characters = _unique(self.ledger.characters + scene.actors)[-30:]
 
-        fact = event.new_evidence or event.action
-        if fact:
-            self.memory.known_facts = _unique(
-                self.memory.known_facts + [f"{stamp} {fact}{citation}"]
+        observation = scene.new_evidence or scene.action
+        if observation:
+            self.ledger.observations = _unique(
+                self.ledger.observations + [f"{stamp} {observation}{citation}"]
+            )[-30:]
+        for claim in scene.claims[:4]:
+            self.ledger.observations = _unique(
+                self.ledger.observations + [f"{stamp} 声称：{claim}{citation}"]
             )[-30:]
 
-        if event.relationship_change:
-            self.memory.relationship_states = _unique(
-                self.memory.relationship_states + [f"{stamp} {event.relationship_change}{citation}"]
+        if scene.relationship_change:
+            self.ledger.relationships = _unique(
+                self.ledger.relationships + [f"{stamp} {scene.relationship_change}{citation}"]
             )[-20:]
 
-        if "cliffhanger" in event.event_type:
-            question = event.action or event.new_evidence
+        if "cliffhanger" in scene.event_type:
+            question = scene.action or scene.new_evidence
             if question:
-                self.memory.open_questions = _unique(
-                    self.memory.open_questions + [f"{stamp} {question}{citation}"]
+                self.ledger.open_threads = _unique(
+                    self.ledger.open_threads + [f"{stamp} {question}{citation}"]
                 )[-8:]
 
-        summary = event.action or event.new_evidence
+        summary = scene.action or scene.new_evidence
         if summary:
-            self.memory.recent_summaries = _unique(
-                self.memory.recent_summaries + [f"{stamp} {summary}"]
+            self.ledger.recent_summaries = _unique(
+                self.ledger.recent_summaries + [f"{stamp} {summary}"]
             )[-5:]
 
 
-def build_story_memories(events: list[EventCard]) -> tuple[dict[int, StoryMemory], StoryMemory]:
-    store = StoryMemoryStore()
-    before: dict[int, StoryMemory] = {}
-    for event in sorted(events, key=lambda item: item.start_sec):
-        before[id(event)] = store.snapshot()
-        store.update(event)
+def build_evidence_ledgers(
+    scenes: list[SceneCard],
+) -> tuple[dict[str, EvidenceLedger], EvidenceLedger]:
+    store = EvidenceLedgerStore()
+    before: dict[str, EvidenceLedger] = {}
+    for scene in sorted(scenes, key=lambda item: item.start_sec):
+        before[scene.scene_id] = store.snapshot()
+        store.update(scene)
     return before, store.snapshot()
 
 

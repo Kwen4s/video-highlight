@@ -51,3 +51,40 @@ def test_english_audio_uses_bilingual_chinese_ocr_model(monkeypatch) -> None:
     monkeypatch.setattr(subtitle_ocr, "_load_ocr", fake_load_ocr)
     assert subtitle_ocr.extract_subtitle_segments([], "en", "cpu") == []
     assert requested == ["ch"]
+
+
+def test_subtitle_ocr_batches_frames_without_losing_timestamps(monkeypatch, tmp_path) -> None:
+    from PIL import Image
+
+    from vh_agent.models import FrameSample
+    from vh_agent.preprocessing import subtitle_ocr
+
+    frames = []
+    for index in range(9):
+        path = tmp_path / f"frame_{index:02d}.jpg"
+        Image.new("RGB", (32, 48), "black").save(path)
+        frames.append(FrameSample(timestamp_sec=float(index), path=path))
+
+    class FakeOCR:
+        def __init__(self):
+            self.batch_sizes = []
+
+        def predict(self, *, input):
+            self.batch_sizes.append(len(input))
+            return [
+                {
+                    "res": {
+                        "rec_texts": [f"subtitle-{len(self.batch_sizes)}-{index}"],
+                        "rec_scores": [0.9],
+                    }
+                }
+                for index, _image in enumerate(input)
+            ]
+
+    ocr = FakeOCR()
+    monkeypatch.setattr(subtitle_ocr, "_load_ocr", lambda **_kwargs: ocr)
+    segments = subtitle_ocr.extract_subtitle_segments(frames, "zh", "cpu")
+
+    assert ocr.batch_sizes == [8, 1]
+    assert len(segments) == 9
+    assert [segment.start_sec for segment in segments] == [float(index) for index in range(9)]

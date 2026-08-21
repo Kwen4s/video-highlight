@@ -15,10 +15,17 @@ from .evaluation import (
 from .models import DetectionResult, DetectionTask
 from .pipeline import HighlightDetectionService
 from .preprocessing.media import probe_video
+from .silver_labeling import (
+    DEFAULT_METADATA_DIR,
+    DEFAULT_SILVER_DATASET_DIR,
+    run_silver_labeling,
+)
 
 app = typer.Typer(no_args_is_help=True, help="Short-drama highlight detection pipeline")
 evaluation_app = typer.Typer(no_args_is_help=True, help="Run and score the test dataset")
+label_app = typer.Typer(no_args_is_help=True, help="Produce resumable silver labels")
 app.add_typer(evaluation_app, name="evaluate")
+app.add_typer(label_app, name="label")
 console = Console()
 
 
@@ -112,6 +119,30 @@ def evaluate_score(
         include_silver=include_silver,
     )
     console.print_json(json.dumps(metrics, ensure_ascii=False))
+
+
+@label_app.command("run")
+def label_run(
+    run_id: str = typer.Option("gemini37_scene_v1", "--run-id"),
+    resume: bool = typer.Option(True, "--resume/--restart"),
+    limit: int | None = typer.Option(None, min=1),
+    metadata_dir: Path = typer.Option(
+        DEFAULT_METADATA_DIR,
+        exists=True,
+        file_okay=False,
+        readable=True,
+    ),
+    output_dir: Path = typer.Option(DEFAULT_SILVER_DATASET_DIR, file_okay=False),
+) -> None:
+    """Label all source metadata records with Gemini 3.7, without exporting clips."""
+    annotations = run_silver_labeling(
+        run_id,
+        metadata_dir=metadata_dir,
+        output_dir=output_dir,
+        resume=resume,
+        limit=limit,
+    )
+    console.print(f"annotations={annotations}")
 
 
 @app.command()

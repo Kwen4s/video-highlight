@@ -11,6 +11,9 @@ class OCRUnavailable(RuntimeError):
     pass
 
 
+OCR_BATCH_SIZE = 8
+
+
 def extract_subtitle_segments(
     frames: list[FrameSample],
     language: str | None,
@@ -29,29 +32,26 @@ def extract_subtitle_segments(
         use_textline_orientation=False,
     )
     raw_segments: list[TranscriptSegment] = []
-    for frame in frames:
-        with Image.open(frame.path) as image:
-            rgb = image.convert("RGB")
-            width, height = rgb.size
-            subtitle_region = np.asarray(rgb.crop((0, int(height * 0.42), width, height)))
-        texts, scores = _predict(ocr, subtitle_region)
-        kept = [
-            text.strip()
-            for text, score in zip(texts, scores, strict=True)
-            if text.strip() and score >= min_confidence
-        ]
-        if kept:
-            raw_segments.append(
-                TranscriptSegment(
-                    start_sec=frame.timestamp_sec,
-                    end_sec=frame.timestamp_sec + 1.5,
-                    text=" ".join(kept),
-                    source="ocr",
-                    confidence=float(
-                        np.mean([score for score in scores if score >= min_confidence])
-                    ),
+    for start in range(0, len(frames), OCR_BATCH_SIZE):
+        batch_frames = frames[start : start + OCR_BATCH_SIZE]
+        images = [_subtitle_region(frame) for frame in batch_frames]
+        predictions = _predict_many(ocr, images)
+        for frame, (texts, scores) in zip(batch_frames, predictions, strict=True):
+            kept_pairs = [
+                (text.strip(), score)
+                for text, score in zip(texts, scores, strict=True)
+                if text.strip() and score >= min_confidence
+            ]
+            if kept_pairs:
+                raw_segments.append(
+                    TranscriptSegment(
+                        start_sec=frame.timestamp_sec,
+                        end_sec=frame.timestamp_sec + 1.5,
+                        text=" ".join(text for text, _score in kept_pairs),
+                        source="ocr",
+                        confidence=float(np.mean([score for _text, score in kept_pairs])),
+                    )
                 )
-            )
     return _merge_repeated(raw_segments)
 
 
@@ -81,23 +81,37 @@ def _load_ocr(
     )
 
 
-def _predict(ocr: object, image: np.ndarray) -> tuple[list[str], list[float]]:
+def _subtitle_region(frame: FrameSample) -> np.ndarray:
+    with Image.open(frame.path) as image:
+        rgb = image.convert("RGB")
+        width, height = rgb.size
+        return np.asarray(rgb.crop((0, int(height * 0.42), width, height)))
+
+
+def _predict_many(ocr: object, images: list[np.ndarray]) -> list[tuple[list[str], list[float]]]:
+    if not images:
+        return []
     if not hasattr(ocr, "predict"):
         raise OCRUnavailable("PaddleOCR 3.7+ predict API is required")
-    output = list(ocr.predict(input=image))
+    output = list(ocr.predict(input=images))
+    if len(output) != len(images):
+        raise OCRUnavailable(f"PaddleOCR returned {len(output)} results for {len(images)} frames")
+    return [_parse_prediction(item) for item in output]
+
+
+def _parse_prediction(item: object) -> tuple[list[str], list[float]]:
     texts: list[str] = []
     scores: list[float] = []
-    for item in output:
-        payload = getattr(item, "json", item)
-        if callable(payload):
-            payload = payload()
-        if isinstance(payload, str):
-            payload = json.loads(payload)
-        if not isinstance(payload, dict):
-            raise OCRUnavailable(f"Unexpected PaddleOCR result type: {type(payload).__name__}")
-        result = payload.get("res", payload)
-        texts.extend(str(value) for value in result.get("rec_texts", []))
-        scores.extend(float(value) for value in result.get("rec_scores", []))
+    payload = getattr(item, "json", item)
+    if callable(payload):
+        payload = payload()
+    if isinstance(payload, str):
+        payload = json.loads(payload)
+    if not isinstance(payload, dict):
+        raise OCRUnavailable(f"Unexpected PaddleOCR result type: {type(payload).__name__}")
+    result = payload.get("res", payload)
+    texts.extend(str(value) for value in result.get("rec_texts", []))
+    scores.extend(float(value) for value in result.get("rec_scores", []))
     if len(texts) != len(scores):
         raise OCRUnavailable("PaddleOCR returned mismatched texts and scores")
     return texts, scores
