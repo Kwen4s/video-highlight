@@ -6,10 +6,9 @@
   "description": "Video Highlight desktop review workspace",
   "main": "electron/main.cjs",
   "scripts": {
-    "dev": "concurrently -k \"npm:dev:web\" \"npm:dev:api\" \"npm:dev:electron\"",
+    "dev": "concurrently -k \"npm:dev:web\" \"npm:dev:electron\"",
     "dev:web": "vite --host 127.0.0.1",
-    "dev:api": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/start-backend.ps1",
-    "dev:electron": "wait-on http://127.0.0.1:5173 http-get://127.0.0.1:8000/health && electron . --dev",
+    "dev:electron": "wait-on http://127.0.0.1:5173 && electron . --dev",
     "build": "tsc --noEmit -p tsconfig.app.json && tsc --noEmit -p tsconfig.node.json && vite build",
     "preview": "vite preview --host 127.0.0.1",
     "start": "electron ."

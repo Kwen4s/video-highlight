@@ -4,13 +4,18 @@ from pydantic import Field, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 REPOSITORY_ROOT = Path(__file__).resolve().parents[2]
+BACKEND_ROOT = Path(__file__).resolve().parents[1]
 
 
 class Settings(BaseSettings):
-    model_config = SettingsConfigDict(env_file=".env", extra="ignore")
+    model_config = SettingsConfigDict(
+        env_file=BACKEND_ROOT / ".env",
+        env_file_encoding="utf-8",
+        extra="ignore",
+    )
 
     storage_dir: Path = Field(
-        default=REPOSITORY_ROOT / "vh-frontend" / "video-data",
+        default=BACKEND_ROOT / "runtime",
         validation_alias="VH_STORAGE_DIR",
     )
     agent_root: Path = Field(
@@ -28,6 +33,40 @@ class Settings(BaseSettings):
         ge=1,
         validation_alias="VH_MAX_UPLOAD_BYTES",
     )
+    edit_session_ttl_sec: int = Field(
+        default=30 * 60,
+        ge=60,
+        validation_alias="VH_EDIT_SESSION_TTL_SEC",
+    )
+    chat_api_key: str = Field(default="", validation_alias="VH_CHAT_API_KEY")
+    chat_base_url: str = Field(
+        default="https://api.siliconflow.cn/v1",
+        validation_alias="VH_CHAT_BASE_URL",
+    )
+    chat_model: str = Field(
+        default="Qwen/Qwen3-VL-8B-Instruct",
+        validation_alias="VH_CHAT_MODEL",
+    )
+    chat_timeout_sec: float = Field(
+        default=45.0,
+        gt=0,
+        validation_alias="VH_CHAT_TIMEOUT_SEC",
+    )
+    chat_max_retries: int = Field(
+        default=1,
+        ge=0,
+        validation_alias="VH_CHAT_MAX_RETRIES",
+    )
+    cleanup_interval_sec: int = Field(
+        default=60,
+        ge=5,
+        validation_alias="VH_CLEANUP_INTERVAL_SEC",
+    )
+    orphan_job_ttl_sec: int = Field(
+        default=24 * 60 * 60,
+        ge=300,
+        validation_alias="VH_ORPHAN_JOB_TTL_SEC",
+    )
     allowed_origins: str = Field(
         default="http://127.0.0.1:5173,http://localhost:5173,null",
         validation_alias="VH_ALLOWED_ORIGINS",
@@ -36,7 +75,8 @@ class Settings(BaseSettings):
     @field_validator("storage_dir", "agent_root", mode="after")
     @classmethod
     def resolve_path(cls, value: Path) -> Path:
-        return value.expanduser().resolve()
+        expanded = value.expanduser()
+        return (expanded if expanded.is_absolute() else BACKEND_ROOT / expanded).resolve()
 
     @property
     def jobs_dir(self) -> Path:

@@ -20,8 +20,11 @@ class Highlight(BaseModel):
     highlight_type: str
     description: str
     reason: str
-    clip_url: str
     review_status: ReviewStatus = "pending"
+
+
+class AgentHighlight(Highlight):
+    clip_url: str = ""
 
 
 class DetectionResult(BaseModel):
@@ -29,6 +32,24 @@ class DetectionResult(BaseModel):
     job_id: str
     video: VideoSummary
     highlights: list[Highlight]
+
+
+class AgentDetectionResult(BaseModel):
+    schema_version: Literal["1.0"] = "1.0"
+    job_id: str
+    video: VideoSummary
+    highlights: list[AgentHighlight]
+
+    def to_public_result(self) -> DetectionResult:
+        return DetectionResult(
+            schema_version=self.schema_version,
+            job_id=self.job_id,
+            video=self.video,
+            highlights=[
+                Highlight.model_validate(item.model_dump(exclude={"clip_url"}))
+                for item in self.highlights
+            ],
+        )
 
 
 class JobResponse(BaseModel):
@@ -40,10 +61,26 @@ class JobResponse(BaseModel):
     language: Literal["zh", "en"]
     created_at: str
     updated_at: str
-    source_url: str
+    session_expires_at: str | None = None
+    revision: int = 0
     error_message: str | None = None
     result: DetectionResult | None = None
 
 
-class ReviewRequest(BaseModel):
-    status: ReviewStatus
+class EditMessageRequest(BaseModel):
+    message: str = Field(min_length=1, max_length=500)
+    revision: int = Field(ge=0)
+    selected_highlight_id: str | None = Field(default=None, max_length=80)
+
+
+class EditMessageResponse(BaseModel):
+    job: JobResponse
+    reply: str
+    changed: bool
+
+
+class DemoSessionRequest(BaseModel):
+    original_name: str = Field(min_length=1, max_length=255)
+    size_bytes: int = Field(ge=0)
+    language: Literal["zh", "en"] = "zh"
+    result: DetectionResult

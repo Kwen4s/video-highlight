@@ -1,12 +1,18 @@
+from __future__ import annotations
+
 import json
 import sqlite3
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from typing import Any
 
 
 def utc_now() -> str:
     return datetime.now(UTC).isoformat()
+
+
+def utc_after(seconds: int) -> str:
+    return (datetime.now(UTC) + timedelta(seconds=seconds)).isoformat()
 
 
 class JobRepository:
@@ -29,11 +35,28 @@ class JobRepository:
                     language TEXT NOT NULL,
                     created_at TEXT NOT NULL,
                     updated_at TEXT NOT NULL,
+                    session_expires_at TEXT,
+                    revision INTEGER NOT NULL DEFAULT 0,
+                    history_json TEXT NOT NULL DEFAULT '[]',
+                    conversation_json TEXT NOT NULL DEFAULT '[]',
                     error_message TEXT,
                     result_json TEXT
                 )
                 """
             )
+            columns = {
+                row["name"]
+                for row in connection.execute("PRAGMA table_info(jobs)").fetchall()
+            }
+            additions = {
+                "session_expires_at": "TEXT",
+                "revision": "INTEGER NOT NULL DEFAULT 0",
+                "history_json": "TEXT NOT NULL DEFAULT '[]'",
+                "conversation_json": "TEXT NOT NULL DEFAULT '[]'",
+            }
+            for name, declaration in additions.items():
+                if name not in columns:
+                    connection.execute(f"ALTER TABLE jobs ADD COLUMN {name} {declaration}")
 
     def create(
         self,
@@ -79,36 +102,255 @@ class JobRepository:
             ).fetchall()
         return [dict(row) for row in rows]
 
+    def list_expired(self, now: str, orphaned_before: str) -> list[str]:
+        with self._connect() as connection:
+            rows = connection.execute(
+                """
+                SELECT job_id FROM jobs
+                WHERE (
+                    session_expires_at IS NOT NULL AND session_expires_at <= ?
+                    AND status IN ('completed', 'failed')
+                ) OR (
+                    status IN ('queued', 'processing') AND updated_at <= ?
+                )
+                """,
+                (now, orphaned_before),
+            ).fetchall()
+        return [row["job_id"] for row in rows]
+
     def set_status(
         self,
         job_id: str,
         status: str,
         *,
         error_message: str | None = None,
+        session_expires_at: str | None = None,
     ) -> None:
-        with self._connect() as connection:
-            connection.execute(
-                "UPDATE jobs SET status = ?, error_message = ?, updated_at = ? WHERE job_id = ?",
-                (status, error_message, utc_now(), job_id),
-            )
-
-    def save_result(self, job_id: str, result: dict[str, Any]) -> None:
         with self._connect() as connection:
             connection.execute(
                 """
                 UPDATE jobs
-                SET status = 'completed', result_json = ?, error_message = NULL, updated_at = ?
+                SET status = ?, error_message = ?, session_expires_at = ?, updated_at = ?
                 WHERE job_id = ?
                 """,
-                (json.dumps(result, ensure_ascii=False), utc_now(), job_id),
+                (status, error_message, session_expires_at, utc_now(), job_id),
             )
 
-    def replace_result(self, job_id: str, result: dict[str, Any]) -> None:
+    def save_result(
+        self,
+        job_id: str,
+        result: dict[str, Any],
+        *,
+        session_expires_at: str,
+    ) -> None:
         with self._connect() as connection:
             connection.execute(
-                "UPDATE jobs SET result_json = ?, updated_at = ? WHERE job_id = ?",
-                (json.dumps(result, ensure_ascii=False), utc_now(), job_id),
+                """
+                UPDATE jobs
+                SET status = 'completed', result_json = ?, error_message = NULL,
+                    session_expires_at = ?, revision = 0, history_json = '[]',
+                    conversation_json = '[]', updated_at = ?
+                WHERE job_id = ?
+                """,
+                (
+                    json.dumps(result, ensure_ascii=False),
+                    session_expires_at,
+                    utc_now(),
+                    job_id,
+                ),
             )
+
+    def open_demo_session(
+        self,
+        *,
+        job_id: str,
+        original_name: str,
+        size_bytes: int,
+        language: str,
+        result: dict[str, Any],
+        session_expires_at: str,
+    ) -> dict[str, Any]:
+        now = utc_now()
+        with self._connect() as connection:
+            connection.execute(
+                """
+                INSERT INTO jobs (
+                    job_id, status, original_name, stored_name, content_type,
+                    size_bytes, language, created_at, updated_at,
+                    session_expires_at, revision, history_json,
+                    conversation_json, error_message, result_json
+                ) VALUES (?, 'completed', ?, '', 'video/mp4', ?, ?, ?, ?, ?, 0, '[]', '[]', NULL, ?)
+                ON CONFLICT(job_id) DO UPDATE SET
+                    status = 'completed',
+                    original_name = excluded.original_name,
+                    stored_name = '',
+                    content_type = 'video/mp4',
+                    size_bytes = excluded.size_bytes,
+                    language = excluded.language,
+                    created_at = excluded.created_at,
+                    updated_at = excluded.updated_at,
+                    session_expires_at = excluded.session_expires_at,
+                    revision = 0,
+                    history_json = '[]',
+                    conversation_json = '[]',
+                    error_message = NULL,
+                    result_json = excluded.result_json
+                """,
+                (
+                    job_id,
+                    original_name,
+                    size_bytes,
+                    language,
+                    now,
+                    now,
+                    session_expires_at,
+                    json.dumps(result, ensure_ascii=False),
+                ),
+            )
+        return self.get(job_id)  # type: ignore[return-value]
+
+    def replace_result(
+        self,
+        job_id: str,
+        result: dict[str, Any],
+        *,
+        expected_revision: int,
+        session_expires_at: str,
+    ) -> bool:
+        with self._connect() as connection:
+            connection.execute("BEGIN IMMEDIATE")
+            row = connection.execute(
+                "SELECT revision, result_json, history_json FROM jobs WHERE job_id = ?",
+                (job_id,),
+            ).fetchone()
+            if row is None or row["revision"] != expected_revision or not row["result_json"]:
+                return False
+            history = json.loads(row["history_json"] or "[]")
+            history.append(json.loads(row["result_json"]))
+            history = history[-20:]
+            connection.execute(
+                """
+                UPDATE jobs
+                SET result_json = ?, history_json = ?, revision = revision + 1,
+                    session_expires_at = ?, updated_at = ?
+                WHERE job_id = ?
+                """,
+                (
+                    json.dumps(result, ensure_ascii=False),
+                    json.dumps(history, ensure_ascii=False),
+                    session_expires_at,
+                    utc_now(),
+                    job_id,
+                ),
+            )
+        return True
+
+    def undo_result(
+        self,
+        job_id: str,
+        *,
+        expected_revision: int,
+        session_expires_at: str,
+    ) -> bool | None:
+        with self._connect() as connection:
+            connection.execute("BEGIN IMMEDIATE")
+            row = connection.execute(
+                "SELECT revision, history_json FROM jobs WHERE job_id = ?",
+                (job_id,),
+            ).fetchone()
+            if row is None or row["revision"] != expected_revision:
+                return False
+            history = json.loads(row["history_json"] or "[]")
+            if not history:
+                return None
+            previous = history.pop()
+            connection.execute(
+                """
+                UPDATE jobs
+                SET result_json = ?, history_json = ?, revision = revision + 1,
+                    session_expires_at = ?, updated_at = ?
+                WHERE job_id = ?
+                """,
+                (
+                    json.dumps(previous, ensure_ascii=False),
+                    json.dumps(history, ensure_ascii=False),
+                    session_expires_at,
+                    utc_now(),
+                    job_id,
+                ),
+            )
+        return True
+
+    def touch_session(
+        self,
+        job_id: str,
+        *,
+        expected_revision: int,
+        session_expires_at: str,
+    ) -> bool:
+        with self._connect() as connection:
+            cursor = connection.execute(
+                """
+                UPDATE jobs SET session_expires_at = ?, updated_at = ?
+                WHERE job_id = ? AND revision = ?
+                """,
+                (session_expires_at, utc_now(), job_id, expected_revision),
+            )
+        return cursor.rowcount == 1
+
+    def get_conversation(self, job_id: str) -> list[dict[str, Any]]:
+        with self._connect() as connection:
+            row = connection.execute(
+                "SELECT conversation_json FROM jobs WHERE job_id = ?",
+                (job_id,),
+            ).fetchone()
+        if row is None:
+            return []
+        conversation = json.loads(row["conversation_json"] or "[]")
+        return conversation if isinstance(conversation, list) else []
+
+    def append_conversation(
+        self,
+        job_id: str,
+        *,
+        expected_revision: int,
+        user_message: str,
+        assistant_reply: str,
+        action: dict[str, Any] | None,
+    ) -> bool:
+        with self._connect() as connection:
+            connection.execute("BEGIN IMMEDIATE")
+            row = connection.execute(
+                "SELECT revision, conversation_json FROM jobs WHERE job_id = ?",
+                (job_id,),
+            ).fetchone()
+            if row is None or row["revision"] != expected_revision:
+                return False
+            conversation = json.loads(row["conversation_json"] or "[]")
+            if not isinstance(conversation, list):
+                conversation = []
+            conversation.append(
+                {
+                    "user_message": user_message,
+                    "assistant_reply": assistant_reply,
+                    "action": action,
+                    "revision": expected_revision,
+                    "created_at": utc_now(),
+                }
+            )
+            conversation = conversation[-20:]
+            cursor = connection.execute(
+                """
+                UPDATE jobs SET conversation_json = ?
+                WHERE job_id = ? AND revision = ?
+                """,
+                (
+                    json.dumps(conversation, ensure_ascii=False),
+                    job_id,
+                    expected_revision,
+                ),
+            )
+        return cursor.rowcount == 1
 
     def delete(self, job_id: str) -> None:
         with self._connect() as connection:

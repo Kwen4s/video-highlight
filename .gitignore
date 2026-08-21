@@ -10,7 +10,15 @@ outputs/
 AGENTS.md
 vh-frontend/node_modules/
 vh-frontend/dist/
-vh-frontend/video-data/
+vh-frontend/video-data/*
+!vh-frontend/video-data/jobs/
+vh-frontend/video-data/jobs/*
+!vh-frontend/video-data/jobs/job_demo_citypulse/
+!vh-frontend/video-data/jobs/job_demo_launchfilm/
+vh-frontend/.env.local
+vh-frontend/.env.*.local
 vh-frontend/*.tsbuildinfo
 vh-frontend/vite.config.js
 vh-frontend/vite.config.d.ts
+vh-backend/data/
+vh-backend/runtime/

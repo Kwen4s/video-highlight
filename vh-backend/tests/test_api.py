@@ -1,11 +1,11 @@
-import json
+from datetime import UTC, datetime, timedelta
 
 from fastapi.testclient import TestClient
 
 from app import main as main_module
 from app.config import Settings
 from app.main import create_app
-from app.repository import JobRepository
+from app.repository import JobRepository, utc_after
 
 
 class FakeRunner:
@@ -18,8 +18,10 @@ class FakeRunner:
 
 def make_client(tmp_path):
     settings = Settings(
-        VH_STORAGE_DIR=tmp_path / "data",
+        VH_STORAGE_DIR=tmp_path / "runtime",
         VH_AGENT_ROOT=tmp_path / "agent",
+        VH_EDIT_SESSION_TTL_SEC=600,
+        VH_CLEANUP_INTERVAL_SEC=3600,
     )
     repository = JobRepository(settings.database_path)
     runner = FakeRunner()
@@ -27,7 +29,46 @@ def make_client(tmp_path):
     return TestClient(app), settings, repository, runner
 
 
-def test_upload_streams_video_and_enqueues_job(tmp_path) -> None:
+def sample_result(job_id: str = "job_abcdefgh") -> dict:
+    return {
+        "schema_version": "1.0",
+        "job_id": job_id,
+        "video": {"video_id": job_id, "title": "demo", "duration_sec": 60},
+        "highlights": [
+            {
+                "highlight_id": "hl_1",
+                "start_sec": 2,
+                "end_sec": 8,
+                "score": 0.91,
+                "highlight_type": "emotion",
+                "description": "情绪转折",
+                "reason": "人物情绪发生明显变化",
+                "review_status": "pending",
+            }
+        ],
+    }
+
+
+def create_completed_job(settings, repository, job_id: str = "job_abcdefgh") -> None:
+    source_dir = settings.jobs_dir / job_id / "source"
+    source_dir.mkdir(parents=True)
+    (source_dir / "original.mp4").write_bytes(b"source")
+    repository.create(
+        job_id=job_id,
+        original_name="demo.mp4",
+        stored_name="original.mp4",
+        content_type="video/mp4",
+        size_bytes=6,
+        language="zh",
+    )
+    repository.save_result(
+        job_id,
+        sample_result(job_id),
+        session_expires_at=utc_after(600),
+    )
+
+
+def test_upload_is_temporary_and_response_has_no_server_media_url(tmp_path) -> None:
     client, settings, _repository, runner = make_client(tmp_path)
 
     with client:
@@ -39,131 +80,185 @@ def test_upload_streams_video_and_enqueues_job(tmp_path) -> None:
         assert response.status_code == 202
         body = response.json()
         assert body["status"] == "queued"
-        assert body["original_name"] == "片段.mp4"
-        assert body["source_url"] == "/api/jobs/job_12345678/source"
+        assert "source_url" not in body
         assert runner.enqueued == ["job_12345678"]
         assert (
             settings.jobs_dir / "job_12345678" / "source" / "original.mp4"
         ).read_bytes() == b"video-bytes"
-        assert client.get(body["source_url"]).content == b"video-bytes"
 
 
-def test_completed_result_is_mapped_to_public_video_url_and_reviewed(tmp_path) -> None:
-    client, settings, repository, _runner = make_client(tmp_path)
-    result = {
-        "schema_version": "1.0",
-        "job_id": "job_abcdefgh",
-        "video": {"video_id": "job_abcdefgh", "title": "demo", "duration_sec": 12},
-        "highlights": [
-            {
-                "highlight_id": "hl_1",
-                "start_sec": 2,
-                "end_sec": 8,
-                "score": 0.91,
-                "highlight_type": "emotion",
-                "description": "情绪转折",
-                "reason": "人物情绪发生明显变化",
-                "clip_url": "clips/hl_1.mp4",
-                "review_status": "pending",
-            }
-        ],
-    }
+def test_cors_allows_electron_origins_and_message_preflight(tmp_path) -> None:
+    client, _settings, _repository, _runner = make_client(tmp_path)
 
     with client:
-        source_dir = settings.jobs_dir / "job_abcdefgh" / "source"
-        source_dir.mkdir(parents=True)
-        (source_dir / "original.mp4").write_bytes(b"source")
-        repository.create(
-            job_id="job_abcdefgh",
-            original_name="demo.mp4",
-            stored_name="original.mp4",
-            content_type="video/mp4",
-            size_bytes=6,
-            language="zh",
+        development = client.get(
+            "/health",
+            headers={"Origin": "http://127.0.0.1:5173"},
         )
-        repository.save_result("job_abcdefgh", result)
-        result_path = settings.jobs_dir / "job_abcdefgh" / "result.json"
-        result_path.write_text(json.dumps(result, ensure_ascii=False), encoding="utf-8")
-        clip_path = settings.jobs_dir / "job_abcdefgh" / "clips" / "hl_1.mp4"
-        clip_path.parent.mkdir()
-        clip_path.write_bytes(b"clip")
+        assert development.headers["access-control-allow-origin"] == "http://127.0.0.1:5173"
 
+        packaged = client.options(
+            "/api/jobs/job_12345678/messages",
+            headers={
+                "Origin": "null",
+                "Access-Control-Request-Method": "POST",
+                "Access-Control-Request-Headers": "content-type",
+            },
+        )
+        assert packaged.status_code == 200
+        assert packaged.headers["access-control-allow-origin"] == "null"
+        assert "POST" in packaged.headers["access-control-allow-methods"]
+
+        rejected = client.get(
+            "/health",
+            headers={"Origin": "http://unconfigured.example"},
+        )
+        assert "access-control-allow-origin" not in rejected.headers
+
+
+def test_demo_job_can_open_a_temporary_conversation_session(tmp_path) -> None:
+    client, _settings, repository, _runner = make_client(tmp_path)
+    job_id = "job_demo_citypulse"
+
+    with client:
+        opened = client.post(
+            f"/api/demo-jobs/{job_id}/session",
+            json={
+                "original_name": "城市节拍_原片.mp4",
+                "size_bytes": 1024,
+                "language": "zh",
+                "result": sample_result(job_id),
+            },
+        )
+        assert opened.status_code == 200
+        body = opened.json()
+        assert body["status"] == "completed"
+        assert body["revision"] == 0
+        assert datetime.fromisoformat(body["session_expires_at"]) > datetime.now(UTC)
+
+        edited = client.post(
+            f"/api/jobs/{job_id}/messages",
+            json={
+                "message": "入点后移 1 秒",
+                "revision": 0,
+                "selected_highlight_id": "hl_1",
+            },
+        )
+        assert edited.status_code == 200
+        assert edited.json()["job"]["result"]["highlights"][0]["start_sec"] == 3
+        assert repository.get(job_id)["stored_name"] == ""
+
+
+def test_demo_session_bootstrap_rejects_non_demo_job(tmp_path) -> None:
+    client, _settings, _repository, _runner = make_client(tmp_path)
+
+    with client:
+        response = client.post(
+            "/api/demo-jobs/job_not_a_demo/session",
+            json={
+                "original_name": "fake.mp4",
+                "size_bytes": 1,
+                "language": "zh",
+                "result": sample_result("job_not_a_demo"),
+            },
+        )
+        assert response.status_code == 404
+
+
+def test_result_contains_only_intervals_and_edit_session_is_versioned(tmp_path) -> None:
+    client, settings, repository, _runner = make_client(tmp_path)
+
+    with client:
+        create_completed_job(settings, repository)
         response = client.get("/api/jobs/job_abcdefgh")
-        clip_url = response.json()["result"]["highlights"][0]["clip_url"]
-        assert clip_url == "/api/jobs/job_abcdefgh/highlights/hl_1/video"
-        assert client.get(clip_url).content == b"clip"
+        body = response.json()
+        highlight = body["result"]["highlights"][0]
+        assert "clip_url" not in highlight
+        assert "source_url" not in body
+        assert body["revision"] == 0
+        assert body["session_expires_at"]
 
-        reviewed = client.patch(
-            "/api/jobs/job_abcdefgh/highlights/hl_1",
-            json={"status": "accepted"},
+        edited = client.post(
+            "/api/jobs/job_abcdefgh/messages",
+            json={
+                "message": "入点后移 1 秒",
+                "revision": 0,
+                "selected_highlight_id": "hl_1",
+            },
         )
-        assert reviewed.status_code == 200
-        assert reviewed.json()["result"]["highlights"][0]["review_status"] == "accepted"
+        assert edited.status_code == 200
+        assert edited.json()["changed"] is True
+        assert edited.json()["job"]["revision"] == 1
+        assert edited.json()["job"]["result"]["highlights"][0]["start_sec"] == 3
+        conversation = repository.get_conversation("job_abcdefgh")
+        assert conversation[0]["user_message"] == "入点后移 1 秒"
+        assert conversation[0]["revision"] == 1
+
+        ambiguous = client.post(
+            "/api/jobs/job_abcdefgh/messages",
+            json={
+                "message": "缩短 1 秒",
+                "revision": 1,
+                "selected_highlight_id": "hl_1",
+            },
+        )
+        assert ambiguous.status_code == 200
+        assert ambiguous.json()["changed"] is False
+        assert "哪一端" in ambiguous.json()["reply"]
+
+        undone = client.post(
+            "/api/jobs/job_abcdefgh/messages",
+            json={"message": "撤销", "revision": 1},
+        )
+        assert undone.status_code == 200
+        assert undone.json()["job"]["revision"] == 2
+        assert undone.json()["job"]["result"]["highlights"][0]["start_sec"] == 2
+
+        stale = client.post(
+            "/api/jobs/job_abcdefgh/messages",
+            json={"message": "撤销", "revision": 1},
+        )
+        assert stale.status_code == 409
 
 
-def test_delete_removes_finished_job_and_files_but_rejects_active_job(tmp_path) -> None:
+def test_expired_session_rejects_edits_but_local_result_can_survive(tmp_path) -> None:
     client, settings, repository, _runner = make_client(tmp_path)
 
     with client:
-        finished_dir = settings.jobs_dir / "job_finished1"
-        finished_dir.mkdir(parents=True)
-        (finished_dir / "agent.log").write_text("done", encoding="utf-8")
-        repository.create(
-            job_id="job_finished1",
-            original_name="finished.mp4",
-            stored_name="original.mp4",
-            content_type="video/mp4",
-            size_bytes=4,
-            language="zh",
+        create_completed_job(settings, repository)
+        expired = (datetime.now(UTC) - timedelta(seconds=1)).isoformat()
+        repository.touch_session(
+            "job_abcdefgh",
+            expected_revision=0,
+            session_expires_at=expired,
         )
-        repository.set_status("job_finished1", "failed", error_message="failed")
+        response = client.post(
+            "/api/jobs/job_abcdefgh/messages",
+            json={"message": "入点后移 1 秒", "revision": 0, "selected_highlight_id": "hl_1"},
+        )
+        assert response.status_code == 410
 
+
+def test_delete_cleans_finished_temporary_job_and_reports_locked_files(
+    tmp_path, monkeypatch
+) -> None:
+    client, settings, repository, _runner = make_client(tmp_path)
+
+    with client:
+        create_completed_job(settings, repository, "job_finished1")
         deleted = client.delete("/api/jobs/job_finished1")
         assert deleted.status_code == 204
         assert repository.get("job_finished1") is None
-        assert not finished_dir.exists()
+        assert not (settings.jobs_dir / "job_finished1").exists()
 
-        active_dir = settings.jobs_dir / "job_active123"
-        active_dir.mkdir(parents=True)
-        repository.create(
-            job_id="job_active123",
-            original_name="active.mp4",
-            stored_name="original.mp4",
-            content_type="video/mp4",
-            size_bytes=4,
-            language="zh",
-        )
-
-        conflict = client.delete("/api/jobs/job_active123")
-        assert conflict.status_code == 409
-        assert repository.get("job_active123") is not None
-        assert active_dir.exists()
-
-
-def test_delete_reports_locked_job_without_removing_record(tmp_path, monkeypatch) -> None:
-    client, settings, repository, _runner = make_client(tmp_path)
-
-    with client:
-        job_dir = settings.jobs_dir / "job_locked123"
-        job_dir.mkdir(parents=True)
-        repository.create(
-            job_id="job_locked123",
-            original_name="locked.mp4",
-            stored_name="original.mp4",
-            content_type="video/mp4",
-            size_bytes=4,
-            language="zh",
-        )
-        repository.set_status("job_locked123", "failed", error_message="failed")
+        create_completed_job(settings, repository, "job_locked123")
 
         def locked_replace(_source, _target):
             raise PermissionError("locked")
 
         monkeypatch.setattr(main_module.time, "sleep", lambda _delay: None)
         monkeypatch.setattr(main_module.Path, "replace", locked_replace)
-
-        response = client.delete("/api/jobs/job_locked123")
-        assert response.status_code == 423
-        assert response.json()["detail"] == "任务文件仍被播放器或其他程序占用，请等待几秒后重试"
+        locked = client.delete("/api/jobs/job_locked123")
+        assert locked.status_code == 423
         assert repository.get("job_locked123") is not None
-        assert job_dir.exists()
+        assert (settings.jobs_dir / "job_locked123").exists()

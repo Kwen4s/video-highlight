@@ -4,15 +4,15 @@ from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
 from .config import Settings
-from .models import DetectionResult
-from .repository import JobRepository
+from .models import AgentDetectionResult
+from .repository import JobRepository, utc_after
 
 
 class AgentInvoker:
     def __init__(self, settings: Settings) -> None:
         self.settings = settings
 
-    def run(self, *, job_id: str, video_path: Path, language: str) -> DetectionResult:
+    def run(self, *, job_id: str, video_path: Path, language: str) -> AgentDetectionResult:
         if not self.settings.agent_root.is_dir():
             raise RuntimeError("vh-agent directory is not available")
 
@@ -38,7 +38,8 @@ class AgentInvoker:
         environment.update(
             {
                 "VH_JOB_OUTPUT_DIR": str(self.settings.jobs_dir),
-                "VH_MEDIA_CACHE_DIR": str(self.settings.storage_dir / "cache"),
+                "VH_MEDIA_CACHE_DIR": str(job_dir / "cache"),
+                "VH_EXPORT_CLIPS": "false",
                 "PYTHONUTF8": "1",
             }
         )
@@ -64,7 +65,7 @@ class AgentInvoker:
         result_path = job_dir / "result.json"
         if not result_path.is_file():
             raise RuntimeError("vh-agent did not produce result.json")
-        result = DetectionResult.model_validate_json(result_path.read_text(encoding="utf-8"))
+        result = AgentDetectionResult.model_validate_json(result_path.read_text(encoding="utf-8"))
         if result.job_id != job_id:
             raise RuntimeError("vh-agent returned a mismatched job id")
         return result
@@ -97,12 +98,17 @@ class AgentJobRunner:
                 video_path=video_path,
                 language=job["language"],
             )
-            self.repository.save_result(job_id, result.model_dump(mode="json"))
+            self.repository.save_result(
+                job_id,
+                result.to_public_result().model_dump(mode="json"),
+                session_expires_at=utc_after(self.settings.edit_session_ttl_sec),
+            )
         except Exception as error:
             self.repository.set_status(
                 job_id,
                 "failed",
                 error_message=f"高光提取失败（{type(error).__name__}），请查看任务日志",
+                session_expires_at=utc_after(self.settings.edit_session_ttl_sec),
             )
 
     def shutdown(self) -> None:
