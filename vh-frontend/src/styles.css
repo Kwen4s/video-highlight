@@ -99,8 +99,8 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--acid); outl
 .progress-track.indeterminate i { width: 34% !important; animation: scanning 1.5s ease-in-out infinite; }
 @keyframes scanning { from { transform: translateX(-110%); } to { transform: translateX(310%); } }
 .phase-rail { display: grid; grid-template-columns: repeat(4, 1fr); }
-.phase-rail span { position: relative; display: flex; align-items: center; gap: 9px; color: #8e9890; font-size: 15px; }
-.phase-rail span::after { content: ''; position: absolute; z-index: 0; top: 11px; left: 24px; right: 0; height: 1px; background: #2a302b; transform: translateX(8px); }
+.phase-rail span { position: relative; isolation: isolate; display: flex; align-items: center; gap: 9px; color: #8e9890; font-size: 15px; }
+.phase-rail span::after { content: ''; position: absolute; z-index: -1; top: 11px; left: 24px; right: 0; height: 1px; background: #2a302b; transform: translateX(8px); }
 .phase-rail span:last-child::after { display: none; }.phase-rail i { z-index: 1; display: grid; place-items: center; width: 22px; height: 22px; border: 1px solid #4c564e; border-radius: 50%; background: #080b0a; font: 600 15px/1 var(--mono); }
 .phase-rail span.current { color: #e2e8e2; }.phase-rail span.current i { color: var(--acid); border-color: var(--acid); }.phase-rail span.done { color: #b0bab2; }.phase-rail span.done i { color: #071004; border-color: var(--acid); background: var(--acid); }
 .failed-state { display: flex; align-items: center; gap: 17px; padding: 30px; border: 1px solid rgba(255,112,95,.25); background: rgba(255,112,95,.05); }.failed-state > svg { color: var(--red); }.failed-state h2 { margin: 0 0 5px; font-size: 22px; }.failed-state p { margin: 0; color: var(--muted); font-size: 16px; }
