@@ -35,34 +35,117 @@ VH_CHAT_MODEL=Qwen/Qwen3-VL-8B-Instruct
 
 两个内置 Demo 也支持对话。用户从任务归档打开 Demo 时，Electron 会把公开高光结果注册为后端临时会话；演示视频不会上传，仍从本机播放。Demo 会话与普通任务一样在每次消息后续期。
 
-## 启动
+## 部署、启动与停止
 
-服务器侧先准备 Agent：
+### Ubuntu 服务器部署后端
 
-```powershell
-cd vh-agent
-$env:UV_DEFAULT_INDEX = "https://pypi.tuna.tsinghua.edu.cn/simple"
+以下命令以 `/home/tnx/video-highlight` 为项目目录，后端监听 `8777`。部署前确认 `vh-agent/.env` 中的 `VH_ASR_MODEL` 指向实际的 Whisper `snapshots/<revision>` 目录，例如：
+
+```dotenv
+VH_ASR_MODEL=/data1/video-highlight-models/faster-whisper/models--Systran--faster-whisper-large-v3/snapshots/<revision>
+```
+
+首次部署或依赖发生变化时执行：
+
+```bash
+cd /home/tnx/video-highlight/vh-agent
+unset VIRTUAL_ENV
 uv sync --extra enhanced
-```
 
-随后启动后端：
-
-```powershell
-cd vh-backend
-Copy-Item .env.example .env
-$env:UV_DEFAULT_INDEX = "https://pypi.tuna.tsinghua.edu.cn/simple"
+cd ../vh-backend
+unset VIRTUAL_ENV
 uv sync --group dev
-uv run uvicorn app.main:app --host 0.0.0.0 --port 8000
+mkdir -p runtime
 ```
 
-本机只启动桌面前端：
+启动后端并保存 PID 和日志：
+
+```bash
+cd /home/tnx/video-highlight/vh-backend
+nohup uv run --no-sync uvicorn app.main:app --host 0.0.0.0 --port 8777 \
+  > runtime/backend.log 2>&1 &
+echo $! > runtime/backend.pid
+curl -fsS http://127.0.0.1:8777/health
+```
+
+正常时健康检查返回：
+
+```json
+{"status":"ok"}
+```
+
+查看运行日志：
+
+```bash
+tail -f /home/tnx/video-highlight/vh-backend/runtime/backend.log
+```
+
+停止后端：
+
+```bash
+cd /home/tnx/video-highlight/vh-backend
+if [ -f runtime/backend.pid ]; then
+  pid=$(cat runtime/backend.pid)
+  kill "$pid" 2>/dev/null || true
+  rm -f runtime/backend.pid
+fi
+```
+
+如果服务是前台启动的，直接在对应终端按 `Ctrl+C`；如果没有 PID 文件，可先通过 `ss -ltnp | grep ':8777'` 找到进程后停止该进程。
+
+### 重新部署/重启后端
+
+代码和配置更新后，按以下顺序执行。重启只会停止并重新启动 API 服务，不会删除 `vh-backend/runtime` 中的任务数据。
+
+```bash
+cd /home/tnx/video-highlight/vh-backend
+if [ -f runtime/backend.pid ]; then
+  kill "$(cat runtime/backend.pid)" 2>/dev/null || true
+  rm -f runtime/backend.pid
+fi
+
+cd /home/tnx/video-highlight/vh-backend
+unset VIRTUAL_ENV
+mkdir -p runtime
+nohup .venv/bin/python -m uvicorn app.main:app \
+  --host 0.0.0.0 --port 8777 \
+  > runtime/backend.log 2>&1 &
+echo $! > runtime/backend.pid
+curl -fsS http://127.0.0.1:8777/health
+```
+
+若重启后任务仍失败，查看对应任务目录中的 `agent.log`，或先查看最新后端日志：
+
+```bash
+tail -n 200 /home/tnx/video-highlight/vh-backend/runtime/backend.log
+```
+
+### 启动桌面前端
+
+前端在用户本机运行，不需要部署到 Ubuntu。先在 `vh-frontend/.env.local` 设置服务器地址，例如：
+
+```dotenv
+VITE_API_BASE_URL=http://服务器IP:8777
+```
+
+开发模式启动：
 
 ```powershell
 cd vh-frontend
 nvm use
 npm install
-Copy-Item .env.example .env.local
 npm run dev
 ```
 
-前端默认访问 `http://localhost:8000`。服务器部署后，在 `vh-frontend/.env.local` 中将 `VITE_API_BASE_URL` 改为服务器 IP 或域名。详细配置分别见 [前端说明](vh-frontend/README.md)和[后端说明](vh-backend/README.md)。
+开发模式下前端和 Electron 会由同一个命令启动，停止时在该终端按 `Ctrl+C`。
+
+打包模式启动：
+
+```powershell
+cd vh-frontend
+npm install
+npm run build
+npm start
+```
+
+前端默认访问 `http://122.193.22.119:8777`。服务器部署后，在 `vh-frontend/.env.local` 中将 `VITE_API_BASE_URL` 改为服务器 IP 或域名。详细配置分别见 [前端说明](vh-frontend/README.md) 和 [后端说明](vh-backend/README.md)。

@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type { DragEvent, ReactNode, SVGProps } from 'react'
 
-const API_BASE = (import.meta.env.VITE_API_BASE_URL?.trim() || 'http://localhost:8000').replace(/\/+$/, '')
+const API_BASE = (import.meta.env.VITE_API_BASE_URL?.trim() || 'http://122.193.22.119:8777').replace(/\/+$/, '')
 const API_ADDRESS = API_BASE.replace(/^https?:\/\//, '')
 const VIDEO_EXTENSIONS = ['.mp4', '.mov', '.mkv', '.webm', '.avi', '.m4v']
 const DEMO_JOB_IDS = new Set(['job_demo_citypulse', 'job_demo_launchfilm'])
