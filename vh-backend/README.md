@@ -10,13 +10,13 @@
 cd vh-backend
 $env:UV_DEFAULT_INDEX = "https://pypi.tuna.tsinghua.edu.cn/simple"
 uv sync --group dev
-uv run uvicorn app.main:app --host 127.0.0.1 --port 8000
+uv run uvicorn app.main:app --host 127.0.0.1 --port 8777
 ```
 
 服务器需要接受其他机器的 Electron 连接时，监听所有网卡：
 
 ```powershell
-uv run uvicorn app.main:app --host 0.0.0.0 --port 8000
+uv run uvicorn app.main:app --host 0.0.0.0 --port 8777
 ```
 
 此时前端将 `VITE_API_BASE_URL` 配置为服务器的实际 IP 或域名，不要配置为 `0.0.0.0`。`vh-frontend` 的 `npm run dev` 只启动桌面前端，不会代为启动本服务。

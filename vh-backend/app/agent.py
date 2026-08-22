@@ -35,6 +35,10 @@ class AgentInvoker:
             language,
         ]
         environment = os.environ.copy()
+        # The backend and vh-agent have separate uv environments. Inheriting the
+        # backend's VIRTUAL_ENV makes uv warn that it does not match the agent
+        # project and can select the wrong environment on Windows and Linux.
+        environment.pop("VIRTUAL_ENV", None)
         environment.update(
             {
                 "VH_JOB_OUTPUT_DIR": str(self.settings.jobs_dir),
