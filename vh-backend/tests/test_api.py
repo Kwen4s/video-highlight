@@ -69,7 +69,7 @@ def create_completed_job(settings, repository, job_id: str = "job_abcdefgh") -> 
     )
 
 
-def test_upload_is_temporary_and_response_has_no_server_media_url(tmp_path) -> None:
+def test_upload_returns_public_media_url_without_exposing_server_path(tmp_path) -> None:
     client, settings, _repository, runner = make_client(tmp_path)
 
     with client:
@@ -81,7 +81,8 @@ def test_upload_is_temporary_and_response_has_no_server_media_url(tmp_path) -> N
         assert response.status_code == 202
         body = response.json()
         assert body["status"] == "queued"
-        assert "source_url" not in body
+        assert body["source_url"] == "/api/jobs/job_12345678/source"
+        assert str(settings.jobs_dir) not in json.dumps(body)
         assert runner.enqueued == ["job_12345678"]
         assert (
             settings.jobs_dir / "job_12345678" / "source" / "original.mp4"
@@ -110,6 +111,16 @@ def test_cors_allows_electron_origins_and_message_preflight(tmp_path) -> None:
         assert packaged.headers["access-control-allow-origin"] == "null"
         assert "POST" in packaged.headers["access-control-allow-methods"]
 
+        media_preflight = client.options(
+            "/api/jobs/job_12345678/source",
+            headers={
+                "Origin": "http://127.0.0.1:5173",
+                "Access-Control-Request-Method": "HEAD",
+            },
+        )
+        assert media_preflight.status_code == 200
+        assert "HEAD" in media_preflight.headers["access-control-allow-methods"]
+
         rejected = client.get(
             "/health",
             headers={"Origin": "http://unconfigured.example"},
@@ -134,6 +145,7 @@ def test_demo_job_can_open_a_temporary_conversation_session(tmp_path) -> None:
         assert opened.status_code == 200
         body = opened.json()
         assert body["status"] == "completed"
+        assert body["source_url"] is None
         assert body["revision"] == 0
         assert datetime.fromisoformat(body["session_expires_at"]) > datetime.now(UTC)
 
@@ -175,7 +187,7 @@ def test_result_contains_only_intervals_and_edit_session_is_versioned(tmp_path) 
         body = response.json()
         highlight = body["result"]["highlights"][0]
         assert "clip_url" not in highlight
-        assert "source_url" not in body
+        assert body["source_url"] == "/api/jobs/job_abcdefgh/source"
         assert body["revision"] == 0
         assert body["session_expires_at"]
 
@@ -220,6 +232,67 @@ def test_result_contains_only_intervals_and_edit_session_is_versioned(tmp_path) 
             json={"message": "撤销", "revision": 1},
         )
         assert stale.status_code == 409
+
+
+def test_source_supports_inline_head_and_byte_ranges(tmp_path) -> None:
+    client, settings, repository, _runner = make_client(tmp_path)
+
+    with client:
+        create_completed_job(settings, repository)
+
+        head = client.head(
+            "/api/jobs/job_abcdefgh/source",
+            headers={"Origin": "http://127.0.0.1:5173"},
+        )
+        assert head.status_code == 200
+        assert head.content == b""
+        assert head.headers["content-type"] == "video/mp4"
+        assert head.headers["content-length"] == "6"
+        assert head.headers["accept-ranges"] == "bytes"
+        assert head.headers["cache-control"] == "private, no-store"
+        assert head.headers["content-disposition"].startswith("inline;")
+        assert head.headers["access-control-allow-origin"] == "http://127.0.0.1:5173"
+
+        partial = client.get(
+            "/api/jobs/job_abcdefgh/source",
+            headers={"Range": "bytes=1-3"},
+        )
+        assert partial.status_code == 206
+        assert partial.content == b"our"
+        assert partial.headers["content-range"] == "bytes 1-3/6"
+        assert partial.headers["content-length"] == "3"
+
+
+def test_source_returns_404_when_media_file_is_missing(tmp_path) -> None:
+    client, settings, repository, _runner = make_client(tmp_path)
+
+    with client:
+        create_completed_job(settings, repository)
+        (settings.jobs_dir / "job_abcdefgh" / "source" / "original.mp4").unlink()
+
+        response = client.get("/api/jobs/job_abcdefgh/source")
+        assert response.status_code == 404
+
+
+def test_source_infers_video_type_when_upload_type_is_generic(tmp_path) -> None:
+    client, settings, repository, _runner = make_client(tmp_path)
+
+    with client:
+        source_dir = settings.jobs_dir / "job_generic123" / "source"
+        source_dir.mkdir(parents=True)
+        (source_dir / "original.m4v").write_bytes(b"source")
+        repository.create(
+            job_id="job_generic123",
+            original_name="demo.m4v",
+            stored_name="original.m4v",
+            content_type="application/octet-stream",
+            size_bytes=6,
+            language="zh",
+        )
+
+        response = client.head("/api/jobs/job_generic123/source")
+        assert response.status_code == 200
+        assert response.headers["content-type"] == "video/x-m4v"
 
 
 def test_message_stream_emits_incremental_reply_and_final_job(tmp_path) -> None:

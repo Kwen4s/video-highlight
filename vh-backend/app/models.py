@@ -63,6 +63,7 @@ class JobResponse(BaseModel):
     updated_at: str
     session_expires_at: str | None = None
     revision: int = 0
+    source_url: str | None = None
     error_message: str | None = None
     result: DetectionResult | None = None
 

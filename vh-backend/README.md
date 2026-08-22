@@ -1,6 +1,6 @@
 # VH Backend
 
-面向 Electron 的 FastAPI 服务，负责视频上传、临时任务与会话持久化、`vh-agent` 调用和高光对话编排。它与 `vh-agent` 部署在服务器侧；GPU 推理逻辑仍只存在于 `vh-agent`。
+面向 Electron 的 FastAPI 服务，负责视频上传、任务与会话持久化、公开媒体流、`vh-agent` 调用和高光对话编排。它与 `vh-agent` 部署在服务器侧；GPU 推理逻辑仍只存在于 `vh-agent`。
 
 ## 安装与运行
 
@@ -70,7 +70,7 @@ runtime/
         └── cache/
 ```
 
-`agent.log`、缓存、对话计划和物理路径都不会通过 API 返回给前端。任务会话过期后，后端清理上传视频、缓存、结果和临时对话；Electron 本机保存原片、公开结果、复核状态和完整对话历史。
+`agent.log`、缓存、对话计划和物理路径都不会通过 API 返回给前端。前端只使用后端返回的公开 API 路径，不读取服务器文件路径。任务会话过期后，后端会按清理策略删除上传视频、缓存、结果和临时对话。
 
 ## API
 
@@ -78,6 +78,7 @@ runtime/
 - `POST /api/jobs`：multipart 上传；字段为 `file`、`job_id`、`language`。
 - `GET /api/jobs`：列出仍处于服务端临时会话中的任务。
 - `GET /api/jobs/{job_id}`：查询任务状态和公开结果。
+- `GET|HEAD /api/jobs/{job_id}/source`：读取原视频；支持浏览器媒体播放所需的字节范围请求。
 - `POST /api/demo-jobs/{job_id}/session`：为白名单内置 Demo 创建或续开临时对话会话，不上传视频。
 - `POST /api/jobs/{job_id}/messages`：发送查询或编辑请求；请求携带 `message`、`revision` 和可选的 `selected_highlight_id`。
 - `DELETE /api/jobs/{job_id}`：提前清理已完成或失败的临时任务。

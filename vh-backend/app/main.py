@@ -29,6 +29,14 @@ from .repository import JobRepository, utc_after, utc_now
 
 JOB_ID_PATTERN = re.compile(r"^job_[A-Za-z0-9_-]{8,48}$")
 ALLOWED_EXTENSIONS = {".mp4", ".mov", ".mkv", ".webm", ".avi", ".m4v"}
+VIDEO_MEDIA_TYPES = {
+    ".avi": "video/x-msvideo",
+    ".m4v": "video/x-m4v",
+    ".mkv": "video/x-matroska",
+    ".mov": "video/quicktime",
+    ".mp4": "video/mp4",
+    ".webm": "video/webm",
+}
 CHUNK_SIZE = 1024 * 1024
 DELETE_RETRY_DELAYS_SEC = (0.0, 0.1, 0.25, 0.5, 1.0)
 DEMO_JOB_IDS = frozenset({"job_demo_citypulse", "job_demo_launchfilm"})
@@ -129,7 +137,7 @@ def create_app(
     application.add_middleware(
         CORSMiddleware,
         allow_origins=app_settings.allowed_origin_list,
-        allow_methods=["GET", "POST", "DELETE"],
+        allow_methods=["GET", "HEAD", "POST", "DELETE"],
         allow_headers=["*"],
     )
 
@@ -230,7 +238,12 @@ def create_app(
     def get_job(job_id: str) -> JobResponse:
         return serialize_job(require_job(app_repository, job_id))
 
-    @application.get("/api/jobs/{job_id}/source")
+    @application.get("/api/jobs/{job_id}/source", response_class=FileResponse)
+    @application.head(
+        "/api/jobs/{job_id}/source",
+        response_class=FileResponse,
+        include_in_schema=False,
+    )
     def get_job_source(job_id: str) -> FileResponse:
         row = require_job(app_repository, job_id)
         jobs_root = app_settings.jobs_dir.resolve()
@@ -239,8 +252,13 @@ def create_app(
             raise HTTPException(status_code=404, detail="视频源文件不存在")
         return FileResponse(
             source_path,
-            media_type=row["content_type"] or "application/octet-stream",
+            media_type=source_media_type(source_path, row.get("content_type")),
             filename=row["original_name"],
+            content_disposition_type="inline",
+            headers={
+                "Accept-Ranges": "bytes",
+                "Cache-Control": "private, no-store",
+            },
         )
 
     @application.post(
@@ -393,6 +411,12 @@ def require_job(repository: JobRepository, job_id: str) -> dict[str, Any]:
     return row
 
 
+def source_media_type(source_path: Path, declared_type: str | None) -> str:
+    if declared_type and declared_type.startswith("video/"):
+        return declared_type
+    return VIDEO_MEDIA_TYPES.get(source_path.suffix.lower(), "application/octet-stream")
+
+
 def validate_edit_request(row: dict[str, Any], request: EditMessageRequest) -> None:
     if row["status"] != "completed":
         raise HTTPException(status_code=409, detail="任务尚未完成，不能编辑高光")
@@ -431,6 +455,7 @@ def serialize_job(row: dict[str, Any]) -> JobResponse:
         updated_at=row["updated_at"],
         session_expires_at=row.get("session_expires_at"),
         revision=row.get("revision", 0),
+        source_url=(f"/api/jobs/{row['job_id']}/source" if row.get("stored_name") else None),
         error_message=row["error_message"],
         result=result,
     )

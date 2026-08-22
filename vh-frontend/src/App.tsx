@@ -40,7 +40,7 @@ type Job = {
   updated_at: string
   session_expires_at: string | null
   revision: number
-  source_url: string
+  source_url: string | null
   error_message: string | null
   result: DetectionResult | null
   messages: ChatMessage[]
@@ -53,14 +53,14 @@ type ChatMessage = {
   created_at: string
 }
 
-type RemoteJob = Omit<Job, 'source_url' | 'messages'>
+type RemoteJob = Omit<Job, 'source_url' | 'messages'> & { source_url?: string | null }
 
-function sourceUrl(jobId: string) {
-  return `${API_BASE}/api/jobs/${encodeURIComponent(jobId)}/source`
+function resolveSourceUrl(sourceUrl: string | null | undefined) {
+  return sourceUrl ? new URL(sourceUrl, `${API_BASE}/`).toString() : null
 }
 
 function withSourceUrl(job: RemoteJob): Job {
-  return { ...job, source_url: sourceUrl(job.job_id), messages: [] }
+  return { ...job, source_url: resolveSourceUrl(job.source_url), messages: [] }
 }
 
 type EditMessageStreamResult = {
@@ -76,7 +76,7 @@ type EditMessageStreamEvent =
   | { type: 'error'; status: number; detail: string }
 
 type UploadState = {
-  phase: 'idle' | 'saving' | 'uploading'
+  phase: 'idle' | 'uploading'
   progress: number
   fileName?: string
 }
@@ -255,7 +255,13 @@ function mergeRemoteJob(local: Job, remote: RemoteJob): Job {
       }
     }),
   } : null
-  return { ...local, ...remote, result, source_url: sourceUrl(remote.job_id), messages: local.messages }
+  return {
+    ...local,
+    ...remote,
+    result,
+    source_url: resolveSourceUrl(remote.source_url),
+    messages: local.messages,
+  }
 }
 
 function createJobId() {
@@ -306,7 +312,7 @@ function Sidebar({ view, onView, online, jobs }: { view: View; onView: (view: Vi
       <button className={view === 'workspace' ? 'active' : ''} onClick={() => onView('workspace')}><Icon name="spark" /><span>高光提取</span><b>01</b></button>
       <button className={view === 'library' ? 'active' : ''} onClick={() => onView('library')}><Icon name="library" /><span>任务归档</span><b>02</b></button>
     </nav>
-    <div className="sidebar-metric"><span>本地任务</span><strong>{String(jobs.length).padStart(2, '0')}</strong><small>{completed} 个已完成</small></div>
+    <div className="sidebar-metric"><span>服务端任务</span><strong>{String(jobs.length).padStart(2, '0')}</strong><small>{completed} 个已完成</small></div>
     <div className={`service-state ${online ? 'online' : ''}`}><i /><div><b>{online ? '后端服务在线' : '后端服务离线'}</b><span>API · {API_ADDRESS}</span></div></div>
   </aside>
 }
@@ -329,7 +335,7 @@ function UploadDropzone({ onFile, compact = false }: { onFile: (file: File) => v
     <div className="drop-icon"><Icon name="upload" size={27} /></div>
     <p className="overline">NEW SOURCE / 01</p>
     <h2>把原片放到这里</h2>
-    <p>原片与任务记录永久保存在本机；后端只临时接收视频并返回高光时间段。</p>
+    <p>原片上传到后端创建分析任务；前端只通过公开 API 获取状态、结果和视频流。</p>
     <button className="button primary" onClick={() => inputRef.current?.click()}><Icon name="film" size={17} />选择视频文件</button>
     <span>MP4 · MOV · MKV · WEBM · AVI · 最大 20 GB</span>
   </div>
@@ -337,21 +343,21 @@ function UploadDropzone({ onFile, compact = false }: { onFile: (file: File) => v
 
 function ProgressPanel({ upload, job, onCancel }: { upload: UploadState; job: Job | null; onCancel: () => void }) {
   const uploading = upload.phase !== 'idle'
-  const label = upload.phase === 'saving' ? '正在保存本地原片' : upload.phase === 'uploading' ? `正在上传 ${upload.progress}%` : job ? statusCopy[job.status] : ''
+  const label = upload.phase === 'uploading' ? `正在上传 ${upload.progress}%` : job ? statusCopy[job.status] : ''
   const number = upload.phase === 'uploading' ? upload.progress : job?.status === 'completed' ? 100 : null
   return <section className={`progress-panel ${job?.status || upload.phase}`}>
     <div className="progress-heading"><div><span className="pulse" /><div><b>{label}</b><small>{uploading ? upload.fileName : job?.original_name}</small></div></div>{upload.phase === 'uploading' && <button onClick={onCancel}><Icon name="x" size={15} />取消上传</button>}</div>
-    <div className={`progress-track ${job?.status === 'processing' || job?.status === 'queued' || upload.phase === 'saving' ? 'indeterminate' : ''}`}><i style={{ width: `${number ?? 38}%` }} /></div>
+    <div className={`progress-track ${job?.status === 'processing' || job?.status === 'queued' ? 'indeterminate' : ''}`}><i style={{ width: `${number ?? 38}%` }} /></div>
     <div className="phase-rail">
-      <span className={upload.phase === 'saving' ? 'current' : upload.phase === 'uploading' || job ? 'done' : ''}><i>1</i>本地保存</span>
-      <span className={upload.phase === 'uploading' ? 'current' : job ? 'done' : ''}><i>2</i>上传任务</span>
+      <span className={upload.phase === 'uploading' ? 'current' : job ? 'done' : ''}><i>1</i>上传视频</span>
+      <span className={job ? 'done' : ''}><i>2</i>后端入队</span>
       <span className={job?.status === 'processing' ? 'current' : job?.status === 'completed' ? 'done' : ''}><i>3</i>Agent 分析</span>
       <span className={job?.status === 'completed' ? 'done' : ''}><i>4</i>等待复核</span>
     </div>
   </section>
 }
 
-function Player({ job, selected, onSelect }: { job: Job; selected: Highlight | null; onSelect: (item: Highlight) => void }) {
+function Player({ job, selected, reloadToken, onSelect, onPlaybackError }: { job: Job; selected: Highlight | null; reloadToken: number; onSelect: (item: Highlight) => void; onPlaybackError: (message: string | null) => void }) {
   const source = job.source_url
   const highlights = job.result?.highlights || []
   const sourceDuration = job.result?.video.duration_sec || 1
@@ -367,14 +373,32 @@ function Player({ job, selected, onSelect }: { job: Job; selected: Highlight | n
   useEffect(() => {
     const player = videoRef.current
     if (!player) return
-    player.src = source
-    player.load()
+    let cancelled = false
+    const loadSource = async () => {
+      if (!source) {
+        onPlaybackError('后端没有返回视频播放地址，请确认媒体接口版本已经部署。')
+        return
+      }
+      try {
+        const response = await fetch(source, { method: 'HEAD', cache: 'no-store' })
+        if (!response.ok) throw new Error(`视频源接口返回 ${response.status}`)
+        if (cancelled) return
+        player.src = source
+        player.load()
+      } catch (reason) {
+        if (cancelled) return
+        const detail = reason instanceof Error ? reason.message : '未知错误'
+        onPlaybackError(`无法加载后端视频源：${detail}。请检查后端媒体接口和 CORS 配置。`)
+      }
+    }
+    void loadSource()
     return () => {
+      cancelled = true
       player.pause()
       player.removeAttribute('src')
       player.load()
     }
-  }, [source])
+  }, [source, reloadToken, onPlaybackError])
   useEffect(() => {
     const player = videoRef.current
     if (!player) return
@@ -399,7 +423,7 @@ function Player({ job, selected, onSelect }: { job: Job; selected: Highlight | n
   return <section className="player-card">
     <div className="player-top"><div><span>VIDEO MONITOR · {selected ? 'HIGHLIGHT' : 'SOURCE'}</span><b>{selected?.description || job.original_name}</b></div><span className="media-chip">{selected ? `${formatTime(selected.start_sec)} — ${formatTime(selected.end_sec)}` : formatBytes(job.size_bytes)}</span></div>
     <div className="video-frame">
-      <div className="video-stage"><video ref={videoRef} key={source} controls preload="metadata" /></div>
+      <div className="video-stage"><video ref={videoRef} key={source} controls preload="metadata" onLoadedMetadata={() => onPlaybackError(null)} onError={() => onPlaybackError('视频流已返回，但 Electron 无法解码。请确认视频编码为 Chromium 支持的 H.264/AAC、VP9/Opus 或 AV1。')} /></div>
       <div className="monitor-timeline" aria-label="完整原片高光时间轴">
         <div className="timeline-caption">
           <div><span>完整原片 · 高光轨道</span><small>点击荧光绿区间预览片段</small></div>
@@ -493,7 +517,7 @@ function HighlightAssistant({ job, selected, busy, onSend }: { job: Job; selecte
       <div className="assistant-context"><span>当前上下文</span><b>{focus}</b><small>{job.result?.highlights.length || 0} 个高光候选已载入</small></div>
       <div className="message assistant-message">
         <span className="message-avatar"><Icon name="spark" size={15} /></span>
-        <div><small>EDIT AGENT</small><p>{sessionActive ? `我正在查看${focus}。你可以查询理由，调整时间范围，修改标题或说明，也可以删除、拆分、合并和撤销。` : '服务端临时会话已经结束。本地原片、结果和复核记录不受影响，仍可继续审阅。'}</p></div>
+        <div><small>EDIT AGENT</small><p>{sessionActive ? `我正在查看${focus}。你可以查询理由，调整时间范围，修改标题或说明，也可以删除、拆分、合并和撤销。` : '服务端编辑会话已经结束，请重新创建任务后继续编辑。'}</p></div>
       </div>
       {job.messages.map((message, index) => message.role === 'user'
         ? <div className="message user-message" key={message.message_id}><div><small>YOU</small><p>{message.content}</p></div></div>
@@ -507,22 +531,22 @@ function HighlightAssistant({ job, selected, busy, onSend }: { job: Job; selecte
   </aside>
 }
 
-function Workspace({ upload, job, selected, error, chatBusy, onFile, onSelect, onReview, onChat, onCancel, onRetry }: { upload: UploadState; job: Job | null; selected: Highlight | null; error: string | null; chatBusy: boolean; onFile: (file: File) => void; onSelect: (item: Highlight | null) => void; onReview: (item: Highlight, status: ReviewStatus) => void; onChat: (message: string) => Promise<void>; onCancel: () => void; onRetry: () => void }) {
+function Workspace({ upload, job, selected, error, chatBusy, playerReloadToken, onFile, onSelect, onReview, onChat, onCancel, onRetry, onPlaybackError }: { upload: UploadState; job: Job | null; selected: Highlight | null; error: string | null; chatBusy: boolean; playerReloadToken: number; onFile: (file: File) => void; onSelect: (item: Highlight | null) => void; onReview: (item: Highlight, status: ReviewStatus) => void; onChat: (message: string) => Promise<void>; onCancel: () => void; onRetry: () => void; onPlaybackError: (message: string | null) => void }) {
   const busy = upload.phase !== 'idle' || job?.status === 'queued' || job?.status === 'processing'
   const reviewing = job?.status === 'completed'
   return <div className={`view workspace-view${reviewing ? ' task-review' : ''}`}>
-    {!reviewing && <header className="view-header"><div><p className="overline">LOCAL VIDEO INTELLIGENCE</p><h1>高光提取</h1><p>导入视频，后台完成保存与高光提取，再由你做最后判断。</p></div><UploadDropzone compact onFile={onFile} /></header>}
+    {!reviewing && <header className="view-header"><div><p className="overline">VIDEO INTELLIGENCE</p><h1>高光提取</h1><p>导入视频，后端完成任务编排与高光提取，再由你做最后判断。</p></div><UploadDropzone compact onFile={onFile} /></header>}
     {error && <div className="error-banner"><span><Icon name="close" size={16} /></span><div><b>流程没有完成</b><p>{error}</p></div><button onClick={onRetry}><Icon name="retry" size={15} />重新载入</button></div>}
     {!job && upload.phase === 'idle' && <UploadDropzone onFile={onFile} />}
     {busy && <ProgressPanel upload={upload} job={job} onCancel={onCancel} />}
-    {job?.status === 'failed' && <div className="failed-state"><Icon name="close" size={22} /><div><h2>Agent 未能完成分析</h2><p>{job.error_message || '原视频已经安全保存在本机，可以稍后重新提交。'}</p></div></div>}
-    {job?.status === 'completed' && <div className="review-grid"><HighlightList job={job} selectedId={selected?.highlight_id || null} onSelect={onSelect} onReview={onReview} /><Player job={job} selected={selected} onSelect={onSelect} /><HighlightAssistant job={job} selected={selected} busy={chatBusy} onSend={onChat} /></div>}
+    {job?.status === 'failed' && <div className="failed-state"><Icon name="close" size={22} /><div><h2>Agent 未能完成分析</h2><p>{job.error_message || '后端未能完成当前任务，可以稍后重新提交。'}</p></div></div>}
+    {job?.status === 'completed' && <div className="review-grid"><HighlightList job={job} selectedId={selected?.highlight_id || null} onSelect={onSelect} onReview={onReview} /><Player job={job} selected={selected} reloadToken={playerReloadToken} onSelect={onSelect} onPlaybackError={onPlaybackError} /><HighlightAssistant job={job} selected={selected} busy={chatBusy} onSend={onChat} /></div>}
   </div>
 }
 
 function Library({ jobs, onOpen, onFile, onDelete }: { jobs: Job[]; onOpen: (job: Job) => void; onFile: (file: File) => void; onDelete: (job: Job) => void }) {
   return <div className="view library-view">
-    <header className="view-header"><div><p className="overline">LOCAL ARCHIVE</p><h1>任务归档</h1><p>原片、时间段结果、复核状态和编辑对话永久保存在本机。</p></div><UploadDropzone compact onFile={onFile} /></header>
+    <header className="view-header"><div><p className="overline">SERVER TASKS</p><h1>任务归档</h1><p>这里展示后端当前保留的任务、分析结果和编辑会话。</p></div><UploadDropzone compact onFile={onFile} /></header>
     <section className="archive-summary"><div><small>全部任务</small><b>{jobs.length}</b></div><div><small>提取完成</small><b>{jobs.filter((item) => item.status === 'completed').length}</b></div><div><small>处理中</small><b>{jobs.filter((item) => ['queued', 'processing'].includes(item.status)).length}</b></div><div><small>高光片段</small><b>{jobs.reduce((sum, item) => sum + (item.result?.highlights.length || 0), 0)}</b></div></section>
     <section className="job-list">
       <div className="job-list-head"><span>视频 / 任务</span><span>大小</span><span>状态</span><span>创建时间</span><span>操作</span></div>
@@ -567,27 +591,29 @@ export default function App() {
   const [deleteBusy, setDeleteBusy] = useState(false)
   const [deleteError, setDeleteError] = useState<string | null>(null)
   const [chatBusy, setChatBusy] = useState(false)
+  const [playerReloadToken, setPlayerReloadToken] = useState(0)
   const uploadRequest = useRef<XMLHttpRequest | null>(null)
 
   const refreshJobs = useCallback(async () => {
-    if (!window.localLibrary) {
-      setError('本地任务库只能在 Electron 桌面端使用')
-      return []
-    }
     try {
       const remoteJobs = await requestJson<RemoteJob[]>('/api/jobs')
       const records = remoteJobs.map(withSourceUrl)
       setJobs(records)
+      setJob((current) => {
+        if (!current) return current
+        const latest = remoteJobs.find((record) => record.job_id === current.job_id)
+        return latest ? mergeRemoteJob(current, latest) : current
+      })
       setOnline(true)
       return records
     } catch (reason) {
-      setError(reason instanceof Error ? reason.message : '本地任务库读取失败')
+      setOnline(false)
+      setError(reason instanceof Error ? reason.message : '后端任务读取失败')
       return []
     }
   }, [])
 
   const persistJob = useCallback(async (record: Job) => {
-    if (!window.localLibrary) throw new Error('本地任务库不可用')
     const saved = record
     setJob(saved)
     setJobs((current) => {
@@ -631,9 +657,7 @@ export default function App() {
     const extension = file.name.includes('.') ? file.name.slice(file.name.lastIndexOf('.')).toLowerCase() : ''
     if (!VIDEO_EXTENSIONS.includes(extension)) { setError('请选择 MP4、MOV、MKV、WEBM、AVI 或 M4V 视频。'); return }
     if (file.size > 20 * 1024 ** 3) { setError('视频不能超过 20 GB。'); return }
-    if (!window.localLibrary) { setError('请在 Electron 桌面端导入视频。'); return }
     const jobId = createJobId()
-    const localJob = {} as Job
     setView('workspace')
     setJob(null)
     setSelected(null)
@@ -648,14 +672,6 @@ export default function App() {
       setUpload({ phase: 'idle', progress: 0 })
       const message = reason instanceof Error ? reason.message : '视频导入失败'
       setError(message)
-      if (false && localJob) {
-        await persistJob({
-          ...localJob,
-          status: 'failed',
-          updated_at: new Date().toISOString(),
-          error_message: `上传或分析任务创建失败：${message}`,
-        }).catch(() => undefined)
-      }
     }
   }
 
@@ -762,8 +778,7 @@ export default function App() {
     setDeleteBusy(true)
     setDeleteError(null)
     try {
-      await requestEmpty(`/api/jobs/${deleteCandidate.job_id}`, { method: 'DELETE' }).catch(() => undefined)
-      if (!window.localLibrary) throw new Error('本地任务库不可用')
+      await requestEmpty(`/api/jobs/${deleteCandidate.job_id}`, { method: 'DELETE' })
       setJobs((current) => current.filter((record) => record.job_id !== deleteCandidate.job_id))
       if (job?.job_id === deleteCandidate.job_id) { setJob(null); setSelected(null) }
       setDeleteCandidate(null)
@@ -779,7 +794,7 @@ export default function App() {
     <WindowChrome />
     <Sidebar view={view} onView={setView} online={online} jobs={jobs} />
     <main>{view === 'workspace'
-      ? <Workspace upload={upload} job={job} selected={activeHighlight} error={error} chatBusy={chatBusy} onFile={handleFile} onSelect={setSelected} onReview={review} onChat={sendEditMessage} onCancel={() => uploadRequest.current?.abort()} onRetry={() => { setError(null); void refreshJobs() }} />
+      ? <Workspace upload={upload} job={job} selected={activeHighlight} error={error} chatBusy={chatBusy} playerReloadToken={playerReloadToken} onFile={handleFile} onSelect={setSelected} onReview={review} onChat={sendEditMessage} onCancel={() => uploadRequest.current?.abort()} onRetry={() => { setError(null); setPlayerReloadToken((value) => value + 1); void refreshJobs() }} onPlaybackError={setError} />
       : <Library jobs={jobs} onOpen={openJob} onFile={handleFile} onDelete={requestDelete} />}
     </main>
     {deleteCandidate && <DeleteDialog job={deleteCandidate} busy={deleteBusy} error={deleteError} onCancel={closeDelete} onConfirm={confirmDelete} />}
