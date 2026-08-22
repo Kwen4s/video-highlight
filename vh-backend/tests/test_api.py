@@ -1,12 +1,12 @@
 import json
-from datetime import UTC, datetime, timedelta
+import sqlite3
 
 from fastapi.testclient import TestClient
 
 from app import main as main_module
 from app.config import Settings
 from app.main import create_app
-from app.repository import JobRepository, utc_after
+from app.repository import JobRepository
 
 
 class FakeRunner:
@@ -21,8 +21,6 @@ def make_client(tmp_path):
     settings = Settings(
         VH_STORAGE_DIR=tmp_path / "runtime",
         VH_AGENT_ROOT=tmp_path / "agent",
-        VH_EDIT_SESSION_TTL_SEC=600,
-        VH_CLEANUP_INTERVAL_SEC=3600,
     )
     repository = JobRepository(settings.database_path)
     runner = FakeRunner()
@@ -65,7 +63,6 @@ def create_completed_job(settings, repository, job_id: str = "job_abcdefgh") -> 
     repository.save_result(
         job_id,
         sample_result(job_id),
-        session_expires_at=utc_after(600),
     )
 
 
@@ -128,7 +125,7 @@ def test_cors_allows_electron_origins_and_message_preflight(tmp_path) -> None:
         assert "access-control-allow-origin" not in rejected.headers
 
 
-def test_demo_job_can_open_a_temporary_conversation_session(tmp_path) -> None:
+def test_demo_job_can_open_a_conversation_session(tmp_path) -> None:
     client, _settings, repository, _runner = make_client(tmp_path)
     job_id = "job_demo_citypulse"
 
@@ -147,7 +144,7 @@ def test_demo_job_can_open_a_temporary_conversation_session(tmp_path) -> None:
         assert body["status"] == "completed"
         assert body["source_url"] is None
         assert body["revision"] == 0
-        assert datetime.fromisoformat(body["session_expires_at"]) > datetime.now(UTC)
+        assert "session_expires_at" not in body
 
         edited = client.post(
             f"/api/jobs/{job_id}/messages",
@@ -178,7 +175,7 @@ def test_demo_session_bootstrap_rejects_non_demo_job(tmp_path) -> None:
         assert response.status_code == 404
 
 
-def test_result_contains_only_intervals_and_edit_session_is_versioned(tmp_path) -> None:
+def test_result_contains_only_intervals_and_editing_is_versioned(tmp_path) -> None:
     client, settings, repository, _runner = make_client(tmp_path)
 
     with client:
@@ -189,7 +186,7 @@ def test_result_contains_only_intervals_and_edit_session_is_versioned(tmp_path) 
         assert "clip_url" not in highlight
         assert body["source_url"] == "/api/jobs/job_abcdefgh/source"
         assert body["revision"] == 0
-        assert body["session_expires_at"]
+        assert "session_expires_at" not in body
 
         edited = client.post(
             "/api/jobs/job_abcdefgh/messages",
@@ -323,22 +320,62 @@ def test_message_stream_emits_incremental_reply_and_final_job(tmp_path) -> None:
         assert completed["job"]["result"]["highlights"][0]["start_sec"] == 3
 
 
-def test_expired_session_rejects_edits_but_local_result_can_survive(tmp_path) -> None:
+def test_completed_job_remains_available_and_editable_without_time_limit(tmp_path) -> None:
     client, settings, repository, _runner = make_client(tmp_path)
 
     with client:
         create_completed_job(settings, repository)
-        expired = (datetime.now(UTC) - timedelta(seconds=1)).isoformat()
-        repository.touch_session(
-            "job_abcdefgh",
-            expected_revision=0,
-            session_expires_at=expired,
-        )
+        with sqlite3.connect(settings.database_path) as connection:
+            connection.execute("ALTER TABLE jobs ADD COLUMN session_expires_at TEXT")
+            connection.execute(
+                """
+                UPDATE jobs
+                SET updated_at = '2000-01-01T00:00:00+00:00',
+                    session_expires_at = '2000-01-01T00:00:00+00:00'
+                WHERE job_id = ?
+                """,
+                ("job_abcdefgh",),
+            )
+
+        listed = client.get("/api/jobs")
+        assert listed.status_code == 200
+        assert any(job["job_id"] == "job_abcdefgh" for job in listed.json())
+
         response = client.post(
             "/api/jobs/job_abcdefgh/messages",
             json={"message": "入点后移 1 秒", "revision": 0, "selected_highlight_id": "hl_1"},
         )
-        assert response.status_code == 410
+        assert response.status_code == 200
+        assert response.json()["job"]["result"]["highlights"][0]["start_sec"] == 3
+
+
+def test_stale_queued_job_is_not_deleted_automatically(tmp_path) -> None:
+    client, settings, repository, _runner = make_client(tmp_path)
+
+    with client:
+        source_dir = settings.jobs_dir / "job_stalequeue" / "source"
+        source_dir.mkdir(parents=True)
+        (source_dir / "original.mp4").write_bytes(b"source")
+        repository.create(
+            job_id="job_stalequeue",
+            original_name="demo.mp4",
+            stored_name="original.mp4",
+            content_type="video/mp4",
+            size_bytes=6,
+            language="zh",
+        )
+        with sqlite3.connect(settings.database_path) as connection:
+            connection.execute(
+                "UPDATE jobs SET updated_at = '2000-01-01T00:00:00+00:00' WHERE job_id = ?",
+                ("job_stalequeue",),
+            )
+
+        listed = client.get("/api/jobs")
+
+        assert listed.status_code == 200
+        assert any(job["job_id"] == "job_stalequeue" for job in listed.json())
+        assert repository.get("job_stalequeue") is not None
+        assert (settings.jobs_dir / "job_stalequeue").exists()
 
 
 def test_delete_cleans_finished_temporary_job_and_reports_locked_files(

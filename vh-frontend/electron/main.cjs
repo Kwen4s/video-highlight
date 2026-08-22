@@ -59,7 +59,11 @@ async function readStoredJob(jobId) {
 }
 
 function publicJob(stored) {
-  const { local_source_name: _localSourceName, ...task } = stored
+  const {
+    local_source_name: _localSourceName,
+    session_expires_at: _legacySessionExpiry,
+    ...task
+  } = stored
   return { ...task, source_url: localSourceUrl(task.job_id) }
 }
 
@@ -105,7 +109,6 @@ async function buildDemoTask(templateDirectory, jobId, createdAt) {
     language: 'zh',
     created_at: createdAt,
     updated_at: createdAt,
-    session_expires_at: null,
     revision: 0,
     error_message: null,
     result: {
@@ -196,7 +199,6 @@ async function importSource(input) {
       language: input?.language === 'en' ? 'en' : 'zh',
       created_at: createdAt,
       updated_at: createdAt,
-      session_expires_at: null,
       revision: 0,
       error_message: null,
       result: null,
@@ -217,12 +219,12 @@ async function importSource(input) {
 async function saveJob(input) {
   const jobId = requireJobId(input?.job_id)
   const current = await readStoredJob(jobId)
+  const { session_expires_at: _legacySessionExpiry, ...currentWithoutExpiry } = current
   const messages = Array.isArray(input?.messages) ? input.messages.slice(-200) : current.messages
   const stored = {
-    ...current,
+    ...currentWithoutExpiry,
     status: input.status,
     updated_at: input.updated_at,
-    session_expires_at: input.session_expires_at ?? null,
     revision: Number.isInteger(input.revision) ? input.revision : current.revision,
     error_message: input.error_message ?? null,
     result: input.result ?? null,

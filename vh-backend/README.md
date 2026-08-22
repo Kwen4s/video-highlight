@@ -70,20 +70,20 @@ runtime/
         └── cache/
 ```
 
-`agent.log`、缓存、对话计划和物理路径都不会通过 API 返回给前端。前端只使用后端返回的公开 API 路径，不读取服务器文件路径。任务会话过期后，后端会按清理策略删除上传视频、缓存、结果和临时对话。
+`agent.log`、缓存、对话计划和物理路径都不会通过 API 返回给前端。前端只使用后端返回的公开 API 路径，不读取服务器文件路径。任务不会按超时自动删除，包括长期停留在排队或处理状态的任务；已完成或失败的任务也会一直保留，直到用户主动删除。
 
 ## API
 
 - `GET /health`：健康检查。
 - `POST /api/jobs`：multipart 上传；字段为 `file`、`job_id`、`language`。
-- `GET /api/jobs`：列出仍处于服务端临时会话中的任务。
+- `GET /api/jobs`：列出服务端保留的任务。
 - `GET /api/jobs/{job_id}`：查询任务状态和公开结果。
 - `GET|HEAD /api/jobs/{job_id}/source`：读取原视频；支持浏览器媒体播放所需的字节范围请求。
-- `POST /api/demo-jobs/{job_id}/session`：为白名单内置 Demo 创建或续开临时对话会话，不上传视频。
+- `POST /api/demo-jobs/{job_id}/session`：为白名单内置 Demo 创建或重置对话上下文，不上传视频。
 - `POST /api/jobs/{job_id}/messages`：发送查询或编辑请求；请求携带 `message`、`revision` 和可选的 `selected_highlight_id`。
-- `DELETE /api/jobs/{job_id}`：提前清理已完成或失败的临时任务。
+- `DELETE /api/jobs/{job_id}`：删除已完成或失败的任务。
 
-任务状态为 `queued → processing → completed`，失败时为 `failed`。当前使用单检测工作线程，避免多个 GPU 任务并发争用显存。结果修改使用乐观版本号，过期版本返回 `409`；会话过期返回 `410`。
+任务状态为 `queued → processing → completed`，失败时为 `failed`。当前使用单检测工作线程，避免多个 GPU 任务并发争用显存。结果和编辑对话没有有效期限制；结果修改仍使用乐观版本号，版本冲突返回 `409`。
 
 ## 配置
 
@@ -94,10 +94,7 @@ runtime/
 - `VH_AGENT_UV_EXECUTABLE`：uv 可执行文件。
 - `VH_AGENT_TIMEOUT_SEC`：检测任务超时秒数。
 - `VH_MAX_UPLOAD_BYTES`：上传上限，默认 20 GB。
-- `VH_EDIT_SESSION_TTL_SEC`：完成任务的可编辑会话时长。
 - `VH_CHAT_*`：对话模型的密钥、OpenAI 兼容地址、模型、超时和重试次数。
-- `VH_CLEANUP_INTERVAL_SEC`：过期任务清理周期。
-- `VH_ORPHAN_JOB_TTL_SEC`：异常中断任务的保留时长。
 - `VH_ALLOWED_ORIGINS`：逗号分隔的 Electron/Vite 页面来源。
 
 ## CORS 配置

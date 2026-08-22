@@ -33,11 +33,6 @@ class Settings(BaseSettings):
         ge=1,
         validation_alias="VH_MAX_UPLOAD_BYTES",
     )
-    edit_session_ttl_sec: int = Field(
-        default=30 * 60,
-        ge=60,
-        validation_alias="VH_EDIT_SESSION_TTL_SEC",
-    )
     chat_api_key: str = Field(default="", validation_alias="VH_CHAT_API_KEY")
     chat_base_url: str = Field(
         default="https://api.siliconflow.cn/v1",
@@ -56,16 +51,6 @@ class Settings(BaseSettings):
         default=1,
         ge=0,
         validation_alias="VH_CHAT_MAX_RETRIES",
-    )
-    cleanup_interval_sec: int = Field(
-        default=60,
-        ge=5,
-        validation_alias="VH_CLEANUP_INTERVAL_SEC",
-    )
-    orphan_job_ttl_sec: int = Field(
-        default=24 * 60 * 60,
-        ge=300,
-        validation_alias="VH_ORPHAN_JOB_TTL_SEC",
     )
     allowed_origins: str = Field(
         default="http://127.0.0.1:5173,http://localhost:5173,null",

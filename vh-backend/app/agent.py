@@ -5,7 +5,7 @@ from pathlib import Path
 
 from .config import Settings
 from .models import AgentDetectionResult
-from .repository import JobRepository, utc_after
+from .repository import JobRepository
 
 
 class AgentInvoker:
@@ -105,14 +105,12 @@ class AgentJobRunner:
             self.repository.save_result(
                 job_id,
                 result.to_public_result().model_dump(mode="json"),
-                session_expires_at=utc_after(self.settings.edit_session_ttl_sec),
             )
         except Exception as error:
             self.repository.set_status(
                 job_id,
                 "failed",
                 error_message=f"高光提取失败（{type(error).__name__}），请查看任务日志",
-                session_expires_at=utc_after(self.settings.edit_session_ttl_sec),
             )
 
     def shutdown(self) -> None:

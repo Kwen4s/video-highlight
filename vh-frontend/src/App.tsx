@@ -8,6 +8,7 @@ const MESSAGE_CHUNK_SIZE = 4
 const MESSAGE_CHUNK_DELAY_MS = 20
 
 type View = 'workspace' | 'library'
+type Theme = 'dark' | 'light'
 type JobStatus = 'queued' | 'processing' | 'completed' | 'failed'
 type ReviewStatus = 'pending' | 'accepted' | 'rejected' | 'revised'
 
@@ -38,7 +39,6 @@ type Job = {
   language: 'zh' | 'en'
   created_at: string
   updated_at: string
-  session_expires_at: string | null
   revision: number
   source_url: string | null
   error_message: string | null
@@ -83,7 +83,7 @@ type UploadState = {
 
 type IconName =
   | 'spark' | 'upload' | 'library' | 'film' | 'check' | 'close' | 'minus'
-  | 'square' | 'source' | 'retry' | 'folder' | 'trash' | 'x'
+  | 'square' | 'source' | 'retry' | 'folder' | 'trash' | 'x' | 'sun' | 'moon'
 
 function Icon({ name, size = 18, ...props }: { name: IconName; size?: number } & SVGProps<SVGSVGElement>) {
   const paths: Record<IconName, ReactNode> = {
@@ -100,6 +100,8 @@ function Icon({ name, size = 18, ...props }: { name: IconName; size?: number } &
     folder: <path d="M3 7.5A2.5 2.5 0 0 1 5.5 5H10l2 2h6.5A2.5 2.5 0 0 1 21 9.5v7a2.5 2.5 0 0 1-2.5 2.5h-13A2.5 2.5 0 0 1 3 16.5v-9Z" />,
     trash: <><path d="M4 7h16M9 7V4h6v3m3 0-1 13H7L6 7" /><path d="M10 11v5m4-5v5" /></>,
     x: <path d="m8 8 8 8m0-8-8 8" />,
+    sun: <><circle cx="12" cy="12" r="3.5" /><path d="M12 2v2m0 16v2M4.93 4.93l1.42 1.42m11.3 11.3 1.42 1.42M2 12h2m16 0h2M4.93 19.07l1.42-1.42m11.3-11.3 1.42-1.42" /></>,
+    moon: <path d="M20 15.1A8 8 0 0 1 8.9 4a8 8 0 1 0 11.1 11.1Z" />,
   }
   return <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" {...props}>{paths[name]}</svg>
 }
@@ -268,10 +270,6 @@ function createJobId() {
   return `job_${crypto.randomUUID().replace(/-/g, '').slice(0, 16)}`
 }
 
-function hasActiveSession(job: Job) {
-  return Boolean(job.session_expires_at && new Date(job.session_expires_at).getTime() > Date.now())
-}
-
 function formatBytes(bytes: number) {
   if (!bytes) return '0 B'
   const units = ['B', 'KB', 'MB', 'GB', 'TB']
@@ -292,10 +290,12 @@ const statusCopy: Record<JobStatus, string> = {
   queued: '等待分析', processing: '正在提取', completed: '提取完成', failed: '提取失败',
 }
 
-function WindowChrome() {
+function WindowChrome({ theme, onToggleTheme }: { theme: Theme; onToggleTheme: () => void }) {
+  const nextThemeLabel = theme === 'dark' ? '切换到亮色模式' : '切换到暗色模式'
   return <div className="window-chrome">
     <div className="chrome-label"><span /> FRAME / 本地高光工作台</div>
     <div className="window-actions">
+      <button className="theme-toggle" aria-label={nextThemeLabel} title={nextThemeLabel} onClick={onToggleTheme}><Icon name={theme === 'dark' ? 'sun' : 'moon'} size={16} /></button>
       <button aria-label="最小化" onClick={() => window.desktopWindow?.minimize()}><Icon name="minus" size={15} /></button>
       <button aria-label="最大化" onClick={() => window.desktopWindow?.toggleMaximize()}><Icon name="square" size={14} /></button>
       <button className="danger" aria-label="关闭" onClick={() => window.desktopWindow?.close()}><Icon name="close" size={15} /></button>
@@ -482,25 +482,17 @@ function HighlightList({ job, selectedId, onSelect, onReview }: { job: Job; sele
 function HighlightAssistant({ job, selected, busy, onSend }: { job: Job; selected: Highlight | null; busy: boolean; onSend: (message: string) => Promise<void> }) {
   const focus = selected ? `「${selected.description}」` : '完整原片'
   const [input, setInput] = useState('')
-  const [now, setNow] = useState(Date.now())
   const threadRef = useRef<HTMLDivElement>(null)
   const latestMessage = job.messages[job.messages.length - 1]
-  useEffect(() => {
-    const timer = window.setInterval(() => setNow(Date.now()), 30_000)
-    return () => window.clearInterval(timer)
-  }, [])
   useEffect(() => {
     const frame = window.requestAnimationFrame(() => {
       if (threadRef.current) threadRef.current.scrollTop = threadRef.current.scrollHeight
     })
     return () => window.cancelAnimationFrame(frame)
   }, [job.messages.length, latestMessage?.content])
-  const expiresAt = job.session_expires_at ? new Date(job.session_expires_at).getTime() : 0
-  const sessionActive = expiresAt > now
-  const remainingMinutes = Math.max(0, Math.ceil((expiresAt - now) / 60_000))
   const submit = async (value: string) => {
     const message = value.trim()
-    if (!message || busy || !sessionActive) return
+    if (!message || busy) return
     setInput('')
     try {
       await onSend(message)
@@ -511,22 +503,22 @@ function HighlightAssistant({ job, selected, busy, onSend }: { job: Job; selecte
   return <aside className="assistant-panel">
     <div className="assistant-head">
       <div><p className="overline">AI EDIT ASSISTANT</p><h2>高光编辑助手</h2></div>
-      <span className={`assistant-state ${sessionActive ? '' : 'expired'}`}><i />{busy ? '处理中' : sessionActive ? `${remainingMinutes} 分钟` : '会话结束'}</span>
+      {busy && <span className="assistant-state"><i />处理中</span>}
     </div>
     <div ref={threadRef} className="assistant-thread" role="log" aria-label="高光编辑助手对话">
       <div className="assistant-context"><span>当前上下文</span><b>{focus}</b><small>{job.result?.highlights.length || 0} 个高光候选已载入</small></div>
       <div className="message assistant-message">
         <span className="message-avatar"><Icon name="spark" size={15} /></span>
-        <div><small>EDIT AGENT</small><p>{sessionActive ? `我正在查看${focus}。你可以查询理由，调整时间范围，修改标题或说明，也可以删除、拆分、合并和撤销。` : '服务端编辑会话已经结束，请重新创建任务后继续编辑。'}</p></div>
+        <div><small>EDIT AGENT</small><p>我正在查看{focus}。你可以查询理由，调整时间范围，修改标题或说明，也可以删除、拆分、合并和撤销。</p></div>
       </div>
       {job.messages.map((message, index) => message.role === 'user'
         ? <div className="message user-message" key={message.message_id}><div><small>YOU</small><p>{message.content}</p></div></div>
         : <div className={`message assistant-message${busy && index === job.messages.length - 1 ? ' streaming' : ''}`} key={message.message_id}><span className="message-avatar"><Icon name="spark" size={15} /></span><div><small>EDIT AGENT</small><p>{message.content}</p></div></div>)}
-      <div className="assistant-suggestions"><span>快捷指令</span><div><button type="button" disabled={!selected || !sessionActive || busy} onClick={() => void submit('入点后移 1 秒')}>入点后移 1 秒</button><button type="button" disabled={!selected || !sessionActive || busy} onClick={() => void submit('出点前移 1 秒')}>出点前移 1 秒</button><button type="button" disabled={!sessionActive || busy} onClick={() => void submit('撤销')}>撤销</button></div></div>
+      <div className="assistant-suggestions"><span>快捷指令</span><div><button type="button" disabled={!selected || busy} onClick={() => void submit('入点后移 1 秒')}>入点后移 1 秒</button><button type="button" disabled={!selected || busy} onClick={() => void submit('出点前移 1 秒')}>出点前移 1 秒</button><button type="button" disabled={busy} onClick={() => void submit('撤销')}>撤销</button></div></div>
     </div>
     <form className="assistant-composer" aria-label="AI 编辑指令输入" onSubmit={(event) => { event.preventDefault(); void submit(input) }}>
-      <input value={input} onChange={(event) => setInput(event.target.value)} placeholder={sessionActive ? '询问高光，或描述你想进行的调整…' : '编辑会话已结束'} disabled={!sessionActive || busy} />
-      <button type="submit" aria-label="发送编辑指令" disabled={!input.trim() || !sessionActive || busy}>→</button>
+      <input value={input} onChange={(event) => setInput(event.target.value)} placeholder="询问高光，或描述你想进行的调整…" disabled={busy} />
+      <button type="submit" aria-label="发送编辑指令" disabled={!input.trim() || busy}>→</button>
     </form>
   </aside>
 }
@@ -580,6 +572,13 @@ function DeleteDialog({ job, busy, error, onCancel, onConfirm }: { job: Job; bus
 }
 
 export default function App() {
+  const [theme, setTheme] = useState<Theme>(() => {
+    try {
+      return window.localStorage.getItem('frame-theme') === 'light' ? 'light' : 'dark'
+    } catch {
+      return 'dark'
+    }
+  })
   const [view, setView] = useState<View>('workspace')
   const [jobs, setJobs] = useState<Job[]>([])
   const [job, setJob] = useState<Job | null>(null)
@@ -593,6 +592,14 @@ export default function App() {
   const [chatBusy, setChatBusy] = useState(false)
   const [playerReloadToken, setPlayerReloadToken] = useState(0)
   const uploadRequest = useRef<XMLHttpRequest | null>(null)
+
+  useEffect(() => {
+    try {
+      window.localStorage.setItem('frame-theme', theme)
+    } catch {
+      // The theme still works for the current session if storage is unavailable.
+    }
+  }, [theme])
 
   const refreshJobs = useCallback(async () => {
     try {
@@ -790,8 +797,8 @@ export default function App() {
   }
   const activeHighlight = useMemo(() => selected && job?.result?.highlights.find((item) => item.highlight_id === selected.highlight_id) || null, [job, selected])
 
-  return <div className="app-shell">
-    <WindowChrome />
+  return <div className="app-shell" data-theme={theme}>
+    <WindowChrome theme={theme} onToggleTheme={() => setTheme((current) => current === 'dark' ? 'light' : 'dark')} />
     <Sidebar view={view} onView={setView} online={online} jobs={jobs} />
     <main>{view === 'workspace'
       ? <Workspace upload={upload} job={job} selected={activeHighlight} error={error} chatBusy={chatBusy} playerReloadToken={playerReloadToken} onFile={handleFile} onSelect={setSelected} onReview={review} onChat={sendEditMessage} onCancel={() => uploadRequest.current?.abort()} onRetry={() => { setError(null); setPlayerReloadToken((value) => value + 1); void refreshJobs() }} onPlaybackError={setError} />

@@ -4,8 +4,7 @@ import re
 import shutil
 import time
 from collections.abc import AsyncIterator
-from contextlib import asynccontextmanager, suppress
-from datetime import UTC, datetime
+from contextlib import asynccontextmanager
 from pathlib import Path
 from typing import Annotated, Any
 from uuid import uuid4
@@ -25,7 +24,7 @@ from .models import (
     EditMessageResponse,
     JobResponse,
 )
-from .repository import JobRepository, utc_after, utc_now
+from .repository import JobRepository
 
 JOB_ID_PATTERN = re.compile(r"^job_[A-Za-z0-9_-]{8,48}$")
 ALLOWED_EXTENSIONS = {".mp4", ".mov", ".mkv", ".webm", ".avi", ".m4v"}
@@ -84,23 +83,6 @@ def purge_job(settings: Settings, repository: JobRepository, job_id: str) -> Non
         shutil.rmtree(tombstone)
 
 
-def purge_expired_jobs(settings: Settings, repository: JobRepository) -> None:
-    for job_id in repository.list_expired(
-        utc_now(),
-        utc_after(-settings.orphan_job_ttl_sec),
-    ):
-        try:
-            purge_job(settings, repository, job_id)
-        except (JobFilesLockedError, OSError):
-            continue
-
-
-async def cleanup_loop(settings: Settings, repository: JobRepository) -> None:
-    while True:
-        await asyncio.sleep(settings.cleanup_interval_sec)
-        await asyncio.to_thread(purge_expired_jobs, settings, repository)
-
-
 def create_app(
     settings: Settings | None = None,
     repository: JobRepository | None = None,
@@ -116,15 +98,10 @@ def create_app(
     async def lifespan(application: FastAPI) -> AsyncIterator[None]:
         app_settings.jobs_dir.mkdir(parents=True, exist_ok=True)
         app_repository.initialize()
-        purge_expired_jobs(app_settings, app_repository)
-        cleanup_task = asyncio.create_task(cleanup_loop(app_settings, app_repository))
         application.state.settings = app_settings
         application.state.repository = app_repository
         application.state.runner = app_runner
         yield
-        cleanup_task.cancel()
-        with suppress(asyncio.CancelledError):
-            await cleanup_task
         shutdown = getattr(app_runner, "shutdown", None)
         if shutdown:
             shutdown()
@@ -201,7 +178,6 @@ def create_app(
 
     @application.get("/api/jobs", response_model=list[JobResponse])
     def list_jobs(limit: int = 50) -> list[JobResponse]:
-        purge_expired_jobs(app_settings, app_repository)
         safe_limit = max(1, min(limit, 100))
         return [serialize_job(row) for row in app_repository.list(safe_limit)]
 
@@ -230,7 +206,6 @@ def create_app(
             size_bytes=request.size_bytes,
             language=request.language,
             result=request.result.model_dump(mode="json"),
-            session_expires_at=utc_after(app_settings.edit_session_ttl_sec),
         )
         return serialize_job(row)
 
@@ -279,21 +254,14 @@ def create_app(
             )
         except ConversationAgentError as error:
             raise HTTPException(status_code=502, detail=str(error)) from error
-        expires_at = utc_after(app_settings.edit_session_ttl_sec)
         if outcome.undo:
             undone = app_repository.undo_result(
                 job_id,
                 expected_revision=request.revision,
-                session_expires_at=expires_at,
             )
             if undone is False:
                 raise HTTPException(status_code=409, detail="结果版本已更新，请重新载入后再编辑")
             if undone is None:
-                app_repository.touch_session(
-                    job_id,
-                    expected_revision=request.revision,
-                    session_expires_at=expires_at,
-                )
                 reply = "没有可以撤销的高光修改。"
                 changed = False
             else:
@@ -304,31 +272,25 @@ def create_app(
                 job_id,
                 outcome.result.model_dump(mode="json"),
                 expected_revision=request.revision,
-                session_expires_at=expires_at,
             )
             if not replaced:
                 raise HTTPException(status_code=409, detail="结果版本已更新，请重新载入后再编辑")
             reply = outcome.reply
             changed = True
         else:
-            touched = app_repository.touch_session(
-                job_id,
-                expected_revision=request.revision,
-                session_expires_at=expires_at,
-            )
-            if not touched:
-                raise HTTPException(status_code=409, detail="结果版本已更新，请重新载入后再编辑")
             reply = outcome.reply
             changed = False
 
         resulting_revision = request.revision + (1 if changed else 0)
-        app_repository.append_conversation(
+        appended = app_repository.append_conversation(
             job_id,
             expected_revision=resulting_revision,
             user_message=request.message,
             assistant_reply=reply,
             action=outcome.action,
         )
+        if not appended:
+            raise HTTPException(status_code=409, detail="结果版本已更新，请重新载入后再编辑")
 
         return EditMessageResponse(
             job=serialize_job(require_job(app_repository, job_id)),
@@ -420,8 +382,6 @@ def source_media_type(source_path: Path, declared_type: str | None) -> str:
 def validate_edit_request(row: dict[str, Any], request: EditMessageRequest) -> None:
     if row["status"] != "completed":
         raise HTTPException(status_code=409, detail="任务尚未完成，不能编辑高光")
-    if not row.get("session_expires_at") or _is_expired(row["session_expires_at"]):
-        raise HTTPException(status_code=410, detail="编辑会话已结束，本地结果仍可继续审阅")
     if row["revision"] != request.revision:
         raise HTTPException(status_code=409, detail="结果版本已更新，请重新载入后再编辑")
 
@@ -453,16 +413,10 @@ def serialize_job(row: dict[str, Any]) -> JobResponse:
         language=row["language"],
         created_at=row["created_at"],
         updated_at=row["updated_at"],
-        session_expires_at=row.get("session_expires_at"),
         revision=row.get("revision", 0),
         source_url=(f"/api/jobs/{row['job_id']}/source" if row.get("stored_name") else None),
         error_message=row["error_message"],
         result=result,
     )
-
-
-def _is_expired(value: str) -> bool:
-    return datetime.fromisoformat(value) <= datetime.now(UTC)
-
 
 app = create_app()
