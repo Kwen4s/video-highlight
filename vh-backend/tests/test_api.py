@@ -1,3 +1,4 @@
+import json
 from datetime import UTC, datetime, timedelta
 
 from fastapi.testclient import TestClient
@@ -219,6 +220,34 @@ def test_result_contains_only_intervals_and_edit_session_is_versioned(tmp_path) 
             json={"message": "撤销", "revision": 1},
         )
         assert stale.status_code == 409
+
+
+def test_message_stream_emits_incremental_reply_and_final_job(tmp_path) -> None:
+    client, settings, repository, _runner = make_client(tmp_path)
+
+    with client:
+        create_completed_job(settings, repository)
+        response = client.post(
+            "/api/jobs/job_abcdefgh/messages/stream",
+            json={
+                "message": "入点后移 1 秒",
+                "revision": 0,
+                "selected_highlight_id": "hl_1",
+            },
+        )
+
+        assert response.status_code == 200
+        assert response.headers["content-type"].startswith("application/x-ndjson")
+        events = [json.loads(line) for line in response.text.splitlines()]
+        assert events[0] == {"type": "start"}
+        assert "".join(
+            event["delta"] for event in events if event["type"] == "delta"
+        )
+        completed = events[-1]
+        assert completed["type"] == "complete"
+        assert completed["changed"] is True
+        assert completed["job"]["revision"] == 1
+        assert completed["job"]["result"]["highlights"][0]["start_sec"] == 3
 
 
 def test_expired_session_rejects_edits_but_local_result_can_survive(tmp_path) -> None:

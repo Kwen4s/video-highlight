@@ -5,6 +5,8 @@ const API_BASE = (import.meta.env.VITE_API_BASE_URL?.trim() || 'http://localhost
 const API_ADDRESS = API_BASE.replace(/^https?:\/\//, '')
 const VIDEO_EXTENSIONS = ['.mp4', '.mov', '.mkv', '.webm', '.avi', '.m4v']
 const DEMO_JOB_IDS = new Set(['job_demo_citypulse', 'job_demo_launchfilm'])
+const MESSAGE_CHUNK_SIZE = 4
+const MESSAGE_CHUNK_DELAY_MS = 20
 
 type View = 'workspace' | 'library'
 type JobStatus = 'queued' | 'processing' | 'completed' | 'failed'
@@ -54,11 +56,17 @@ type ChatMessage = {
 
 type RemoteJob = Omit<Job, 'source_url' | 'messages'>
 
-type EditMessageResponse = {
+type EditMessageStreamResult = {
   job: RemoteJob
   reply: string
   changed: boolean
 }
+
+type EditMessageStreamEvent =
+  | { type: 'start' }
+  | { type: 'delta'; delta: string }
+  | { type: 'complete'; job: RemoteJob; changed: boolean }
+  | { type: 'error'; status: number; detail: string }
 
 type UploadState = {
   phase: 'idle' | 'saving' | 'uploading'
@@ -114,6 +122,81 @@ async function requestEmpty(path: string, init?: RequestInit): Promise<void> {
     const payload = await response.json().catch(() => null) as { detail?: string } | null
     throw new Error(payload?.detail || `请求失败（${response.status}）`)
   }
+}
+
+async function requestMessageStream(
+  path: string,
+  payload: Record<string, unknown>,
+  onDelta: (reply: string) => void,
+): Promise<EditMessageStreamResult> {
+  let response: Response
+  try {
+    response = await fetch(`${API_BASE}${path}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    })
+  } catch {
+    throw new Error(`无法连接后端服务（${API_ADDRESS}），请检查 API 地址、网络和后端状态`)
+  }
+  if (!response.ok) {
+    const error = await response.json().catch(() => null) as { detail?: string } | null
+    if (response.status === 404 && error?.detail === 'Not Found' && path.endsWith('/stream')) {
+      const fallback = await requestJson<EditMessageStreamResult>(path.slice(0, -'/stream'.length), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      })
+      let visibleReply = ''
+      for (let index = 0; index < fallback.reply.length; index += MESSAGE_CHUNK_SIZE) {
+        visibleReply += fallback.reply.slice(index, index + MESSAGE_CHUNK_SIZE)
+        onDelta(visibleReply)
+        await new Promise<void>((resolve) => window.setTimeout(resolve, MESSAGE_CHUNK_DELAY_MS))
+      }
+      return fallback
+    }
+    throw new Error(error?.detail || `请求失败（${response.status}）`)
+  }
+  if (!response.body) throw new Error('后端没有返回可读取的流式响应')
+
+  const reader = response.body.getReader()
+  const decoder = new TextDecoder()
+  let buffer = ''
+  let reply = ''
+  let completed: Extract<EditMessageStreamEvent, { type: 'complete' }> | null = null
+
+  const consume = (
+    line: string,
+  ): Extract<EditMessageStreamEvent, { type: 'complete' }> | null => {
+    if (!line.trim()) return null
+    let event: EditMessageStreamEvent
+    try {
+      event = JSON.parse(line) as EditMessageStreamEvent
+    } catch {
+      throw new Error('后端返回了无效的流式消息')
+    }
+    if (event.type === 'delta') {
+      reply += event.delta
+      onDelta(reply)
+    } else if (event.type === 'complete') {
+      return event
+    } else if (event.type === 'error') {
+      throw new Error(event.detail)
+    }
+    return null
+  }
+
+  while (true) {
+    const { done, value } = await reader.read()
+    buffer += decoder.decode(value, { stream: !done })
+    const lines = buffer.split('\n')
+    buffer = lines.pop() || ''
+    for (const line of lines) completed = consume(line) || completed
+    if (done) break
+  }
+  completed = consume(buffer) || completed
+  if (!completed) throw new Error('流式响应在完成前意外结束')
+  return { job: completed.job, changed: completed.changed, reply }
 }
 
 function uploadVideo(
@@ -369,21 +452,29 @@ function HighlightAssistant({ job, selected, busy, onSend }: { job: Job; selecte
   const focus = selected ? `「${selected.description}」` : '完整原片'
   const [input, setInput] = useState('')
   const [now, setNow] = useState(Date.now())
+  const threadRef = useRef<HTMLDivElement>(null)
+  const latestMessage = job.messages[job.messages.length - 1]
   useEffect(() => {
     const timer = window.setInterval(() => setNow(Date.now()), 30_000)
     return () => window.clearInterval(timer)
   }, [])
+  useEffect(() => {
+    const frame = window.requestAnimationFrame(() => {
+      if (threadRef.current) threadRef.current.scrollTop = threadRef.current.scrollHeight
+    })
+    return () => window.cancelAnimationFrame(frame)
+  }, [job.messages.length, latestMessage?.content])
   const expiresAt = job.session_expires_at ? new Date(job.session_expires_at).getTime() : 0
   const sessionActive = expiresAt > now
   const remainingMinutes = Math.max(0, Math.ceil((expiresAt - now) / 60_000))
   const submit = async (value: string) => {
     const message = value.trim()
     if (!message || busy || !sessionActive) return
+    setInput('')
     try {
       await onSend(message)
-      setInput('')
     } catch {
-      // The parent displays the API error and keeps the draft for retry.
+      setInput(message)
     }
   }
   return <aside className="assistant-panel">
@@ -391,15 +482,15 @@ function HighlightAssistant({ job, selected, busy, onSend }: { job: Job; selecte
       <div><p className="overline">AI EDIT ASSISTANT</p><h2>高光编辑助手</h2></div>
       <span className={`assistant-state ${sessionActive ? '' : 'expired'}`}><i />{busy ? '处理中' : sessionActive ? `${remainingMinutes} 分钟` : '会话结束'}</span>
     </div>
-    <div className="assistant-thread" role="log" aria-label="高光编辑助手对话">
+    <div ref={threadRef} className="assistant-thread" role="log" aria-label="高光编辑助手对话">
       <div className="assistant-context"><span>当前上下文</span><b>{focus}</b><small>{job.result?.highlights.length || 0} 个高光候选已载入</small></div>
       <div className="message assistant-message">
         <span className="message-avatar"><Icon name="spark" size={15} /></span>
         <div><small>EDIT AGENT</small><p>{sessionActive ? `我正在查看${focus}。你可以查询理由，调整时间范围，修改标题或说明，也可以删除、拆分、合并和撤销。` : '服务端临时会话已经结束。本地原片、结果和复核记录不受影响，仍可继续审阅。'}</p></div>
       </div>
-      {job.messages.map((message) => message.role === 'user'
+      {job.messages.map((message, index) => message.role === 'user'
         ? <div className="message user-message" key={message.message_id}><div><small>YOU</small><p>{message.content}</p></div></div>
-        : <div className="message assistant-message" key={message.message_id}><span className="message-avatar"><Icon name="spark" size={15} /></span><div><small>EDIT AGENT</small><p>{message.content}</p></div></div>)}
+        : <div className={`message assistant-message${busy && index === job.messages.length - 1 ? ' streaming' : ''}`} key={message.message_id}><span className="message-avatar"><Icon name="spark" size={15} /></span><div><small>EDIT AGENT</small><p>{message.content}</p></div></div>)}
       <div className="assistant-suggestions"><span>快捷指令</span><div><button type="button" disabled={!selected || !sessionActive || busy} onClick={() => void submit('入点后移 1 秒')}>入点后移 1 秒</button><button type="button" disabled={!selected || !sessionActive || busy} onClick={() => void submit('出点前移 1 秒')}>出点前移 1 秒</button><button type="button" disabled={!sessionActive || busy} onClick={() => void submit('撤销')}>撤销</button></div></div>
     </div>
     <form className="assistant-composer" aria-label="AI 编辑指令输入" onSubmit={(event) => { event.preventDefault(); void submit(input) }}>
@@ -411,8 +502,9 @@ function HighlightAssistant({ job, selected, busy, onSend }: { job: Job; selecte
 
 function Workspace({ upload, job, selected, error, chatBusy, onFile, onSelect, onReview, onChat, onCancel, onRetry }: { upload: UploadState; job: Job | null; selected: Highlight | null; error: string | null; chatBusy: boolean; onFile: (file: File) => void; onSelect: (item: Highlight | null) => void; onReview: (item: Highlight, status: ReviewStatus) => void; onChat: (message: string) => Promise<void>; onCancel: () => void; onRetry: () => void }) {
   const busy = upload.phase !== 'idle' || job?.status === 'queued' || job?.status === 'processing'
-  return <div className="view workspace-view">
-    <header className="view-header"><div><p className="overline">LOCAL VIDEO INTELLIGENCE</p><h1>从原片到值得留下的一刻。</h1><p>导入视频，后台完成保存与高光提取，再由你做最后判断。</p></div><UploadDropzone compact onFile={onFile} /></header>
+  const reviewing = job?.status === 'completed'
+  return <div className={`view workspace-view${reviewing ? ' task-review' : ''}`}>
+    {!reviewing && <header className="view-header"><div><p className="overline">LOCAL VIDEO INTELLIGENCE</p><h1>高光提取</h1><p>导入视频，后台完成保存与高光提取，再由你做最后判断。</p></div><UploadDropzone compact onFile={onFile} /></header>}
     {error && <div className="error-banner"><span><Icon name="close" size={16} /></span><div><b>流程没有完成</b><p>{error}</p></div><button onClick={onRetry}><Icon name="retry" size={15} />重新载入</button></div>}
     {!job && upload.phase === 'idle' && <UploadDropzone onFile={onFile} />}
     {busy && <ProgressPanel upload={upload} job={job} onCancel={onCancel} />}
@@ -592,6 +684,7 @@ export default function App() {
 
   const sendEditMessage = async (message: string) => {
     if (!job) return
+    const currentJob = job
     setChatBusy(true)
     setError(null)
     const userMessage: ChatMessage = {
@@ -600,26 +693,43 @@ export default function App() {
       content: message,
       created_at: new Date().toISOString(),
     }
+    const assistantMessage: ChatMessage = {
+      message_id: `msg_${crypto.randomUUID()}`,
+      role: 'assistant',
+      content: '',
+      created_at: new Date().toISOString(),
+    }
+    setJob({
+      ...currentJob,
+      messages: [...currentJob.messages, userMessage, assistantMessage],
+    })
     try {
-      const response = await requestJson<EditMessageResponse>(`/api/jobs/${job.job_id}/messages`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
+      const response = await requestMessageStream(
+        `/api/jobs/${currentJob.job_id}/messages/stream`,
+        {
           message,
-          revision: job.revision,
+          revision: currentJob.revision,
           selected_highlight_id: selected?.highlight_id || null,
-        }),
+        },
+        (reply) => setJob((active) => active?.job_id === currentJob.job_id ? {
+          ...active,
+          messages: active.messages.map((item) => item.message_id === assistantMessage.message_id
+            ? { ...item, content: reply }
+            : item),
+        } : active),
+      )
+      const merged = mergeRemoteJob(currentJob, response.job)
+      await persistJob({
+        ...merged,
+        messages: [
+          ...currentJob.messages,
+          userMessage,
+          { ...assistantMessage, content: response.reply },
+        ],
       })
-      const assistantMessage: ChatMessage = {
-        message_id: `msg_${crypto.randomUUID()}`,
-        role: 'assistant',
-        content: response.reply,
-        created_at: new Date().toISOString(),
-      }
-      const merged = mergeRemoteJob(job, response.job)
-      await persistJob({ ...merged, messages: [...job.messages, userMessage, assistantMessage] })
       setOnline(true)
     } catch (reason) {
+      setJob((active) => active?.job_id === currentJob.job_id ? currentJob : active)
       setError(reason instanceof Error ? reason.message : '高光编辑失败')
       throw reason
     } finally {

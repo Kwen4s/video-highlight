@@ -1,4 +1,5 @@
 import asyncio
+import json
 import re
 import shutil
 import time
@@ -11,7 +12,7 @@ from uuid import uuid4
 
 from fastapi import FastAPI, File, Form, HTTPException, UploadFile, status
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import Response
+from fastapi.responses import Response, StreamingResponse
 
 from .agent import AgentJobRunner
 from .config import Settings
@@ -31,6 +32,8 @@ ALLOWED_EXTENSIONS = {".mp4", ".mov", ".mkv", ".webm", ".avi", ".m4v"}
 CHUNK_SIZE = 1024 * 1024
 DELETE_RETRY_DELAYS_SEC = (0.0, 0.1, 0.25, 0.5, 1.0)
 DEMO_JOB_IDS = frozenset({"job_demo_citypulse", "job_demo_launchfilm"})
+STREAM_REPLY_CHUNK_SIZE = 4
+STREAM_REPLY_DELAY_SEC = 0.02
 
 
 class JobFilesLockedError(RuntimeError):
@@ -233,12 +236,7 @@ def create_app(
     )
     def edit_job(job_id: str, request: EditMessageRequest) -> EditMessageResponse:
         row = require_job(app_repository, job_id)
-        if row["status"] != "completed":
-            raise HTTPException(status_code=409, detail="任务尚未完成，不能编辑高光")
-        if not row.get("session_expires_at") or _is_expired(row["session_expires_at"]):
-            raise HTTPException(status_code=410, detail="编辑会话已结束，本地结果仍可继续审阅")
-        if row["revision"] != request.revision:
-            raise HTTPException(status_code=409, detail="结果版本已更新，请重新载入后再编辑")
+        validate_edit_request(row, request)
 
         conversation = app_repository.get_conversation(job_id)
         try:
@@ -307,6 +305,55 @@ def create_app(
             changed=changed,
         )
 
+    @application.post("/api/jobs/{job_id}/messages/stream")
+    async def stream_edit_job(
+        job_id: str,
+        request: EditMessageRequest,
+    ) -> StreamingResponse:
+        validate_edit_request(require_job(app_repository, job_id), request)
+
+        async def events() -> AsyncIterator[bytes]:
+            yield encode_stream_event({"type": "start"})
+            try:
+                response = await asyncio.to_thread(edit_job, job_id, request)
+            except HTTPException as error:
+                detail = error.detail if isinstance(error.detail, str) else "高光编辑失败"
+                yield encode_stream_event(
+                    {"type": "error", "status": error.status_code, "detail": detail}
+                )
+                return
+            except Exception:
+                yield encode_stream_event(
+                    {"type": "error", "status": 500, "detail": "高光编辑失败，请稍后重试"}
+                )
+                return
+
+            for index in range(0, len(response.reply), STREAM_REPLY_CHUNK_SIZE):
+                yield encode_stream_event(
+                    {
+                        "type": "delta",
+                        "delta": response.reply[index : index + STREAM_REPLY_CHUNK_SIZE],
+                    }
+                )
+                await asyncio.sleep(STREAM_REPLY_DELAY_SEC)
+
+            yield encode_stream_event(
+                {
+                    "type": "complete",
+                    "job": response.job.model_dump(mode="json"),
+                    "changed": response.changed,
+                }
+            )
+
+        return StreamingResponse(
+            events(),
+            media_type="application/x-ndjson",
+            headers={
+                "Cache-Control": "no-cache, no-transform",
+                "X-Accel-Buffering": "no",
+            },
+        )
+
     @application.delete("/api/jobs/{job_id}", status_code=status.HTTP_204_NO_CONTENT)
     def delete_job(job_id: str) -> Response:
         row = require_job(app_repository, job_id)
@@ -331,6 +378,21 @@ def require_job(repository: JobRepository, job_id: str) -> dict[str, Any]:
     if row is None:
         raise HTTPException(status_code=404, detail="临时任务不存在或已清理")
     return row
+
+
+def validate_edit_request(row: dict[str, Any], request: EditMessageRequest) -> None:
+    if row["status"] != "completed":
+        raise HTTPException(status_code=409, detail="任务尚未完成，不能编辑高光")
+    if not row.get("session_expires_at") or _is_expired(row["session_expires_at"]):
+        raise HTTPException(status_code=410, detail="编辑会话已结束，本地结果仍可继续审阅")
+    if row["revision"] != request.revision:
+        raise HTTPException(status_code=409, detail="结果版本已更新，请重新载入后再编辑")
+
+
+def encode_stream_event(payload: dict[str, Any]) -> bytes:
+    return (json.dumps(payload, ensure_ascii=False, separators=(",", ":")) + "\n").encode(
+        "utf-8"
+    )
 
 
 def parse_result(row: dict[str, Any]) -> DetectionResult:

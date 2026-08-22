@@ -48,7 +48,7 @@ uv sync --extra enhanced
 随后启动后端：
 
 ```powershell
-cd ..\vh-backend
+cd vh-backend
 Copy-Item .env.example .env
 $env:UV_DEFAULT_INDEX = "https://pypi.tuna.tsinghua.edu.cn/simple"
 uv sync --group dev
