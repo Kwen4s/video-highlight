@@ -1,10 +1,9 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type { DragEvent, ReactNode, SVGProps } from 'react'
 
-const API_BASE = (import.meta.env.VITE_API_BASE_URL?.trim() || 'http://localhost:8000').replace(/\/+$/, '')
+const API_BASE = (import.meta.env.VITE_API_BASE_URL?.trim() || 'http://122.193.22.119:8777').replace(/\/+$/, '')
 const API_ADDRESS = API_BASE.replace(/^https?:\/\//, '')
 const VIDEO_EXTENSIONS = ['.mp4', '.mov', '.mkv', '.webm', '.avi', '.m4v']
-const DEMO_JOB_IDS = new Set(['job_demo_citypulse', 'job_demo_launchfilm'])
 const MESSAGE_CHUNK_SIZE = 4
 const MESSAGE_CHUNK_DELAY_MS = 20
 
@@ -55,6 +54,14 @@ type ChatMessage = {
 }
 
 type RemoteJob = Omit<Job, 'source_url' | 'messages'>
+
+function sourceUrl(jobId: string) {
+  return `${API_BASE}/api/jobs/${encodeURIComponent(jobId)}/source`
+}
+
+function withSourceUrl(job: RemoteJob): Job {
+  return { ...job, source_url: sourceUrl(job.job_id), messages: [] }
+}
 
 type EditMessageStreamResult = {
   job: RemoteJob
@@ -248,7 +255,7 @@ function mergeRemoteJob(local: Job, remote: RemoteJob): Job {
       }
     }),
   } : null
-  return { ...local, ...remote, result, source_url: local.source_url, messages: local.messages }
+  return { ...local, ...remote, result, source_url: sourceUrl(remote.job_id), messages: local.messages }
 }
 
 function createJobId() {
@@ -568,14 +575,10 @@ export default function App() {
       return []
     }
     try {
-      const records = await window.localLibrary.listJobs<Job>()
+      const remoteJobs = await requestJson<RemoteJob[]>('/api/jobs')
+      const records = remoteJobs.map(withSourceUrl)
       setJobs(records)
-      try {
-        await requestJson<{ status: string }>('/health')
-        setOnline(true)
-      } catch {
-        setOnline(false)
-      }
+      setOnline(true)
       return records
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : '本地任务库读取失败')
@@ -585,7 +588,7 @@ export default function App() {
 
   const persistJob = useCallback(async (record: Job) => {
     if (!window.localLibrary) throw new Error('本地任务库不可用')
-    const saved = await window.localLibrary.saveJob(record)
+    const saved = record
     setJob(saved)
     setJobs((current) => {
       const exists = current.some((item) => item.job_id === saved.job_id)
@@ -630,31 +633,22 @@ export default function App() {
     if (file.size > 20 * 1024 ** 3) { setError('视频不能超过 20 GB。'); return }
     if (!window.localLibrary) { setError('请在 Electron 桌面端导入视频。'); return }
     const jobId = createJobId()
-    let localJob: Job | null = null
+    const localJob = {} as Job
     setView('workspace')
     setJob(null)
     setSelected(null)
     setError(null)
-    setUpload({ phase: 'saving', progress: 0, fileName: file.name })
+    setUpload({ phase: 'uploading', progress: 0, fileName: file.name })
     try {
-      localJob = await window.localLibrary.importSource<Job>(file, {
-        jobId,
-        originalName: file.name,
-        contentType: file.type,
-        language: 'zh',
-      })
-      setJob(localJob)
-      setJobs((current) => [localJob as Job, ...current])
-      setUpload({ phase: 'uploading', progress: 0, fileName: file.name })
       const created = await uploadVideo(jobId, file, (progress) => setUpload({ phase: 'uploading', progress, fileName: file.name }), (request) => { uploadRequest.current = request })
-      await persistJob(mergeRemoteJob(localJob, created))
+      await persistJob(withSourceUrl(created))
       setUpload({ phase: 'idle', progress: 0 })
       setOnline(true)
     } catch (reason) {
       setUpload({ phase: 'idle', progress: 0 })
       const message = reason instanceof Error ? reason.message : '视频导入失败'
       setError(message)
-      if (localJob) {
+      if (false && localJob) {
         await persistJob({
           ...localJob,
           status: 'failed',
@@ -742,7 +736,7 @@ export default function App() {
     setSelected(null)
     setError(null)
     setView('workspace')
-    if (!DEMO_JOB_IDS.has(record.job_id) || hasActiveSession(record) || !record.result) return
+    return
 
     setChatBusy(true)
     void requestJson<RemoteJob>(`/api/demo-jobs/${record.job_id}/session`, {
@@ -770,7 +764,6 @@ export default function App() {
     try {
       await requestEmpty(`/api/jobs/${deleteCandidate.job_id}`, { method: 'DELETE' }).catch(() => undefined)
       if (!window.localLibrary) throw new Error('本地任务库不可用')
-      await window.localLibrary.deleteJob(deleteCandidate.job_id)
       setJobs((current) => current.filter((record) => record.job_id !== deleteCandidate.job_id))
       if (job?.job_id === deleteCandidate.job_id) { setJob(null); setSelected(null) }
       setDeleteCandidate(null)

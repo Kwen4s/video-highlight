@@ -12,7 +12,7 @@ from uuid import uuid4
 
 from fastapi import FastAPI, File, Form, HTTPException, UploadFile, status
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import Response, StreamingResponse
+from fastapi.responses import FileResponse, Response, StreamingResponse
 
 from .agent import AgentJobRunner
 from .config import Settings
@@ -229,6 +229,19 @@ def create_app(
     @application.get("/api/jobs/{job_id}", response_model=JobResponse)
     def get_job(job_id: str) -> JobResponse:
         return serialize_job(require_job(app_repository, job_id))
+
+    @application.get("/api/jobs/{job_id}/source")
+    def get_job_source(job_id: str) -> FileResponse:
+        row = require_job(app_repository, job_id)
+        jobs_root = app_settings.jobs_dir.resolve()
+        source_path = (jobs_root / job_id / "source" / row["stored_name"]).resolve()
+        if source_path.parent.parent.parent != jobs_root or not source_path.is_file():
+            raise HTTPException(status_code=404, detail="视频源文件不存在")
+        return FileResponse(
+            source_path,
+            media_type=row["content_type"] or "application/octet-stream",
+            filename=row["original_name"],
+        )
 
     @application.post(
         "/api/jobs/{job_id}/messages",
