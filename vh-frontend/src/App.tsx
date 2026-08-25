@@ -81,6 +81,133 @@ type UploadState = {
   fileName?: string
 }
 
+type WorkflowNode = {
+  title: string
+  detail: string
+  topic: string
+}
+
+type WorkflowStage = {
+  code: string
+  title: string
+  subtitle: string
+  description: string
+  nodes: WorkflowNode[]
+}
+
+type WorkflowState = 'done' | 'current' | 'unknown' | 'waiting' | 'failed'
+
+type WorkflowNodeExecution = {
+  state: WorkflowState
+  label: string
+  detail: string
+}
+
+const WORKFLOW_STAGES: WorkflowStage[] = [
+  {
+    code: '01',
+    title: '源文件接入',
+    subtitle: 'INGEST / GATEWAY',
+    description: '接收桌面端上传的原始视频，在进入分析队列前完成传输进度、媒体格式和任务隔离存储检查。',
+    nodes: [
+      { title: '分片上传', detail: 'multipart 字节流 · 客户端进度回调', topic: 'upload.chunk.received' },
+      { title: '格式校验', detail: '扩展名 · MIME · 20 GB 上限', topic: 'media.guard.passed' },
+      { title: '原片落盘', detail: '任务隔离目录 · source/original', topic: 'source.committed' },
+    ],
+  },
+  {
+    code: '02',
+    title: '任务编排',
+    subtitle: 'FASTAPI / QUEUE',
+    description: '由后端创建稳定任务编号、持久化公开状态并投递分析请求，Worker 获得执行槽后开始运行 Agent。',
+    nodes: [
+      { title: '任务注册', detail: 'job_id · language · revision=0', topic: 'job.created' },
+      { title: '状态持久化', detail: 'SQLite · queued · 时间戳', topic: 'job.state.changed' },
+      { title: 'Worker 认领', detail: '单 Worker 执行队列 · 超时保护', topic: 'analysis.requested' },
+    ],
+  },
+  {
+    code: '03',
+    title: '媒体预处理',
+    subtitle: 'FFMPEG / CACHE',
+    description: '读取原片基础信息并建立内容缓存，同时生成后续视觉、语音和声音分析需要的帧序列、音轨与能量曲线。',
+    nodes: [
+      { title: '媒体探测', detail: '时长 · 编解码 · 音视频轨 · FPS', topic: 'media.probed' },
+      { title: '内容指纹', detail: '视频 fingerprint · 缓存命中检查', topic: 'cache.resolved' },
+      { title: '帧提取', detail: '1 FPS · 宽 480 px · 时间戳采样', topic: 'frames.extracted' },
+      { title: '音频提取', detail: 'PCM WAV · 每秒能量曲线', topic: 'audio.extracted' },
+    ],
+  },
+  {
+    code: '04',
+    title: '并行感知',
+    subtitle: '4-WAY FAN-OUT',
+    description: '场景、语音、字幕和声音事件四条支路并行执行，完成后统一回收到同一条带来源标记的多模态时间轴。',
+    nodes: [
+      { title: '镜头检测', detail: 'shot boundary · 场景时间段', topic: 'scenes.detected' },
+      { title: 'ASR 转写', detail: 'Faster-Whisper · VAD · beam=5', topic: 'asr.transcribed' },
+      { title: '字幕 OCR', detail: 'PP-OCRv6 · batch=8 · 置信度≥0.55', topic: 'ocr.recognized' },
+      { title: '声音事件', detail: 'SenseVoice · 情绪 · BGM/笑/哭/掌声', topic: 'audio.events.detected' },
+      { title: '时间轴对齐', detail: 'ASR + OCR 去重合并 · 来源标记', topic: 'transcript.aligned' },
+    ],
+  },
+  {
+    code: '05',
+    title: '语义融合',
+    subtitle: 'EMBEDDING / SALIENCY',
+    description: '将画面和邻近文本编码为多模态向量，融合视觉、音频、台词与场景变化，形成高光候选窗口。',
+    nodes: [
+      { title: '多模态 Embedding', detail: 'Qwen3-VL · 画面 + 邻近文本', topic: 'embedding.indexed' },
+      { title: '语义跃迁评分', detail: '相邻向量距离 · 帧级变化', topic: 'transition.scored' },
+      { title: '显著性曲线', detail: '画面 · 音量 · 台词 · 场景 · 事件融合', topic: 'saliency.composed' },
+      { title: '候选窗口', detail: '20 s 窗口 · 4 s 步长 · 分段覆盖', topic: 'candidates.generated' },
+      { title: '局部去重', detail: '候选 NMS · 最多 72 个窗口', topic: 'candidates.deduplicated' },
+    ],
+  },
+  {
+    code: '06',
+    title: '事件推理',
+    subtitle: 'MAP / JUDGE / RANK',
+    description: '把候选窗口组织成可推理的场景卡，通过证据账本、并行裁决和全局排序筛选出最终高光。',
+    nodes: [
+      { title: '语义场景卡', detail: '人物 · 动作 · 台词 · 声音证据', topic: 'scene.cards.built' },
+      { title: 'Scene Map', detail: 'VLM 并行叙事映射 · cache', topic: 'scene.map.completed' },
+      { title: 'Evidence Ledger', detail: '人物关系 · 新证据 · 未决线索', topic: 'evidence.ledger.updated' },
+      { title: 'Judge 共识', detail: '并行裁决 · 类型 · 分数 · 置信度', topic: 'judge.consensus.reached' },
+      { title: '边界精修', detail: 'setup / decisive evidence · 因果核心', topic: 'boundaries.refined' },
+      { title: '合并与排序', detail: '重叠合并 · 全局排名 · final NMS', topic: 'highlights.ranked' },
+    ],
+  },
+  {
+    code: '07',
+    title: '结果交付',
+    subtitle: 'PERSIST / REVIEW',
+    description: '校验高光结果契约，只持久化可公开字段，并将视频、高光列表和编辑能力交给人工复核工作台。',
+    nodes: [
+      { title: '契约校验', detail: 'DetectionResult schema 1.0', topic: 'result.validated' },
+      { title: '结果持久化', detail: '公开字段 · revision · source_url', topic: 'result.persisted' },
+      { title: '人工复核就绪', detail: '播放器 · 高光列表 · 编辑助手', topic: 'review.ready' },
+    ],
+  },
+]
+
+const WORKFLOW_EVENT_ROUTES = [
+  ['media.probe.requested', 'ffprobe → duration / streams / codec / has_audio'],
+  ['media.decode.fanout', 'frames.extract + audio.extract + energy.scan'],
+  ['perception.fanout', 'scene.detect | asr | ocr | audio.event'],
+  ['asr.transcribe.requested', 'language=zh · vad_filter=true · beam_size=5'],
+  ['ocr.batch.requested', 'PP-OCRv6 · subtitle region · batch_size=8'],
+  ['audio.event.requested', 'SenseVoice · VAD merge · emotion + event'],
+  ['embedding.requested', 'frame pixels + timestamp-near transcript'],
+  ['saliency.compose.requested', 'visual + audio + transcript + scene + event'],
+  ['candidate.window.requested', 'window=20s · stride=4s · coverage segmentation'],
+  ['scene.map.requested', 'semantic scene cards → parallel VLM mapping'],
+  ['judge.consensus.requested', 'evidence ledger + previous scene + candidate'],
+  ['highlight.boundary.requested', 'setup evidence + decisive evidence + saliency'],
+  ['highlight.rank.requested', 'merge → budget → listwise rank → final NMS'],
+  ['result.persist.requested', 'schema 1.0 → public result → review queue'],
+] as const
+
 type IconName =
   | 'spark' | 'upload' | 'library' | 'film' | 'check' | 'close' | 'minus'
   | 'square' | 'source' | 'retry' | 'folder' | 'trash' | 'x' | 'sun' | 'moon'
@@ -282,12 +409,28 @@ function formatTime(seconds: number) {
   return `${String(Math.floor(value / 60)).padStart(2, '0')}:${String(value % 60).padStart(2, '0')}`
 }
 
+function formatPreciseTime(seconds: number) {
+  const value = Math.max(0, seconds)
+  const minutes = Math.floor(value / 60)
+  const remainder = (value - minutes * 60).toFixed(2).padStart(5, '0')
+  return `${String(minutes).padStart(2, '0')}:${remainder}`
+}
+
 function formatDate(value: string) {
   return new Intl.DateTimeFormat('zh-CN', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }).format(new Date(value))
 }
 
 const statusCopy: Record<JobStatus, string> = {
   queued: '等待分析', processing: '正在提取', completed: '提取完成', failed: '提取失败',
+}
+
+const reviewStatusCopy: Record<ReviewStatus, string> = {
+  pending: '待复核', accepted: '已采用', rejected: '已排除', revised: '已调整',
+}
+
+const highlightTypeCopy: Record<string, string> = {
+  action: '关键行动', climax: '剧情高潮', cliffhanger: '悬念', conflict: '冲突',
+  emotion: '情绪', reveal: '信息揭示', reversal: '剧情反转',
 }
 
 function WindowChrome({ theme, onToggleTheme }: { theme: Theme; onToggleTheme: () => void }) {
@@ -345,22 +488,174 @@ function ProgressPanel({ upload, job, onCancel }: { upload: UploadState; job: Jo
   const uploading = upload.phase !== 'idle'
   const label = upload.phase === 'uploading' ? `正在上传 ${upload.progress}%` : job ? statusCopy[job.status] : ''
   const number = upload.phase === 'uploading' ? upload.progress : job?.status === 'completed' ? 100 : null
+  const internalPipelineActive = job?.status === 'processing'
+  const workflowNodeCount = WORKFLOW_STAGES.reduce((total, stage) => total + stage.nodes.length, 0)
+  const automaticStageIndex = uploading ? 0 : job?.status === 'queued' ? 1 : job?.status === 'processing' || job?.status === 'failed' ? 2 : job?.status === 'completed' ? 6 : 0
+  const [selectedWorkflowStageIndex, setSelectedWorkflowStageIndex] = useState(automaticStageIndex)
+  useEffect(() => setSelectedWorkflowStageIndex(automaticStageIndex), [upload.phase, job?.status])
+  const stageState = (stageIndex: number): WorkflowState => {
+    if (uploading) return stageIndex === 0 ? 'current' : 'waiting'
+    if (!job) return 'waiting'
+    if (job.status === 'queued') return stageIndex === 0 ? 'done' : stageIndex === 1 ? 'current' : 'waiting'
+    if (job.status === 'processing') return stageIndex < 2 ? 'done' : stageIndex === 2 ? 'current' : stageIndex < 6 ? 'unknown' : 'waiting'
+    if (job.status === 'completed') return 'done'
+    if (job.status === 'failed') return stageIndex < 2 ? 'done' : stageIndex === 2 ? 'failed' : 'waiting'
+    return 'waiting'
+  }
+  const selectedWorkflowStage = WORKFLOW_STAGES[selectedWorkflowStageIndex]
+  const selectedWorkflowState = stageState(selectedWorkflowStageIndex)
+  const confirmedStageCount = uploading ? 0 : job?.status === 'completed' ? WORKFLOW_STAGES.length : job?.status === 'queued' ? 1 : job ? 2 : 0
+  const confirmedPercent = uploading ? upload.progress : Math.round((confirmedStageCount / WORKFLOW_STAGES.length) * 100)
+  const publicProgressLabel = uploading
+    ? `${upload.progress}%`
+    : job?.status === 'completed'
+      ? '100%'
+      : job?.status === 'processing' || job?.status === 'failed'
+        ? `≥ ${confirmedPercent}%`
+        : `${confirmedPercent}%`
+  const publicProgressDetail = uploading
+    ? '客户端上传进度'
+    : `${confirmedStageCount} / ${WORKFLOW_STAGES.length} 个阶段已由 API 确认`
+  const selectedStageLabel = selectedWorkflowState === 'done'
+    ? '已确认完成'
+    : selectedWorkflowState === 'failed'
+      ? '执行中断'
+      : selectedWorkflowState === 'current'
+        ? internalPipelineActive ? 'Agent 处理中' : '进行中'
+        : selectedWorkflowState === 'unknown'
+          ? '状态未回传'
+          : '等待调度'
+  const nodeExecution = (): WorkflowNodeExecution => {
+    if (selectedWorkflowState === 'done') return {
+      state: 'done',
+      label: 'API 已确认',
+      detail: '公开任务状态已确认该阶段完成。',
+    }
+    if (selectedWorkflowState === 'failed') return {
+      state: 'failed',
+      label: '执行中断',
+      detail: job?.error_message || '后端返回 failed，公开状态无法定位到具体失败节点。',
+    }
+    if (selectedWorkflowState === 'current' && uploading) return {
+      state: 'current',
+      label: '正在上传',
+      detail: `客户端已发送 ${upload.progress}% 的源文件字节。`,
+    }
+    if (selectedWorkflowState === 'current' && job?.status === 'queued') return {
+      state: 'current',
+      label: '等待 Worker',
+      detail: '任务已创建，等待后端 Worker 认领。',
+    }
+    if (selectedWorkflowState === 'current') return {
+      state: 'current',
+      label: '状态未回传',
+      detail: '任务整体正在处理，后端暂未回传此子步骤的独立状态。',
+    }
+    if (selectedWorkflowState === 'unknown') return {
+      state: 'unknown',
+      label: '状态未回传',
+      detail: '该阶段可能等待、执行中或已完成，当前公开 API 无法进一步区分。',
+    }
+    return {
+      state: 'waiting',
+      label: '等待调度',
+      detail: '前序阶段完成后进入此步骤。',
+    }
+  }
+  const eventMessages = [
+    ...(uploading ? [{ kind: 'observed', topic: 'upload.stream.active', payload: `progress=${upload.progress}% · transport=multipart/form-data` }] : []),
+    ...(job ? [
+      { kind: 'observed', topic: 'job.created', payload: `job_id=${job.job_id} · language=${job.language} · revision=${job.revision}` },
+      { kind: 'observed', topic: 'job.state.changed', payload: `status=${job.status} · updated_at=${formatDate(job.updated_at)}` },
+    ] : []),
+    ...(internalPipelineActive ? [{ kind: 'observed', topic: 'analysis.worker.active', payload: '后端已确认 processing · Agent 内部节点按拓扑展示' }] : []),
+    ...WORKFLOW_EVENT_ROUTES.map(([topic, payload]) => ({ kind: 'route', topic, payload })),
+  ]
   return <section className={`progress-panel ${job?.status || upload.phase}`}>
-    <div className="progress-heading"><div><span className="pulse" /><div><b>{label}</b><small>{uploading ? upload.fileName : job?.original_name}</small></div></div>{upload.phase === 'uploading' && <button onClick={onCancel}><Icon name="x" size={15} />取消上传</button>}</div>
-    <div className={`progress-track ${job?.status === 'processing' || job?.status === 'queued' ? 'indeterminate' : ''}`}><i style={{ width: `${number ?? 38}%` }} /></div>
-    <div className="phase-rail">
-      <span className={upload.phase === 'uploading' ? 'current' : job ? 'done' : ''}><i>1</i>上传视频</span>
-      <span className={job ? 'done' : ''}><i>2</i>后端入队</span>
-      <span className={job?.status === 'processing' ? 'current' : job?.status === 'completed' ? 'done' : ''}><i>3</i>Agent 分析</span>
-      <span className={job?.status === 'completed' ? 'done' : ''}><i>4</i>等待复核</span>
+    <div className="progress-heading">
+      <div><span className="pulse" /><div><b>{label}</b><small>{uploading ? upload.fileName : job?.original_name}</small></div></div>
+      <div className="progress-heading-actions">
+        {job && <span>{job.job_id}</span>}
+        {upload.phase === 'uploading' && <button onClick={onCancel}><Icon name="x" size={15} />取消上传</button>}
+      </div>
     </div>
+    <div className={`progress-track ${job?.status === 'processing' || job?.status === 'queued' ? 'indeterminate' : ''}`}><i style={{ width: `${number ?? 38}%` }} /></div>
+
+    <nav className="workflow-flow" aria-label="高光提取流程">
+      {WORKFLOW_STAGES.map((stage, index) => {
+        const state = stageState(index)
+        const selected = index === selectedWorkflowStageIndex
+        const stateLabel = state === 'done' ? '已完成' : state === 'current' ? '处理中' : state === 'failed' ? '已中断' : state === 'unknown' ? '状态未回传' : '等待'
+        return <button
+          type="button"
+          className={`workflow-flow-step ${state}${selected ? ' selected' : ''}`}
+          key={stage.code}
+          aria-pressed={selected}
+          aria-controls="workflow-stage-detail"
+          onClick={() => setSelectedWorkflowStageIndex(index)}
+        >
+          <span className="workflow-flow-node">{stage.code}</span>
+          <b>{stage.title}</b>
+          <small>{stateLabel} · {stage.nodes.length} 个节点</small>
+        </button>
+      })}
+    </nav>
+
+    <div className="workflow-summary" aria-label="分析流程摘要">
+      <span><b>{WORKFLOW_STAGES.length}</b> 个阶段</span>
+      <span><b>{workflowNodeCount}</b> 个细节节点</span>
+      <span><b>4</b> 路并行感知</span>
+      <span><b>{WORKFLOW_EVENT_ROUTES.length}</b> 条事件路由</span>
+      <em><i /><span><b>{publicProgressLabel}</b><small>{publicProgressDetail}</small></span><strong>PUBLIC STATUS · {job?.status?.toUpperCase() || 'UPLOADING'}</strong></em>
+    </div>
+
+    <div className="workflow-layout">
+      <div className="workflow-graph" aria-label="高光分析编排拓扑">
+        <div className="workflow-section-head workflow-graph-head"><div><span>INTERACTIVE PIPELINE</span><b>点击流程节点查看完整内容</b></div><small>当前查看 · {selectedWorkflowStage.code} {selectedWorkflowStage.title}</small></div>
+        <article id="workflow-stage-detail" className={`workflow-stage-detail ${selectedWorkflowState}`} key={selectedWorkflowStage.code}>
+          <header>
+            <span>{selectedWorkflowStage.code}</span>
+            <div><small>{selectedWorkflowStage.subtitle}</small><h2>{selectedWorkflowStage.title}</h2><p>{selectedWorkflowStage.description}</p></div>
+            <aside><b>{selectedWorkflowStage.nodes.length}</b><span>执行节点</span><em>{selectedStageLabel}</em></aside>
+          </header>
+          <div className="workflow-stage-contents">
+            {selectedWorkflowStage.nodes.map((node, nodeIndex) => {
+              const execution = nodeExecution()
+              return <section className={execution.state} key={node.topic}>
+                <span>{selectedWorkflowStage.code}.{String(nodeIndex + 1).padStart(2, '0')}</span>
+                <div>
+                  <div className="workflow-node-heading"><h3>{node.title}</h3><em><i />{execution.label}</em></div>
+                  <p>{node.detail}</p>
+                </div>
+                <small className="workflow-node-note">{execution.detail}</small>
+                <code><b>EVENT</b>{node.topic}</code>
+              </section>
+            })}
+          </div>
+        </article>
+      </div>
+
+      <aside className="event-console" aria-label="事件驱动消息">
+        <div className="workflow-section-head"><div><span>EVENT BUS</span><b>编排消息</b></div><small>{eventMessages.length} messages</small></div>
+        <div className="event-legend"><span><i className="observed" />API 回执</span><span><i className="route" />拓扑路由</span></div>
+        <ol role="log" aria-live="polite">
+          {eventMessages.map((event, index) => <li className={`${event.kind}${event.kind === 'route' && internalPipelineActive ? ' active' : ''}`} key={`${event.topic}-${index}`}>
+            <span>{String(index + 1).padStart(2, '0')}</span>
+            <div><b>{event.topic}</b><small>{event.payload}</small></div>
+            <em>{event.kind === 'observed' ? 'API' : internalPipelineActive ? 'ROUTE' : 'WAIT'}</em>
+          </li>)}
+        </ol>
+      </aside>
+    </div>
+    <p className="workflow-disclosure"><span>STATUS SOURCE</span> 顶部状态来自后端公开任务 API；Agent 内部节点与事件展示的是当前编排拓扑，不读取 trace 或服务端日志，也不伪装成逐节点完成回执。</p>
   </section>
 }
 
-function Player({ job, selected, reloadToken, onSelect, onPlaybackError }: { job: Job; selected: Highlight | null; reloadToken: number; onSelect: (item: Highlight) => void; onPlaybackError: (message: string | null) => void }) {
+function Player({ job, selected, reloadToken, onSelect, onPlaybackError }: { job: Job; selected: Highlight | null; reloadToken: number; onSelect: (item: Highlight | null) => void; onPlaybackError: (message: string | null) => void }) {
   const source = job.source_url
   const highlights = job.result?.highlights || []
   const sourceDuration = job.result?.video.duration_sec || 1
+  const selectedIndex = selected ? highlights.findIndex((item) => item.highlight_id === selected.highlight_id) : -1
   const videoRef = useRef<HTMLVideoElement>(null)
   const [inspectedId, setInspectedId] = useState<string | null>(null)
   const inspectedHighlight = highlights.find((item) => item.highlight_id === inspectedId)
@@ -457,6 +752,26 @@ function Player({ job, selected, reloadToken, onSelect, onPlaybackError }: { job
         </div>
         <div className="timeline-scale"><span>00:00</span><span>悬停查看出入点 · 点击选择</span><span>{formatTime(sourceDuration)}</span></div>
       </div>
+      {selected && <section className="highlight-detail-drawer" key={selected.highlight_id} aria-labelledby="highlight-detail-title">
+        <div className="detail-identity">
+          <div><span>SELECTED HIGHLIGHT</span><b>{String(selectedIndex + 1).padStart(2, '0')}</b></div>
+          <small>{selected.highlight_id}</small>
+          <button type="button" onClick={() => onSelect(null)} aria-label="关闭高光详情" title="关闭高光详情"><Icon name="x" size={14} /></button>
+        </div>
+        <div className="detail-narrative">
+          <div className="detail-tags"><span>{selected.highlight_type}</span><b>{highlightTypeCopy[selected.highlight_type.toLowerCase()] || '事件高光'}</b><em className={selected.review_status}>{reviewStatusCopy[selected.review_status]}</em></div>
+          <h3 id="highlight-detail-title">{selected.description || '未命名高光片段'}</h3>
+          <div className="detail-reason"><span>WHY SELECTED</span><p>{selected.reason || 'Agent 未提供额外的入选理由。'}</p></div>
+        </div>
+        <div className="detail-telemetry">
+          <div className="detail-score"><span>HIGHLIGHT SCORE</span><b>{Math.round(selected.score * 100)}</b><i><span style={{ width: `${Math.round(selected.score * 100)}%` }} /></i></div>
+          <dl>
+            <div><dt>IN</dt><dd>{formatPreciseTime(selected.start_sec)}</dd></div>
+            <div><dt>OUT</dt><dd>{formatPreciseTime(selected.end_sec)}</dd></div>
+            <div><dt>DURATION</dt><dd>{(selected.end_sec - selected.start_sec).toFixed(2)} s</dd></div>
+          </dl>
+        </div>
+      </section>}
     </div>
   </section>
 }
@@ -468,7 +783,7 @@ function HighlightList({ job, selectedId, onSelect, onReview }: { job: Job; sele
     <button className={!selectedId ? 'source-row active' : 'source-row'} onClick={() => onSelect(null)}><span><Icon name="source" size={16} /></span><div><b>完整原片</b><small>返回源视频预览</small></div></button>
     <div className="highlight-scroll">
       {highlights.map((item, index) => <article key={item.highlight_id} className={selectedId === item.highlight_id ? 'highlight-card active' : 'highlight-card'}>
-        <button className="highlight-main" onClick={() => onSelect(item)}>
+        <button className="highlight-main" aria-pressed={selectedId === item.highlight_id} onClick={() => onSelect(item)}>
           <span className="clip-index">{String(index + 1).padStart(2, '0')}</span>
           <div><div className="clip-meta"><span>{item.highlight_type}</span><b>{Math.round(item.score * 100)}</b></div><h3>{item.description || '未命名高光'}</h3><p>{item.reason}</p><small>{formatTime(item.start_sec)} — {formatTime(item.end_sec)} · {Math.round(item.end_sec - item.start_sec)} 秒</small></div>
         </button>
