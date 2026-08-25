@@ -223,6 +223,32 @@ def test_listwise_compression_keeps_highest_scoring_distinct_clips() -> None:
     assert compressed.rationale == "top distinct highlights by judge score"
 
 
+def test_residual_output_overlap_is_split_at_the_midpoint() -> None:
+    from vh_agent.models import RankedHighlight
+    from vh_agent.pipeline import _resolve_output_overlaps
+
+    def highlight(identifier: str, start: float, end: float) -> RankedHighlight:
+        return RankedHighlight(
+            highlight_id=identifier,
+            start_sec=start,
+            end_sec=end,
+            score=0.8,
+            local_score=0.7,
+            judge_score=0.8,
+            highlight_type="conflict",
+            description=identifier,
+            reason="独立事件",
+            confidence=0.9,
+        )
+
+    resolved = _resolve_output_overlaps(
+        [highlight("first", 10, 30), highlight("second", 24, 40)]
+    )
+    assert len(resolved) == 2
+    assert resolved[0].end_sec == 27.0
+    assert resolved[1].start_sec == 27.0
+
+
 def test_public_result_schema_matches_frontend_contract() -> None:
     schema = DetectionResult.model_json_schema()
     highlight = schema["$defs"]["Highlight"]["properties"]

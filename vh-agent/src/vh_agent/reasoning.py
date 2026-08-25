@@ -21,7 +21,7 @@ from .models import (
 
 MAP_SYSTEM_PROMPT = """从当前 SceneCard 中抽取可核验的场景事实。只描述输入中可见或可听的内容，不裁决它是不是高光。
 
-action 记录可观察行为；claims 记录人物说出的事实性主张，主张本身是可观察言语，但其内容仍未证实；state_before 和 state_after 记录人物或观众在认知、关系、目标、风险、权力或选择上的前后状态，材料不足时填 unknown；new_evidence 记录造成变化的可观察触发；relationship_change 和 emotion 只写本场可支持的结果。
+逐一检查提交的全部关键帧；短暂动作峰值、关键物体出现和人物反应即使没有对应台词，也必须写入 action、new_evidence 或 state_after。action 记录可观察行为；claims 记录人物说出的事实性主张，主张本身是可观察言语，但其内容仍未证实；state_before 和 state_after 记录人物或观众在认知、关系、目标、风险、权力或选择上的前后状态，材料不足时填 unknown；new_evidence 记录造成变化的可观察触发；relationship_change 和 emotion 只写本场可支持的结果。
 
 event_type 使用一到两个简短场景标签，可优先使用 conflict、reversal、reveal、payoff、emotion、action、romance、cliffhanger，也可使用更准确的开放标签。salience 衡量本场对叙事推进的强度，uncertainty 衡量解释的不确定性。每项核心判断引用带时间戳的帧、字幕或声音证据。人物无法可靠识别时使用稳定的角色描述。scene_id 与输入一致。
 只输出符合指定结构的 JSON。"""
@@ -39,7 +39,7 @@ JUDGE_SYSTEM_PROMPT = """判断当前 SceneCard 是否具备独立短视频高�
 
 分别给出四项 0 到 1 的分数：evidence_grounding 衡量核心解释是否有直接证据；narrative_impact 衡量状态、风险、关系、情绪或悬念变化的强度；standalone_clarity 衡量脱离全片后是否能看懂；clipability 衡量必要铺垫、触发和结果能否在 24 秒内形成完整片段。分数只反映各维度，不围绕通过阈值打分。
 
-播放窗口覆盖最短必要铺垫、当前场的决定性证据和已有反应。当前场承接紧邻前场的同一事件时 continue_previous_scene=true。counter_evidence 记录削弱核心解释或独立成片价值的材料。
+播放窗口覆盖最短必要铺垫、当前场的决定性证据和已有反应。reaction_evidence_times_sec 只记录决定性证据之后，输入中确实出现的反应、后果或新状态；悬念尚未解决或没有可见反应时返回空列表。当前场承接紧邻前场的同一事件时 continue_previous_scene=true。counter_evidence 记录削弱核心解释或独立成片价值的材料。
 只输出符合指定结构的 JSON。"""
 
 EVIDENCE_JUDGE_PROMPT = (
@@ -117,7 +117,8 @@ JUDGE_FEW_SHOT_MESSAGES = [
                 "end_sec": 8.0,
                 "evidence": ["[1.00s] 旧状态 Q", "[5.00s] 证据 E", "[7.00s] 新状态"],
                 "setup_evidence_times_sec": [1.0],
-                "decisive_evidence_times_sec": [5.0, 7.0],
+                "decisive_evidence_times_sec": [5.0],
+                "reaction_evidence_times_sec": [7.0],
                 "counter_evidence": [],
                 "continue_previous_scene": False,
             },
@@ -145,6 +146,7 @@ JUDGE_FEW_SHOT_MESSAGES = [
                 "evidence": ["[3.00s ASR] 角色甲主张 P"],
                 "setup_evidence_times_sec": [],
                 "decisive_evidence_times_sec": [],
+                "reaction_evidence_times_sec": [],
                 "counter_evidence": ["没有证据或可见状态变化"],
                 "continue_previous_scene": False,
             },
@@ -155,13 +157,14 @@ JUDGE_FEW_SHOT_MESSAGES = [
 
 
 def scene_map_request_fingerprint(settings: Settings, video: VideoInfo, scene: SceneCard) -> str:
+    frame_samples = _uniform_frame_samples(scene.frame_samples, 6)
     frame_files = [
         {
             "path": str(frame.path),
             "size": frame.path.stat().st_size,
             "mtime_ns": frame.path.stat().st_mtime_ns,
         }
-        for frame in scene.frame_samples[:3]
+        for frame in frame_samples
     ]
     payload = {
         "provider": settings.reasoning_provider,
@@ -172,7 +175,7 @@ def scene_map_request_fingerprint(settings: Settings, video: VideoInfo, scene: S
         "user_prompt": _scene_map_prompt(video, scene),
         "scene": scene.model_dump(mode="json"),
         "frame_files": frame_files,
-        "max_frames": 3,
+        "max_frames": 6,
         "detail": "low",
     }
     encoded = json.dumps(payload, ensure_ascii=False, sort_keys=True).encode()
@@ -205,7 +208,7 @@ class OpenAIReasoner:
                         "content": _multimodal_content(
                             scene,
                             _scene_map_prompt(video, scene),
-                            max_frames=3,
+                            max_frames=6,
                             detail="low",
                         ),
                     },
@@ -377,22 +380,31 @@ class OpenAIReasoner:
         messages: list[dict[str, object]],
         max_tokens: int,
     ) -> dict[str, object]:
-        response = self.client.chat.completions.create(
-            model=model,
-            messages=messages,
-            temperature=0,
-            max_tokens=max_tokens,
-            response_format={"type": "json_object"},
-        )
-        content = response.choices[0].message.content
-        if not content:
-            usage = response.usage
-            raise ValueError(
-                "Empty model completion: "
-                f"model={model}, finish_reason={response.choices[0].finish_reason}, "
-                f"completion_tokens={getattr(usage, 'completion_tokens', None)}"
+        last_error: Exception | None = None
+        for _attempt in range(3):
+            response = self.client.chat.completions.create(
+                model=model,
+                messages=messages,
+                temperature=0,
+                max_tokens=max_tokens,
+                response_format={"type": "json_object"},
             )
-        return _decode_json_object(content)
+            content = response.choices[0].message.content
+            try:
+                if not content or not content.strip():
+                    usage = response.usage
+                    raise ValueError(
+                        "Empty model completion: "
+                        f"model={model}, finish_reason={response.choices[0].finish_reason}, "
+                        f"completion_tokens={getattr(usage, 'completion_tokens', None)}"
+                    )
+                return _decode_json_object(content)
+            except (json.JSONDecodeError, TypeError, ValueError) as exc:
+                last_error = exc
+        raise RuntimeError(
+            f"Model returned invalid JSON after 3 attempts: "
+            f"model={model}, last_error={last_error}"
+        ) from last_error
 
     def _map_output_tokens(self) -> int:
         return 3000 if self.settings.reasoning_provider == "gemini" else 1600
@@ -462,6 +474,7 @@ def _judge_prompt(
   "evidence": ["带时间戳的帧、台词或声音证据"],
   "setup_evidence_times_sec": [证明旧状态或必要铺垫的秒数，可在当前场或紧邻前场],
   "decisive_evidence_times_sec": [造成状态变化的证据秒数，须在当前场],
+  "reaction_evidence_times_sec": [决定性证据后已有反应、后果或新状态的秒数，没有则为空],
   "counter_evidence": ["与核心解释冲突、或降低独立性的证据"],
   "continue_previous_scene": false
 }}"""
@@ -471,13 +484,7 @@ def _multimodal_content(
     scene: SceneCard, prompt: str, *, max_frames: int, detail: str
 ) -> list[dict[str, object]]:
     content: list[dict[str, object]] = []
-    frame_samples = scene.frame_samples
-    if len(frame_samples) > max_frames:
-        indices = [
-            round(index * (len(frame_samples) - 1) / (max_frames - 1))
-            for index in range(max_frames)
-        ]
-        frame_samples = [frame_samples[index] for index in indices]
+    frame_samples = _uniform_frame_samples(scene.frame_samples, max_frames)
     for index, frame in enumerate(frame_samples, start=1):
         label = f"F{index:02d}  {frame.timestamp_sec:.1f}s"
         content.append({"type": "text", "text": label})
@@ -489,6 +496,18 @@ def _multimodal_content(
         )
     content.append({"type": "text", "text": prompt})
     return content
+
+
+def _uniform_frame_samples(
+    frame_samples: list[FrameSample], max_frames: int
+) -> list[FrameSample]:
+    if len(frame_samples) <= max_frames:
+        return frame_samples
+    indices = [
+        round(index * (len(frame_samples) - 1) / (max_frames - 1))
+        for index in range(max_frames)
+    ]
+    return [frame_samples[index] for index in indices]
 
 
 def _image_data_url(frame: FrameSample, label: str) -> str:
@@ -542,9 +561,7 @@ def _needs_adjudication(
         return True
     if abs(first.score - second.score) >= 0.15:
         return True
-    if first_passes and _decision_window_iou(first, second) < 0.5:
-        return True
-    return False
+    return first_passes and _decision_window_iou(first, second) < 0.5
 
 
 def _decision_window_iou(first: JudgeDecision, second: JudgeDecision) -> float:
@@ -606,6 +623,12 @@ def validate_highlight_decision(
         for time in decision.decisive_evidence_times_sec
         if scene.start_sec <= time <= scene.end_sec
     ]
+    reaction_times = [
+        time
+        for time in decision.reaction_evidence_times_sec
+        if scene.start_sec <= time <= scene.end_sec
+        and (not decisive_times or time >= min(decisive_times))
+    ]
     if not decision.evidence or not decisive_times:
         return decision.model_copy(update={"is_highlight": False})
 
@@ -617,7 +640,7 @@ def validate_highlight_decision(
         end_sec,
         floor=setup_floor,
         ceiling=scene.end_sec,
-        core_times=[*event_setup, *decisive_times],
+        core_times=[*event_setup, *decisive_times, *reaction_times],
     )
     if fitted is None:
         return decision.model_copy(update={"is_highlight": False})
@@ -633,6 +656,9 @@ def validate_highlight_decision(
             ],
             "decisive_evidence_times_sec": [
                 time for time in decisive_times if start_sec <= time <= end_sec
+            ],
+            "reaction_evidence_times_sec": [
+                time for time in reaction_times if start_sec <= time <= end_sec
             ],
         }
     )

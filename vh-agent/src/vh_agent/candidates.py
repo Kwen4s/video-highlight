@@ -532,4 +532,6 @@ def refine_boundaries(
             start = max(0.0, center - MAX_HIGHLIGHT_SEC / 2.0)
             end = min(duration_sec, start + MAX_HIGHLIGHT_SEC)
             start = max(0.0, end - MAX_HIGHLIGHT_SEC)
+    end = min(duration_sec, end)
+    start = max(0.0, min(start, end - 0.5))
     return round(start, 3), round(end, 3)

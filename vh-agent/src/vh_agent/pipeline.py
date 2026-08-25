@@ -4,6 +4,7 @@ import math
 import os
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from difflib import SequenceMatcher
+from itertools import pairwise
 from pathlib import Path
 
 import numpy as np
@@ -54,7 +55,7 @@ from .preprocessing.scene_detection import detect_scenes
 from .preprocessing.semantic_embedding import score_semantic_transitions
 from .preprocessing.sensevoice import extract_audio_events
 from .preprocessing.subtitle_ocr import extract_subtitle_segments
-from .preprocessing.transcription import FasterWhisperTranscriber
+from .preprocessing.transcription import ASR_DECODING_POLICY, FasterWhisperTranscriber
 from .reasoning import (
     OpenAIReasoner,
     build_evidence_ledgers,
@@ -73,7 +74,12 @@ class HighlightOrchestrator:
         result, _ = self.run_with_trace(task)
         return result
 
-    def run_with_trace(self, task: DetectionTask) -> tuple[DetectionResult, DetectionTrace]:
+    def run_with_trace(
+        self,
+        task: DetectionTask,
+        *,
+        retain_all_verified: bool = False,
+    ) -> tuple[DetectionResult, DetectionTrace]:
         video = probe_video(task.video_path, language=task.language)
         if not video.has_audio:
             raise ValueError("Short-drama pipeline requires an audio track")
@@ -229,21 +235,31 @@ class HighlightOrchestrator:
         verified = _attach_trailing_result(verified, mapped_scenes, decisions)
         ranked_highlights = _merge_verified_scenes(verified)
         ranking_pool = self._build_ranking_pool(ranked_highlights)
-        output_limit = _output_limit(
-            video.duration_sec,
-            self.settings.local_coverage_sec,
-            self.settings.max_highlights,
-        )
-        if len(ranking_pool) > output_limit:
-            ranking = reasoner.rank_highlights(video, ranking_pool, output_limit)
-            listwise_calls = 1
-        else:
-            ranking = _budgeted_ranking(ranking_pool, output_limit)
+        if retain_all_verified:
+            ranking = _budgeted_ranking(ranking_pool, len(ranking_pool))
             listwise_calls = 0
+        else:
+            output_limit = _output_limit(
+                video.duration_sec,
+                self.settings.local_coverage_sec,
+                self.settings.max_highlights,
+            )
+            if len(ranking_pool) > output_limit:
+                ranking = reasoner.rank_highlights(video, ranking_pool, output_limit)
+                listwise_calls = 1
+            else:
+                ranking = _budgeted_ranking(ranking_pool, output_limit)
+                listwise_calls = 0
         selected_ids = set(ranking.selected_highlight_ids)
-        ranked_highlights = sorted(
-            (item for item in ranking_pool if item.highlight_id in selected_ids),
-            key=lambda item: item.start_sec,
+        ranked_highlights = _resolve_output_overlaps(
+            [item for item in ranking_pool if item.highlight_id in selected_ids]
+        )
+        ranking = ranking.model_copy(
+            update={
+                "selected_highlight_ids": [
+                    item.highlight_id for item in ranked_highlights
+                ]
+            }
         )
         if self.settings.export_clips:
             highlights = self._export_clips(video.path, job_dir, ranked_highlights)
@@ -527,6 +543,7 @@ def _preprocess_signature(settings: Settings, language: str | None) -> str:
         "ocr_version": settings.ocr_version,
         "asr_model": str(settings.asr_model),
         "asr_compute_type": settings.asr_compute_type,
+        "asr_decoding_policy": ASR_DECODING_POLICY,
         "sensevoice_model": str(settings.sensevoice_model),
         "sensevoice_vad_model": str(settings.sensevoice_vad_model),
         "embedding_model": settings.embedding_model,
@@ -597,6 +614,27 @@ def _budgeted_ranking(highlights: list[RankedHighlight], output_limit: int) -> G
     )
 
 
+def _resolve_output_overlaps(
+    highlights: list[RankedHighlight],
+) -> list[RankedHighlight]:
+    """Split residual overlaps, keeping the stronger event if both cannot fit."""
+    ordered = sorted(highlights, key=lambda item: (item.start_sec, item.end_sec))
+    resolved: list[RankedHighlight] = []
+    for current in ordered:
+        if not resolved or current.start_sec >= resolved[-1].end_sec:
+            resolved.append(current)
+            continue
+        previous = resolved[-1]
+        split = round((current.start_sec + previous.end_sec) / 2.0, 3)
+        if split - previous.start_sec < 0.5 or current.end_sec - split < 0.5:
+            if current.judge_score > previous.judge_score:
+                resolved[-1] = current
+            continue
+        resolved[-1] = previous.model_copy(update={"end_sec": split})
+        resolved.append(current.model_copy(update={"start_sec": split}))
+    return resolved
+
+
 def _build_semantic_scenes(
     duration_sec: float,
     candidates: list[CandidateWindow],
@@ -638,9 +676,12 @@ def _build_semantic_scenes(
         span = boundary - boundaries[-1]
         if boundary != duration_sec and span < min_scene_sec:
             continue
-        if boundary != duration_sec and span < max_scene_sec:
-            if not (semantic_break(boundary) or dialogue_pause(boundary)):
-                continue
+        if (
+            boundary != duration_sec
+            and span < max_scene_sec
+            and not (semantic_break(boundary) or dialogue_pause(boundary))
+        ):
+            continue
         boundaries.append(boundary)
 
     if boundaries[-1] != duration_sec:
@@ -649,9 +690,7 @@ def _build_semantic_scenes(
         boundaries.pop(-2)
 
     cards: list[SceneCard] = []
-    for index, (start, end) in enumerate(
-        zip(boundaries[:-1], boundaries[1:], strict=True), start=1
-    ):
+    for index, (start, end) in enumerate(pairwise(boundaries), start=1):
         local = [
             candidate
             for candidate in candidates
@@ -904,5 +943,13 @@ class HighlightDetectionService:
     def detect(self, task: DetectionTask) -> DetectionResult:
         return self._orchestrator.run(task)
 
-    def detect_with_trace(self, task: DetectionTask) -> tuple[DetectionResult, DetectionTrace]:
-        return self._orchestrator.run_with_trace(task)
+    def detect_with_trace(
+        self,
+        task: DetectionTask,
+        *,
+        retain_all_verified: bool = False,
+    ) -> tuple[DetectionResult, DetectionTrace]:
+        return self._orchestrator.run_with_trace(
+            task,
+            retain_all_verified=retain_all_verified,
+        )

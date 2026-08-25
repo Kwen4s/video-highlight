@@ -54,6 +54,7 @@ def _decision(**updates: object) -> JudgeDecision:
         "evidence": ["F03 12s 证件"],
         "setup_evidence_times_sec": [10],
         "decisive_evidence_times_sec": [12],
+        "reaction_evidence_times_sec": [16],
     }
     values.update(updates)
     return JudgeDecision(**values)
@@ -72,6 +73,45 @@ def test_json_decoder_accepts_only_plain_or_single_fenced_object() -> None:
     with pytest.raises(json.JSONDecodeError):
         _decode_json_object('result:\n```json\n{"ok": true}\n```')
 
+
+
+def test_json_completion_retries_once_on_blank_content(monkeypatch) -> None:
+    contents = iter(["   ", '{"ok": true}'])
+    calls = []
+
+    class FakeCompletions:
+        def create(self, **kwargs):
+            calls.append(kwargs)
+            return SimpleNamespace(
+                choices=[
+                    SimpleNamespace(
+                        message=SimpleNamespace(content=next(contents)),
+                        finish_reason="stop",
+                    )
+                ],
+                usage=SimpleNamespace(completion_tokens=0),
+            )
+
+    class FakeClient:
+        def __init__(self, **_kwargs):
+            self.chat = SimpleNamespace(completions=FakeCompletions())
+
+    monkeypatch.setattr(reasoning_module, "OpenAI", FakeClient)
+    reasoner = OpenAIReasoner(
+        Settings(
+            VH_REASONING_PROVIDER="gemini",
+            GEMINI_API_KEY="test",
+            GEMINI_BASE_URL="https://yetoken.vip/v1",
+        )
+    )
+    payload = reasoner._json_completion(
+        model="gemini-3.7-flash",
+        messages=[{"role": "user", "content": "return JSON"}],
+        max_tokens=64,
+    )
+
+    assert payload == {"ok": True}
+    assert len(calls) == 2
 
 def test_disagreement_triggers_adjudication_only_for_material_difference() -> None:
     first = _score_decision(_decision())
@@ -211,6 +251,7 @@ def test_system_prompts_state_core_contracts() -> None:
     assert "claims" in MAP_SYSTEM_PROMPT
     assert "new_evidence" in MAP_SYSTEM_PROMPT
     assert "unknown" in MAP_SYSTEM_PROMPT
+    assert "全部关键帧" in MAP_SYSTEM_PROMPT
     assert "约束" in JUDGE_SYSTEM_PROMPT
     assert "对抗" in JUDGE_SYSTEM_PROMPT
     assert "叙事变化" in JUDGE_SYSTEM_PROMPT
@@ -219,6 +260,7 @@ def test_system_prompts_state_core_contracts() -> None:
     assert "悬念钩子" in JUDGE_SYSTEM_PROMPT
     assert "旧状态 → 决定性证据 → 新状态" in JUDGE_SYSTEM_PROMPT
     assert "continue_previous_scene" in JUDGE_SYSTEM_PROMPT
+    assert "reaction_evidence_times_sec" in JUDGE_SYSTEM_PROMPT
     assert "evidence_grounding" in JUDGE_SYSTEM_PROMPT
     assert "搜身" not in MAP_SYSTEM_PROMPT + JUDGE_SYSTEM_PROMPT
     assert "拦门" not in MAP_SYSTEM_PROMPT + JUDGE_SYSTEM_PROMPT

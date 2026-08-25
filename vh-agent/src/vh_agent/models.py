@@ -181,6 +181,7 @@ class JudgeDecision(BaseModel):
     evidence: list[str] = Field(default_factory=list)
     setup_evidence_times_sec: list[float] = Field(default_factory=list)
     decisive_evidence_times_sec: list[float] = Field(default_factory=list)
+    reaction_evidence_times_sec: list[float] = Field(default_factory=list)
     counter_evidence: list[str] = Field(default_factory=list)
     continue_previous_scene: bool = False
 
