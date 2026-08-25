@@ -1,7 +1,15 @@
 import math
 
 from vh_agent.candidates import build_candidates, refine_boundaries, timestamped_transcript
-from vh_agent.models import CandidateWindow, JudgeDecision, RankedHighlight, SceneCard, SceneSegment, TranscriptSegment, FrameSample
+from vh_agent.models import (
+    CandidateWindow,
+    FrameSample,
+    JudgeDecision,
+    RankedHighlight,
+    SceneCard,
+    SceneSegment,
+    TranscriptSegment,
+)
 
 
 def _judge(**updates) -> JudgeDecision:
@@ -54,7 +62,7 @@ def test_semantic_scene_merges_shots_until_a_real_dialogue_and_semantic_break(tm
             timestamp_sec=float(second), path=tmp_path / f"{second}.jpg",
             semantic_change_score=0.9 if second == 16 else 0.1,
         )
-        for second in range(0, 33)
+        for second in range(33)
     ]
     cards = _build_semantic_scenes(
         32,
@@ -86,7 +94,7 @@ def test_semantic_scene_splits_on_embedding_break_without_dialogue_pause(tmp_pat
             timestamp_sec=float(second), path=tmp_path / f"{second}.jpg",
             semantic_change_score=0.9 if second == 16 else 0.1,
         )
-        for second in range(0, 33)
+        for second in range(33)
     ]
     cards = _build_semantic_scenes(
         32,
@@ -258,6 +266,20 @@ def test_refined_boundary_keeps_decisive_evidence() -> None:
     start, end = refine_boundaries(5, 47, 50, [], curve, [], [42.0])
     assert start <= 42 <= end
     assert end - start <= 24
+
+
+def test_refined_boundary_never_exceeds_video_duration() -> None:
+    start, end = refine_boundaries(
+        50,
+        70,
+        70.1,
+        [TranscriptSegment(start_sec=69, end_sec=70.5, text="结尾反应")],
+        [],
+        [],
+        [69.0],
+    )
+    assert start <= 69 <= end
+    assert end == 70.1
 
 
 def test_timestamped_transcript_preserves_evidence_times() -> None:

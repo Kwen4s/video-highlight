@@ -84,7 +84,7 @@ local preprocessing
 - 事实、假设和最终决策使用不同字段，模型不得把推测写入已知事实。
 - 提示词要求结论、分项分数和可核验的证据 ID，不要求或保存模型隐藏思维链。
 - 上下文按任务检索，不把整集字幕、全部事件或历史提示词不断追加到下一次调用。
-- 模型输出必须通过 Pydantic 严格校验；校验失败即终止当前步骤，不静默补默认值或切换兜底模型。
+- 模型输出必须通过 Pydantic 严格校验；空内容或非法 JSON 使用同一模型和同一请求最多重试两次，第三次失败即终止当前步骤，不静默补默认值或切换兜底模型。
 - Prompt 只表达可推广的任务定义和判据，不写入具体失败样本的人名、台词或剧情；规则变更必须配套通用回归测试。
 
 ### Engineering Rules
@@ -111,6 +111,28 @@ local preprocessing
 
 三个阶段均已实现。第三阶段只处理已验证候选的全局相对排序、去重与数量预算，不反向改变章节 Map、Judge 或边界。
 
+### Local Highlight Model
+
+本地模型采用无 Query 的事件中心叙事转变定位。标注文件保持不变，Gemini 的剧情描述和判断理由不进入学生模型；公开输出仍只有带分数的时间段。
+
+```text
+3-frame video moment + separated ASR/OCR -> frozen Qwen3-VL-Embedding-2B
+30-second audio windows -> frozen SenseVoice encoder -> second-aligned audio states
+  -> availability-aware gated moment fusion
+  -> causal hierarchical local attention at 1s / 4s / 16s
+  -> temporally pooled scene memory
+  -> causal before / local event / bounded after + global salience
+  -> narrative transition vector
+  -> eventness peak + start/end offsets
+  -> temporal NMS
+```
+
+每一秒使用 `[t-1,t,t+1]` 三帧的 Qwen video 接口，并在文本中分开写入 Speech 与 On-screen text。音频以带重叠的 30 秒窗口提取 SenseVoice encoder hidden，再对齐到秒级；两路冻结特征按视频缓存，训练阶段只优化融合、层次时序、场景记忆、转变解码器和输出头。
+
+场景记忆只由媒体缓存中的镜头边界和时序特征池化得到。层级骨干的局部注意力、下采样和上采样均为因果计算；before 分支只能访问过去 32 秒和在当前时刻前已经结束的场景；event 分支访问 `[t-2,t+2]`；after 分支最多访问未来 8 秒。全片场景记忆仅进入显著性上下文，不进入三种状态，因此不会把未来剧情泄漏给 before。
+
+模型以 decisive anchor 为事件中心生成 eventness 热图，并在事件中心附近回归完整银标段的起止偏移。setup、decisive 与 reaction 时间只监督三个受时间掩码约束的注意力位置；反应缺失时由 learned empty state 表示。训练损失为 event focal loss、Smooth L1 + temporal IoU 边界损失和 anchor attention loss。验证集按段级 `F1@IoU 0.5/0.7` 联合选择峰值阈值与 Top-K，加载最优检查点后再固定解码测试集。
+
 
 ## Pipeline
 
@@ -130,7 +152,7 @@ video
 ```
 
 `SceneSegment` 只是镜头边界；`SceneCard` 才是一场戏或完整事件跨度，目标 8-40 秒，可跨多个镜头，最终高光仍限制在 24 秒内。局部滑窗只向 SceneCard 聚合 `local_score`，绝不作为 Judge 主输入。Scene Map 对每场生成唯一、带证据的叙事命题；Judge 只输出证据充分性、叙事影响、独立可懂性和成片完整性四项分数，总分和通过结论由代码计算。`EvidenceLedger` 由更早 Scene Map 的带时间证据观察组成，明确是未验证账本，不能混称为 Judge 已验证记忆。只有两张相邻 SceneCard 都通过 Judge、后场明确标记为前场的因果连续，且合并后不超过 24 秒时才合并出片。确定性去重后，已验证候选在输出预算内会直接保留；仅超出预算时调用全局 listwise 压缩。短视频最多输出两段。
-0.21.0 的性能优化不删减 SceneCard：PP-OCRv6 以 8 帧批量推理；镜头检测、ASR、OCR 与 SenseVoice 首次运行并行；ASR/OCR/声音事件/镜头/embedding 结果按视频指纹和预处理签名写入媒体缓存；Scene Map 按模型、完整 Prompt、SceneCard 和实际帧文件逐场缓存。模型、Prompt、帧或预处理参数变化会直接使对应缓存失效，不读取旧格式。Map 与 Judge 默认并发均为 6；最终结果仍等待全片所有场景完成，因此这些优化不改变召回范围。
+0.21.0 的性能优化不删减 SceneCard：PP-OCRv6 以 8 帧批量推理；镜头检测、ASR、OCR 与 SenseVoice 首次运行并行；ASR/OCR/声音事件/镜头/embedding 结果按视频指纹和预处理签名写入媒体缓存；Scene Map 均匀检查最多 6 张低细节关键帧，Judge 均匀检查最多 8 张高细节关键帧。Scene Map 按模型、完整 Prompt、SceneCard 和实际提交帧逐场缓存，模型、Prompt、帧或预处理参数变化会直接使对应缓存失效，不读取旧格式。Map 与 Judge 默认并发均为 6；Whisper 使用确定性贪心解码，硬字幕继续由 PP-OCRv6 校正，避免 beam search 在全量标注中接近实时地重复搜索。最终结果仍等待全片所有场景完成，因此这些优化不改变召回范围。
 
 
 ## Source Modules
@@ -140,6 +162,7 @@ video
 - `candidates.py`: 本地高召回滑窗评分和时间覆盖。
 - `reasoning.py`: OpenAI 兼容的单场 Scene Map、Judge、结构化校验和 EvidenceLedger。
 - `preprocessing/`: ffmpeg、ASR、OCR、声音事件、镜头和 embedding 适配器。
+- `highlight_model/`: 本地高光模型的编码器、数据集、网络、损失、解码和拟合流程。
 - `evaluation.py`: 测试集运行与指标计算。
 - `cli.py`: `vh` 命令行入口。
 
@@ -204,7 +227,7 @@ vh evaluate score --run-id phase3_v0_13 --include-silver
 
 ## Silver Labels
 
-`vh label run` 读取 `/data1/my_short_drama/metadata/{en,zh}/{train,test}.jsonl` 的每条视频，Map 与 Judge 均固定为 `gemini-3.7-flash`，并裁决每一个 `SceneCard`，不使用在线检测的 18 场预算。每场由证据核验 Judge 和成片 Judge 独立判断；存在实质分歧时才调用第三次仲裁。本地保留帧、ASR、OCR 与音频证据，云端只接收带时间戳的 SceneCard 证据包；yetoken 的 OpenAI 兼容接口没有可用的视频文件上传端点，因此不直传整段视频。
+`vh label run` 读取 `/data1/my_short_drama/metadata/{en,zh}/{train,test}.jsonl` 的每条视频，按时长从短到长调度。Map 与 Judge 均固定为 `gemini-3.7-flash`，并裁决每一个 `SceneCard`，不使用在线检测的 18 场召回预算或 12 段成片预算；银标保留全部已验证场景，不调用 listwise 压缩。每场由证据核验 Judge 和成片 Judge 独立判断；存在实质分歧时才调用第三次仲裁。本地保留帧、ASR、OCR 与音频证据，云端只接收带时间戳的 SceneCard 证据包；yetoken 的 OpenAI 兼容接口没有可用的视频文件上传端点，因此不直传整段视频。
 
 ```bash
 vh label run --run-id gemini37_scene_v1
@@ -218,7 +241,7 @@ annotations.jsonl    # 每条源元数据加 silver highlights，适合作为训
 errors.jsonl         # 仅失败项；下次 --resume 会重试
 ```
 
-命令默认断点续跑，保留源 metadata 不变，不导出 MP4、不写 trace，也不创建每条视频的 job 目录。每个高光包含时间边界、类型、分数、描述、证据、两次原始评分、共识置信度和 `pending` 人工复核状态。每条记录还包含全部 `scene_labels`：已裁决场景保存正负标签、共识决策和原始投票，未进入 Judge 的场景标为 `null`。空高光视频同样写入，因此负样本和难负样本不会丢失。
+命令默认断点续跑，保留源 metadata 不变，不导出 MP4、不写 trace，也不创建每条视频的 job 目录。同一 run 可以继续既有进度；新规则生成的记录带 `annotation_revision: scene_v2`，无该字段的旧记录视为 `scene_v1`。每个高光包含时间边界、类型、分数、描述、证据、两次原始评分、共识置信度和 `pending` 人工复核状态。顶层 `highlights` 保存全部去重后的验证事件，残余重叠会在相邻边界中点切开；每条记录还包含全部 `scene_labels`：已裁决场景保存正负标签、共识决策和原始投票，未进入 Judge 的场景标为 `null`。空高光视频同样写入，因此负样本和难负样本不会丢失。
 
 ## Verify
 

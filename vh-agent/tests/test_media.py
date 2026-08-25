@@ -88,3 +88,36 @@ def test_subtitle_ocr_batches_frames_without_losing_timestamps(monkeypatch, tmp_
     assert ocr.batch_sizes == [8, 1]
     assert len(segments) == 9
     assert [segment.start_sec for segment in segments] == [float(index) for index in range(9)]
+
+
+
+def test_whisper_uses_deterministic_greedy_decoding(tmp_path) -> None:
+    from types import SimpleNamespace
+
+    from vh_agent.preprocessing.transcription import FasterWhisperTranscriber
+
+    requests = []
+
+    class FakeModel:
+        def transcribe(self, audio_path, **kwargs):
+            requests.append((audio_path, kwargs))
+            return (
+                [
+                    SimpleNamespace(
+                        start=1.0,
+                        end=2.0,
+                        text="台词",
+                        avg_logprob=-0.1,
+                    )
+                ],
+                None,
+            )
+
+    transcriber = FasterWhisperTranscriber.__new__(FasterWhisperTranscriber)
+    transcriber.model = FakeModel()
+    segments = transcriber.transcribe(tmp_path / "audio.wav", "zh")
+
+    assert len(segments) == 1
+    assert requests[0][1]["beam_size"] == 1
+    assert requests[0][1]["best_of"] == 1
+    assert requests[0][1]["condition_on_previous_text"] is False

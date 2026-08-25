@@ -1,8 +1,8 @@
 """Resumable Gemini 3.7 silver-label production for the short-drama corpus."""
 
 import json
+from collections.abc import Iterable
 from pathlib import Path
-from typing import Iterable
 
 from .config import PROJECT_ROOT, Settings
 from .models import DetectionResult, DetectionTask, DetectionTrace, Highlight
@@ -12,10 +12,11 @@ DEFAULT_METADATA_DIR = Path("/data1/my_short_drama/metadata")
 DEFAULT_SILVER_DATASET_DIR = PROJECT_ROOT / "datasets" / "silver"
 SILVER_MODEL = "gemini-3.7-flash"
 SILVER_METHOD = "gemini_3_7_flash_dual_judge"
+SILVER_ANNOTATION_REVISION = "scene_v2"
 
 
 def load_metadata_records(metadata_dir: Path = DEFAULT_METADATA_DIR) -> list[dict[str, object]]:
-    """Load each source record once in a stable language/split order."""
+    """Load each source record once, shortest first for observable throughput."""
     paths = sorted(
         path
         for language in ("en", "zh")
@@ -27,7 +28,10 @@ def load_metadata_records(metadata_dir: Path = DEFAULT_METADATA_DIR) -> list[dic
         for line in path.read_text(encoding="utf-8").splitlines():
             if line.strip():
                 records.append(json.loads(line))
-    return records
+    return sorted(
+        records,
+        key=lambda record: (float(record["duration_sec"]), str(record["video_id"])),
+    )
 
 
 def run_silver_labeling(
@@ -53,13 +57,15 @@ def run_silver_labeling(
         annotations_path.write_text("", encoding="utf-8")
 
     pending = [record for record in records if str(record["video_id"]) not in completed]
-    _write_run_manifest(run_dir, records, len(completed), status="running")
+    completed_count = len(completed)
+    _write_run_manifest(run_dir, records, completed_count, status="running")
     service = HighlightDetectionService(
         Settings(
             VH_REASONING_PROVIDER="gemini",
             GEMINI_MAP_MODEL=SILVER_MODEL,
             GEMINI_JUDGE_MODEL=SILVER_MODEL,
             VH_MAX_JUDGE_CANDIDATES=10_000,
+            VH_MAX_HIGHLIGHTS=10_000,
             VH_JOB_OUTPUT_DIR=run_dir / "work",
             VH_EXPORT_CLIPS=False,
             VH_WRITE_RESULT_FILE=False,
@@ -77,9 +83,11 @@ def run_silver_labeling(
                     video_id=video_id,
                     job_id=video_id,
                     language=str(record["language"]),
-                )
+                ),
+                retain_all_verified=True,
             )
             _append_jsonl(annotations_path, _silver_record(record, result, trace))
+            completed_count += 1
         except Exception as exc:
             _append_jsonl(
                 errors_path,
@@ -91,8 +99,9 @@ def run_silver_labeling(
                 },
             )
             print(f"  failed: {type(exc).__name__}: {exc}", flush=True)
+        finally:
+            _write_run_manifest(run_dir, records, completed_count, status="running")
 
-    completed_count = len(_completed_ids(annotations_path))
     _write_run_manifest(
         run_dir,
         records,
@@ -135,6 +144,7 @@ def _silver_record(
     labeled = dict(record)
     labeled.update(
         {
+            "annotation_revision": SILVER_ANNOTATION_REVISION,
             "annotation_method": SILVER_METHOD,
             "annotation_status": "silver",
             "annotator_ids": [SILVER_MODEL],
@@ -156,6 +166,15 @@ def _silver_record(
                         "annotator_scores"
                     ],
                     "evidence": evidence_by_highlight[item.highlight_id]["evidence"],
+                    "setup_times_sec": evidence_by_highlight[item.highlight_id][
+                        "setup_times_sec"
+                    ],
+                    "decisive_times_sec": evidence_by_highlight[item.highlight_id][
+                        "decisive_times_sec"
+                    ],
+                    "reaction_times_sec": evidence_by_highlight[item.highlight_id][
+                        "reaction_times_sec"
+                    ],
                     "review_status": "pending",
                     "notes": "Consensus silver label; requires human review.",
                 }
@@ -192,7 +211,14 @@ def _highlight_evidence(item: Highlight, trace: DetectionTrace) -> dict[str, obj
         > 0
     ]
     if not matches:
-        return {"confidence": 0.0, "annotator_scores": [], "evidence": []}
+        return {
+            "confidence": 0.0,
+            "annotator_scores": [],
+            "evidence": [],
+            "setup_times_sec": [],
+            "decisive_times_sec": [],
+            "reaction_times_sec": [],
+        }
     confidence = max(match.decision.confidence for match in matches)
     scores = [vote.score for match in matches for vote in match.votes]
     evidence = list(
@@ -202,7 +228,29 @@ def _highlight_evidence(item: Highlight, trace: DetectionTrace) -> dict[str, obj
         "confidence": round(confidence, 4),
         "annotator_scores": scores,
         "evidence": evidence,
+        "setup_times_sec": _matched_anchor_times(item, matches, "setup_evidence_times_sec"),
+        "decisive_times_sec": _matched_anchor_times(
+            item, matches, "decisive_evidence_times_sec"
+        ),
+        "reaction_times_sec": _matched_anchor_times(
+            item, matches, "reaction_evidence_times_sec"
+        ),
     }
+
+
+def _matched_anchor_times(
+    highlight: Highlight,
+    matches: list,
+    field: str,
+) -> list[float]:
+    return sorted(
+        {
+            round(float(value), 3)
+            for match in matches
+            for value in getattr(match.decision, field)
+            if highlight.start_sec <= value <= highlight.end_sec
+        }
+    )
 
 
 def _scene_labels(video_id: str, trace: DetectionTrace) -> list[dict[str, object]]:
@@ -253,9 +301,13 @@ def _write_run_manifest(
     payload = {
         "run_id": run_dir.name,
         "status": status,
+        "current_annotation_revision": SILVER_ANNOTATION_REVISION,
+        "revision_policy": "records_without_annotation_revision_are_scene_v1",
         "annotation_method": SILVER_METHOD,
         "model": SILVER_MODEL,
         "judge_policy": "two_independent_votes_then_disagreement_adjudication",
+        "selection_policy": "all_verified_scenes_without_listwise_budget",
+        "ordering": "duration_ascending",
         "total_records": len(records),
         "completed_records": completed,
         "pending_records": max(len(records) - completed, 0),

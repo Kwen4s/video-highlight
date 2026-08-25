@@ -8,6 +8,9 @@ class ASRUnavailable(RuntimeError):
     pass
 
 
+ASR_DECODING_POLICY = "greedy_v1"
+
+
 class FasterWhisperTranscriber:
     def __init__(
         self,
@@ -38,8 +41,9 @@ class FasterWhisperTranscriber:
             str(audio_path),
             language=language if language in {"zh", "en"} else None,
             vad_filter=True,
-            beam_size=5,
-            condition_on_previous_text=True,
+            beam_size=1,
+            best_of=1,
+            condition_on_previous_text=False,
             word_timestamps=False,
         )
         return [
