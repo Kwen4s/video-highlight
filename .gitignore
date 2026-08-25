@@ -22,4 +22,3 @@ vh-frontend/vite.config.js
 vh-frontend/vite.config.d.ts
 vh-backend/data/
 vh-backend/runtime/
-vh-agent/datasets/silver/
