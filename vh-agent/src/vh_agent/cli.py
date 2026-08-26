@@ -153,7 +153,7 @@ def train_run(
     silver_run_id: str = typer.Option("gemini37_transition_v1", "--silver-run-id"),
     annotations: Path | None = typer.Option(None, "--annotations"),
     output_dir: Path = typer.Option(
-        Path("outputs/highlight_model/segment_quality_random_video"), "--output-dir"
+        Path("outputs/highlight_model/random_video"), "--output-dir"
     ),
     vision_model_path: Path = typer.Option(
         Path("/data1/modelscope_models/Qwen3-VL-Embedding-2B"),
@@ -177,7 +177,7 @@ def train_run(
     stage: str = typer.Option("all", "--stage", help="features, train, or all"),
     device: str = typer.Option("cuda:0", "--device"),
     feature_device: str = typer.Option("cuda:0", "--feature-device"),
-    epochs: int = typer.Option(20, "--epochs", min=1),
+    epochs: int = typer.Option(8, "--epochs", min=1),
     learning_rate: float = typer.Option(2e-4, "--learning-rate", min=1e-7),
     gradient_accumulation: int = typer.Option(4, "--gradient-accumulation", min=1),
     model_dim: int = typer.Option(512, "--model-dim", min=128),

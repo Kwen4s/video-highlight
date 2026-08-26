@@ -16,7 +16,7 @@ class HighlightModelConfig:
     stage: Literal["features", "train", "all"] = "all"
     device: str = "cuda:0"
     feature_device: str = "cuda:0"
-    epochs: int = 20
+    epochs: int = 8
     learning_rate: float = 2e-4
     weight_decay: float = 1e-2
     gradient_accumulation: int = 4
@@ -33,5 +33,6 @@ class HighlightModelConfig:
     max_before_sec: int = 32
     max_after_sec: int = 8
     nms_iou: float = 0.4
+    score_threshold: float = 0.05
     max_highlights: int = 12
     seed: int = 13

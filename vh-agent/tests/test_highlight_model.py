@@ -83,8 +83,7 @@ def test_video_split_is_seeded_and_disjoint(tmp_path: Path) -> None:
     splits = split_by_video(videos, seed=13)
 
     assert {name: len(rows) for name, rows in splits.items()} == {
-        "train": 8,
-        "val": 1,
+        "train": 9,
         "test": 1,
     }
     assert splits == split_by_video(list(reversed(videos)), seed=13)

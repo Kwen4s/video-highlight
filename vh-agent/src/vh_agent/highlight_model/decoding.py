@@ -1,10 +1,9 @@
-"""Segment decoding and drama-isolated temporal IoU metrics."""
+"""Segment decoding and temporal IoU metrics."""
 
 from __future__ import annotations
 
 from dataclasses import asdict, dataclass
 
-import numpy as np
 import torch
 
 from .dataset import SilverVideo
@@ -90,41 +89,6 @@ def segment_metrics(
     )
     return metrics
 
-
-def choose_decoder(
-    outputs: dict[str, TransitionOutput],
-    videos: list[SilverVideo],
-    nms_iou: float,
-    max_highlights: int,
-) -> tuple[float, int, dict[str, float]]:
-    best_threshold = 0.5
-    best_top_k = max_highlights
-    best_metrics: dict[str, float] = {}
-    top_k_choices = sorted(
-        {
-            value
-            for value in (1, 2, 3, 5, 8, max_highlights)
-            if value <= max_highlights
-        }
-    )
-    for top_k in top_k_choices:
-        for threshold in np.linspace(0.05, 0.8, 16):
-            predictions = {
-                video.video_id: decode_segments(
-                    outputs[video.video_id],
-                    video.duration_sec,
-                    float(threshold),
-                    nms_iou,
-                    top_k,
-                )
-                for video in videos
-            }
-            metrics = segment_metrics(predictions, videos)
-            if not best_metrics or metrics["mean_f1"] > best_metrics["mean_f1"]:
-                best_threshold = float(threshold)
-                best_top_k = top_k
-                best_metrics = metrics
-    return best_threshold, best_top_k, best_metrics
 
 
 def predictions_as_json(

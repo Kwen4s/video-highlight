@@ -110,23 +110,18 @@ def load_silver_videos(path: Path) -> list[SilverVideo]:
 
 
 def split_by_video(videos: list[SilverVideo], seed: int) -> dict[str, list[SilverVideo]]:
-    if len(videos) < 3:
-        raise ValueError("at least three videos are required")
+    if len(videos) < 2:
+        raise ValueError("at least two videos are required")
     shuffled = sorted(
         videos,
         key=lambda video: hashlib.sha256(
             f"{seed}:{video.video_id}".encode()
         ).hexdigest(),
     )
-    train_end = max(1, round(len(shuffled) * 0.8))
-    val_end = min(
-        len(shuffled) - 1,
-        max(train_end + 1, round(len(shuffled) * 0.9)),
-    )
+    train_end = min(len(shuffled) - 1, max(1, round(len(shuffled) * 0.9)))
     return {
         "train": shuffled[:train_end],
-        "val": shuffled[train_end:val_end],
-        "test": shuffled[val_end:],
+        "test": shuffled[train_end:],
     }
 
 

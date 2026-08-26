@@ -1,4 +1,4 @@
-"""Feature preparation, temporal optimization, and fixed-split evaluation."""
+"""Feature preparation, temporal optimization, and held-out test evaluation."""
 
 from __future__ import annotations
 
@@ -17,7 +17,6 @@ from torch.utils.data import DataLoader
 from .config import HighlightModelConfig
 from .dataset import EpisodeBatch, EpisodeDataset, load_silver_videos, split_by_video
 from .decoding import (
-    choose_decoder,
     decode_segments,
     predictions_as_json,
     segment_metrics,
@@ -26,7 +25,7 @@ from .encoders import FrozenMomentFeatureExtractor
 from .losses import highlight_localization_loss
 from .network import NarrativeTransitionLocalizer, TransitionOutput
 
-CHECKPOINT_SCHEMA = 3
+CHECKPOINT_SCHEMA = 4
 
 
 def fit_highlight_model(config: HighlightModelConfig) -> dict[str, Any]:
@@ -82,71 +81,31 @@ def fit_highlight_model(config: HighlightModelConfig) -> dict[str, Any]:
         eta_min=config.learning_rate * 0.05,
     )
     history: list[dict[str, Any]] = []
-    best_metric = -1.0
     for epoch in range(1, config.epochs + 1):
         train_metrics = _train_epoch(model, datasets["train"], optimizer, config, epoch)
-        validation_outputs, validation_loss = _evaluate(model, datasets["val"], config)
-        threshold, top_k, validation_metrics = choose_decoder(
-            validation_outputs,
-            splits["val"],
-            config.nms_iou,
-            config.max_highlights,
-        )
         row = {
             "epoch": epoch,
             **{f"train_{key}": value for key, value in train_metrics.items()},
-            "validation_loss": validation_loss,
-            "validation_threshold": threshold,
-            "validation_top_k": top_k,
-            **{f"validation_{key}": value for key, value in validation_metrics.items()},
             "learning_rate": optimizer.param_groups[0]["lr"],
         }
         history.append(row)
         _write_json(config.output_dir / "history.json", history)
-        _save_checkpoint(
-            model,
-            optimizer,
-            config.output_dir / "last.pt",
-            epoch,
-            threshold,
-            top_k,
-            row,
-        )
-        if validation_metrics["mean_f1"] > best_metric:
-            best_metric = validation_metrics["mean_f1"]
-            _save_checkpoint(
-                model,
-                optimizer,
-                config.output_dir / "best.pt",
-                epoch,
-                threshold,
-                top_k,
-                row,
-            )
         scheduler.step()
-        print(
-            f"epoch={epoch} train_loss={train_metrics['loss']:.4f} "
-            f"val_loss={validation_loss:.4f} val_mean_f1={validation_metrics['mean_f1']:.4f}"
-        )
+        print(f"epoch={epoch} train_loss={train_metrics['loss']:.4f}")
 
-    best = torch.load(
-        config.output_dir / "best.pt",
-        map_location=config.device,
-        weights_only=False,
+    _save_checkpoint(
+        model,
+        config.output_dir / "checkpoint.pt",
+        config.epochs,
     )
-    if best.get("schema") != CHECKPOINT_SCHEMA:
-        raise RuntimeError("best checkpoint has an incompatible schema")
-    model.load_state_dict(best["model"])
-    best_threshold = float(best["threshold"])
-    best_top_k = int(best["max_highlights"])
     test_outputs, test_loss = _evaluate(model, datasets["test"], config)
     test_predictions = {
         video.video_id: decode_segments(
             test_outputs[video.video_id],
             video.duration_sec,
-            best_threshold,
+            config.score_threshold,
             config.nms_iou,
-            best_top_k,
+            config.max_highlights,
         )
         for video in splits["test"]
     }
@@ -154,12 +113,11 @@ def fit_highlight_model(config: HighlightModelConfig) -> dict[str, Any]:
     report = {
         "schema": CHECKPOINT_SCHEMA,
         "method": "NarrativeTransitionSegmentQualityLocalizer",
-        "split": "random_video_80_10_10",
+        "split": "random_video_90_10",
         "videos": {name: len(subset) for name, subset in splits.items()},
-        "best_epoch": int(best["epoch"]),
-        "threshold": best_threshold,
-        "max_highlights": best_top_k,
-        "validation_mean_f1": best_metric,
+        "checkpoint_epoch": config.epochs,
+        "threshold": config.score_threshold,
+        "max_highlights": config.max_highlights,
         "test_loss": test_loss,
         "test": test_metrics,
     }
@@ -264,23 +222,15 @@ def _forward(
 
 def _save_checkpoint(
     model: NarrativeTransitionLocalizer,
-    optimizer: AdamW,
     path: Path,
     epoch: int,
-    threshold: float,
-    max_highlights: int,
-    metrics: dict[str, Any],
 ) -> None:
     temporary = path.with_suffix(path.suffix + ".tmp")
     torch.save(
         {
             "schema": CHECKPOINT_SCHEMA,
             "epoch": epoch,
-            "threshold": threshold,
-            "max_highlights": max_highlights,
             "model": model.state_dict(),
-            "optimizer": optimizer.state_dict(),
-            "metrics": metrics,
         },
         temporary,
     )

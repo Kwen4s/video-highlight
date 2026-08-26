@@ -131,9 +131,9 @@ local preprocessing
 
 场景记忆只由媒体缓存中的镜头边界和时序特征池化得到。层级骨干的局部注意力、下采样和上采样均为因果计算；before 分支只能访问过去 32 秒和在当前时刻前已经结束的场景；event 分支访问 `[t-2,t+2]`；after 分支最多访问未来 8 秒。全片场景记忆仅进入显著性上下文，不进入三种状态，因此不会把未来剧情泄漏给 before。
 
-模型以 decisive anchor 为事件中心生成 eventness 热图，并在其中心采样区域内密集回归完整银标段的起止偏移，避免只在真实峰值附近训练、却从预测峰读取未受监督偏移。setup、decisive 与 reaction 时间监督三个受时间掩码约束的注意力位置；它们的位置、存在性与预测边界共同进入片段质量头。训练损失包括 event focal loss、Smooth L1 + temporal IoU 边界损失、anchor attention loss、预测片段 IoU 质量损失和片段内 hard-negative 排序损失。推理分数由 eventness 与 anchor-aware segment quality 联合给出，再执行 temporal NMS。验证集报告段级 `F1@IoU 0.3/0.5/0.7`，仍按较严格的 `0.5/0.7` 均值选择阈值、Top-K 与最优 checkpoint。
+模型以 decisive anchor 为事件中心生成 eventness 热图，并在其中心采样区域内密集回归完整银标段的起止偏移，避免只在真实峰值附近训练、却从预测峰读取未受监督偏移。setup、decisive 与 reaction 时间监督三个受时间掩码约束的注意力位置；它们的位置、存在性与预测边界共同进入片段质量头。训练损失包括 event focal loss、Smooth L1 + temporal IoU 边界损失、anchor attention loss、预测片段 IoU 质量损失和片段内 hard-negative 排序损失。推理分数由 eventness 与 anchor-aware segment quality 联合给出，再执行 temporal NMS。
 
-训练数据使用固定 seed 按视频随机划分为 80%/10%/10%，同一部剧的不同视频允许进入不同子集；运行目录保存完整 `video_split.json`，确保实验可复现。
+训练数据使用固定 seed 按视频随机划分为 90% 训练集和 10% 测试集，同一部剧的不同视频允许进入不同子集；不设置验证集，也不使用测试集选择 checkpoint 或搜索解码参数。模型固定训练 8 轮并保存最终轮 `checkpoint.pt`，以固定阈值 0.05 和最多 12 个片段在测试集上执行一次段级 `F1@IoU 0.3/0.5/0.7` 评估。运行目录保存完整 `video_split.json`，确保实验可复现。
 
 
 ## Pipeline
