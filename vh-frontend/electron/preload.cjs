@@ -16,3 +16,18 @@ contextBridge.exposeInMainWorld('localLibrary', {
   listJobs: () => ipcRenderer.invoke('library:list-jobs'),
   deleteJob: (jobId) => ipcRenderer.invoke('library:delete-job', jobId),
 })
+
+contextBridge.exposeInMainWorld('adStudio', {
+  importAsset: (file, kind) => {
+    const sourcePath = webUtils.getPathForFile(file)
+    if (!sourcePath) return Promise.reject(new Error('无法读取所选广告素材的本地路径'))
+    return ipcRenderer.invoke('ads:import-asset', {
+      sourcePath,
+      originalName: file.name,
+      kind,
+    })
+  },
+  listAssets: () => ipcRenderer.invoke('ads:list-assets'),
+  deleteAsset: (assetId) => ipcRenderer.invoke('ads:delete-asset', assetId),
+  exportHighlight: (input) => ipcRenderer.invoke('ads:export-highlight', input),
+})

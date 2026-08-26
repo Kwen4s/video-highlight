@@ -25,4 +25,10 @@ interface Window {
     listJobs: <T>() => Promise<T[]>
     deleteJob: (jobId: string) => Promise<void>
   }
+  adStudio?: {
+    importAsset: <T>(file: File, kind: 'video' | 'image') => Promise<T>
+    listAssets: <T>() => Promise<T[]>
+    deleteAsset: (assetId: string) => Promise<void>
+    exportHighlight: <T>(input: unknown) => Promise<T>
+  }
 }
