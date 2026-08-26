@@ -30,4 +30,5 @@ contextBridge.exposeInMainWorld('adStudio', {
   listAssets: () => ipcRenderer.invoke('ads:list-assets'),
   deleteAsset: (assetId) => ipcRenderer.invoke('ads:delete-asset', assetId),
   exportHighlight: (input) => ipcRenderer.invoke('ads:export-highlight', input),
+  exportCleanHighlight: (input) => ipcRenderer.invoke('highlights:export-clean', input),
 })

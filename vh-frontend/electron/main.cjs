@@ -607,6 +607,75 @@ function safeExportName(value) {
   return (base.replace(/[<>:"/\\|?*\u0000-\u001F]/g, '_').trim() || 'highlight').slice(0, 80)
 }
 
+async function resolveExportSource(sourceUrl, downloadedSourcePath) {
+  let sourceProtocol
+  try {
+    sourceProtocol = new URL(sourceUrl).protocol
+  } catch {
+    throw new Error('原片地址无效')
+  }
+  let sourceInput = ['http:', 'https:'].includes(sourceProtocol) ? sourceUrl : downloadedSourcePath
+  if (sourceInput === downloadedSourcePath) await downloadSource(sourceUrl, downloadedSourcePath)
+  let sourceMedia
+  try {
+    sourceMedia = await probeMedia(sourceInput)
+  } catch (probeError) {
+    if (sourceInput === downloadedSourcePath) throw probeError
+    await downloadSource(sourceUrl, downloadedSourcePath)
+    sourceInput = downloadedSourcePath
+    sourceMedia = await probeMedia(sourceInput)
+  }
+  return { sourceInput, sourceMedia }
+}
+
+async function exportCleanHighlight(event, input) {
+  const jobId = requireJobId(input?.job_id)
+  const sourceUrl = typeof input?.source_url === 'string' ? input.source_url : ''
+  const highlight = input?.highlight
+  const startSec = Number(highlight?.start_sec)
+  const endSec = Number(highlight?.end_sec)
+  if (!highlight || !Number.isFinite(startSec) || !Number.isFinite(endSec) || startSec < 0 || endSec <= startSec) {
+    throw new Error('高光片段时间范围无效')
+  }
+  const defaultName = `${safeExportName(input?.original_name)}-${safeExportName(highlight?.description)}-高光.mp4`
+  const parentWindow = BrowserWindow.fromWebContents(event.sender)
+  const selection = await dialog.showSaveDialog(parentWindow, {
+    title: '导出高光视频',
+    defaultPath: path.join(app.getPath('downloads'), defaultName),
+    filters: [{ name: 'MP4 视频', extensions: ['mp4'] }],
+    properties: ['showOverwriteConfirmation', 'createDirectory'],
+  })
+  if (selection.canceled || !selection.filePath) return { canceled: true }
+
+  const temporaryRoot = await mkdtemp(path.join(app.getPath('temp'), 'frame-highlight-export-'))
+  try {
+    const downloadedSourcePath = path.join(temporaryRoot, 'source.media')
+    const { sourceInput, sourceMedia } = await resolveExportSource(sourceUrl, downloadedSourcePath)
+    const clipDuration = Math.min(endSec, sourceMedia.duration_sec || endSec) - startSec
+    if (clipDuration <= 0) throw new Error('高光片段超出原片时长')
+    await transcodeSegment({
+      inputPath: sourceInput,
+      outputPath: selection.filePath,
+      width: sourceMedia.width,
+      height: sourceMedia.height,
+      startSec,
+      durationSec: clipDuration,
+      hasAudio: sourceMedia.has_audio,
+    })
+    return {
+      canceled: false,
+      output_path: selection.filePath,
+      duration_sec: Number(clipDuration.toFixed(3)),
+      job_id: jobId,
+    }
+  } catch (error) {
+    await rm(selection.filePath, { force: true }).catch(() => undefined)
+    throw error
+  } finally {
+    await rm(temporaryRoot, { recursive: true, force: true })
+  }
+}
+
 async function exportHighlight(event, input) {
   const jobId = requireJobId(input?.job_id)
   const sourceUrl = typeof input?.source_url === 'string' ? input.source_url : ''
@@ -636,18 +705,7 @@ async function exportHighlight(event, input) {
     const adPath = path.join(temporaryRoot, 'advertisement.mp4')
     const cardPath = path.join(temporaryRoot, 'card.png')
     const concatPath = path.join(temporaryRoot, 'concat.txt')
-    const sourceProtocol = new URL(sourceUrl).protocol
-    let sourceInput = ['http:', 'https:'].includes(sourceProtocol) ? sourceUrl : downloadedSourcePath
-    if (sourceInput === downloadedSourcePath) await downloadSource(sourceUrl, downloadedSourcePath)
-    let sourceMedia
-    try {
-      sourceMedia = await probeMedia(sourceInput)
-    } catch (probeError) {
-      if (sourceInput === downloadedSourcePath) throw probeError
-      await downloadSource(sourceUrl, downloadedSourcePath)
-      sourceInput = downloadedSourcePath
-      sourceMedia = await probeMedia(sourceInput)
-    }
+    const { sourceInput, sourceMedia } = await resolveExportSource(sourceUrl, downloadedSourcePath)
     const clipDuration = Math.min(endSec, sourceMedia.duration_sec || endSec) - startSec
     if (clipDuration <= 0) throw new Error('高光片段超出原片时长')
     await transcodeSegment({
@@ -715,6 +773,7 @@ function registerIpcHandlers() {
   ipcMain.handle('ads:list-assets', () => listAdAssets())
   ipcMain.handle('ads:delete-asset', (_event, assetId) => deleteAdAsset(assetId))
   ipcMain.handle('ads:export-highlight', (event, input) => exportHighlight(event, input))
+  ipcMain.handle('highlights:export-clean', (event, input) => exportCleanHighlight(event, input))
 }
 
 function registerMediaProtocol() {

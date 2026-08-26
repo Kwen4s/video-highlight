@@ -1,7 +1,9 @@
 from types import SimpleNamespace
 
-from app.agent import AgentInvoker
+from app.agent import AgentInvoker, AgentJobRunner
 from app.config import Settings
+from app.models import AgentDetectionResult
+from app.repository import JobRepository
 
 
 def test_agent_invocation_does_not_leak_backend_virtualenv(tmp_path, monkeypatch) -> None:
@@ -37,3 +39,75 @@ def test_agent_invocation_does_not_leak_backend_virtualenv(tmp_path, monkeypatch
     assert result.job_id == "job_abcdefgh"
     assert "VIRTUAL_ENV" not in captured["env"]
     assert captured["cwd"] == settings.agent_root
+
+
+class FlakyInvoker:
+    def __init__(self, failures: int) -> None:
+        self.failures = failures
+        self.calls = 0
+
+    def run(self, *, job_id, video_path, language):
+        self.calls += 1
+        if self.calls <= self.failures:
+            raise RuntimeError("temporary failure")
+        return AgentDetectionResult.model_validate(
+            {
+                "job_id": job_id,
+                "video": {"video_id": job_id, "title": "demo", "duration_sec": 10},
+                "highlights": [],
+            }
+        )
+
+
+def make_retry_runner(tmp_path, failures: int):
+    settings = Settings(
+        VH_STORAGE_DIR=tmp_path / "runtime",
+        VH_AGENT_ROOT=tmp_path / "vh-agent",
+        VH_AGENT_RETRY_DELAY_SEC=0,
+        VH_AGENT_MAX_ATTEMPTS=3,
+    )
+    repository = JobRepository(settings.database_path)
+    repository.initialize()
+    source_dir = settings.jobs_dir / "job_abcdefgh" / "source"
+    source_dir.mkdir(parents=True)
+    (source_dir / "original.mp4").write_bytes(b"video")
+    repository.create(
+        job_id="job_abcdefgh",
+        original_name="demo.mp4",
+        stored_name="original.mp4",
+        content_type="video/mp4",
+        size_bytes=5,
+        language="zh",
+        max_attempts=3,
+    )
+    invoker = FlakyInvoker(failures)
+    runner = AgentJobRunner(settings, repository, invoker=invoker)
+    return runner, repository, invoker
+
+
+def test_agent_job_retries_until_third_attempt_succeeds(tmp_path) -> None:
+    runner, repository, invoker = make_retry_runner(tmp_path, failures=2)
+    try:
+        runner._execute("job_abcdefgh")
+    finally:
+        runner.shutdown()
+
+    job = repository.get("job_abcdefgh")
+    assert invoker.calls == 3
+    assert job["status"] == "completed"
+    assert job["attempt"] == 3
+    assert job["error_message"] is None
+
+
+def test_agent_job_stops_after_three_failed_attempts(tmp_path) -> None:
+    runner, repository, invoker = make_retry_runner(tmp_path, failures=3)
+    try:
+        runner._execute("job_abcdefgh")
+    finally:
+        runner.shutdown()
+
+    job = repository.get("job_abcdefgh")
+    assert invoker.calls == 3
+    assert job["status"] == "failed"
+    assert job["attempt"] == 3
+    assert "3/3" in job["error_message"]

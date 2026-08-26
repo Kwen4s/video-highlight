@@ -1,5 +1,6 @@
 import os
 import subprocess
+import time
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
@@ -94,24 +95,46 @@ class AgentJobRunner:
         job = self.repository.get(job_id)
         if job is None:
             return
-        self.repository.set_status(job_id, "processing")
         video_path = self.settings.jobs_dir / job_id / "source" / job["stored_name"]
-        try:
-            result = self.invoker.run(
-                job_id=job_id,
-                video_path=video_path,
-                language=job["language"],
-            )
-            self.repository.save_result(
-                job_id,
-                result.to_public_result().model_dump(mode="json"),
-            )
-        except Exception as error:
-            self.repository.set_status(
-                job_id,
-                "failed",
-                error_message=f"高光提取失败（{type(error).__name__}），请查看任务日志",
-            )
+        max_attempts = min(
+            int(job.get("max_attempts") or self.settings.agent_max_attempts),
+            self.settings.agent_max_attempts,
+        )
+        for attempt in range(1, max_attempts + 1):
+            self.repository.set_attempt(job_id, attempt)
+            try:
+                result = self.invoker.run(
+                    job_id=job_id,
+                    video_path=video_path,
+                    language=job["language"],
+                )
+                self.repository.save_result(
+                    job_id,
+                    result.to_public_result().model_dump(mode="json"),
+                )
+                return
+            except Exception as error:
+                error_type = type(error).__name__
+                if attempt >= max_attempts:
+                    self.repository.set_status(
+                        job_id,
+                        "failed",
+                        error_message=(
+                            f"高光提取连续失败 {attempt}/{max_attempts} 次"
+                            f"（{error_type}），请查看任务日志"
+                        ),
+                    )
+                    return
+                self.repository.set_attempt(
+                    job_id,
+                    attempt,
+                    status="queued",
+                    error_message=(
+                        f"第 {attempt}/{max_attempts} 次执行失败（{error_type}），正在自动重试"
+                    ),
+                )
+                if self.settings.agent_retry_delay_sec:
+                    time.sleep(self.settings.agent_retry_delay_sec)
 
     def shutdown(self) -> None:
         self.executor.shutdown(wait=False, cancel_futures=True)

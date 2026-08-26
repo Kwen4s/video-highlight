@@ -78,6 +78,8 @@ def test_upload_returns_public_media_url_without_exposing_server_path(tmp_path) 
         assert response.status_code == 202
         body = response.json()
         assert body["status"] == "queued"
+        assert body["attempt"] == 0
+        assert body["max_attempts"] == 3
         assert body["source_url"] == "/api/jobs/job_12345678/source"
         assert str(settings.jobs_dir) not in json.dumps(body)
         assert runner.enqueued == ["job_12345678"]
@@ -229,6 +231,35 @@ def test_result_contains_only_intervals_and_editing_is_versioned(tmp_path) -> No
             json={"message": "撤销", "revision": 1},
         )
         assert stale.status_code == 409
+
+
+def test_highlight_range_edit_is_validated_and_versioned(tmp_path) -> None:
+    client, settings, repository, _runner = make_client(tmp_path)
+
+    with client:
+        create_completed_job(settings, repository)
+        edited = client.post(
+            "/api/jobs/job_abcdefgh/highlights/hl_1/range",
+            json={"start_sec": 3.25, "end_sec": 9.5, "revision": 0},
+        )
+        assert edited.status_code == 200
+        body = edited.json()
+        assert body["revision"] == 1
+        assert body["result"]["highlights"][0]["start_sec"] == 3.25
+        assert body["result"]["highlights"][0]["end_sec"] == 9.5
+        assert body["result"]["highlights"][0]["review_status"] == "revised"
+
+        stale = client.post(
+            "/api/jobs/job_abcdefgh/highlights/hl_1/range",
+            json={"start_sec": 4, "end_sec": 10, "revision": 0},
+        )
+        assert stale.status_code == 409
+
+        invalid = client.post(
+            "/api/jobs/job_abcdefgh/highlights/hl_1/range",
+            json={"start_sec": 9.4, "end_sec": 9.5, "revision": 1},
+        )
+        assert invalid.status_code == 422
 
 
 def test_source_supports_inline_head_and_byte_ranges(tmp_path) -> None:

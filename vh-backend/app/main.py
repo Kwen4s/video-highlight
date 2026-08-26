@@ -22,6 +22,7 @@ from .models import (
     DetectionResult,
     EditMessageRequest,
     EditMessageResponse,
+    HighlightRangeEditRequest,
     JobResponse,
 )
 from .repository import JobRepository
@@ -162,6 +163,7 @@ def create_app(
                 content_type=file.content_type or "application/octet-stream",
                 size_bytes=size_bytes,
                 language=language,
+                max_attempts=app_settings.agent_max_attempts,
             )
         except Exception:
             partial_path.unlink(missing_ok=True)
@@ -235,6 +237,52 @@ def create_app(
                 "Cache-Control": "private, no-store",
             },
         )
+
+    @application.post(
+        "/api/jobs/{job_id}/highlights/{highlight_id}/range",
+        response_model=JobResponse,
+    )
+    def edit_highlight_range(
+        job_id: str,
+        highlight_id: str,
+        request: HighlightRangeEditRequest,
+    ) -> JobResponse:
+        row = require_job(app_repository, job_id)
+        if row["status"] != "completed":
+            raise HTTPException(status_code=409, detail="任务尚未完成，不能编辑高光")
+        if row["revision"] != request.revision:
+            raise HTTPException(status_code=409, detail="结果版本已更新，请重新载入后再编辑")
+
+        result = parse_result(row)
+        target = next(
+            (item for item in result.highlights if item.highlight_id == highlight_id),
+            None,
+        )
+        if target is None:
+            raise HTTPException(status_code=404, detail="高光片段不存在")
+        range_error = validate_highlight_range(
+            request.start_sec,
+            request.end_sec,
+            result.video.duration_sec,
+        )
+        if range_error:
+            raise HTTPException(status_code=422, detail=range_error)
+
+        start_sec = round(request.start_sec, 3)
+        end_sec = round(request.end_sec, 3)
+        if target.start_sec == start_sec and target.end_sec == end_sec:
+            return serialize_job(row)
+        target.start_sec = start_sec
+        target.end_sec = end_sec
+        target.review_status = "revised"
+        replaced = app_repository.replace_result(
+            job_id,
+            result.model_dump(mode="json"),
+            expected_revision=request.revision,
+        )
+        if not replaced:
+            raise HTTPException(status_code=409, detail="结果版本已更新，请重新载入后再编辑")
+        return serialize_job(require_job(app_repository, job_id))
 
     @application.post(
         "/api/jobs/{job_id}/messages",
@@ -414,6 +462,8 @@ def serialize_job(row: dict[str, Any]) -> JobResponse:
         created_at=row["created_at"],
         updated_at=row["updated_at"],
         revision=row.get("revision", 0),
+        attempt=row.get("attempt", 0),
+        max_attempts=row.get("max_attempts", 3),
         source_url=(f"/api/jobs/{row['job_id']}/source" if row.get("stored_name") else None),
         error_message=row["error_message"],
         result=result,

@@ -32,6 +32,8 @@ class JobRepository:
                     created_at TEXT NOT NULL,
                     updated_at TEXT NOT NULL,
                     revision INTEGER NOT NULL DEFAULT 0,
+                    attempt INTEGER NOT NULL DEFAULT 0,
+                    max_attempts INTEGER NOT NULL DEFAULT 3,
                     history_json TEXT NOT NULL DEFAULT '[]',
                     conversation_json TEXT NOT NULL DEFAULT '[]',
                     error_message TEXT,
@@ -45,6 +47,8 @@ class JobRepository:
             }
             additions = {
                 "revision": "INTEGER NOT NULL DEFAULT 0",
+                "attempt": "INTEGER NOT NULL DEFAULT 0",
+                "max_attempts": "INTEGER NOT NULL DEFAULT 3",
                 "history_json": "TEXT NOT NULL DEFAULT '[]'",
                 "conversation_json": "TEXT NOT NULL DEFAULT '[]'",
             }
@@ -61,6 +65,7 @@ class JobRepository:
         content_type: str,
         size_bytes: int,
         language: str,
+        max_attempts: int = 3,
     ) -> dict[str, Any]:
         now = utc_now()
         with self._connect() as connection:
@@ -68,8 +73,8 @@ class JobRepository:
                 """
                 INSERT INTO jobs (
                     job_id, status, original_name, stored_name, content_type,
-                    size_bytes, language, created_at, updated_at
-                ) VALUES (?, 'queued', ?, ?, ?, ?, ?, ?, ?)
+                    size_bytes, language, created_at, updated_at, max_attempts
+                ) VALUES (?, 'queued', ?, ?, ?, ?, ?, ?, ?, ?)
                 """,
                 (
                     job_id,
@@ -80,6 +85,7 @@ class JobRepository:
                     language,
                     now,
                     now,
+                    max_attempts,
                 ),
             )
         return self.get(job_id)  # type: ignore[return-value]
@@ -111,6 +117,24 @@ class JobRepository:
                 WHERE job_id = ?
                 """,
                 (status, error_message, utc_now(), job_id),
+            )
+
+    def set_attempt(
+        self,
+        job_id: str,
+        attempt: int,
+        *,
+        status: str = "processing",
+        error_message: str | None = None,
+    ) -> None:
+        with self._connect() as connection:
+            connection.execute(
+                """
+                UPDATE jobs
+                SET status = ?, attempt = ?, error_message = ?, updated_at = ?
+                WHERE job_id = ?
+                """,
+                (status, attempt, error_message, utc_now(), job_id),
             )
 
     def save_result(

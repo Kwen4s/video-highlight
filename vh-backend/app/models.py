@@ -62,6 +62,8 @@ class JobResponse(BaseModel):
     created_at: str
     updated_at: str
     revision: int = 0
+    attempt: int = Field(default=0, ge=0)
+    max_attempts: int = Field(default=3, ge=1, le=3)
     source_url: str | None = None
     error_message: str | None = None
     result: DetectionResult | None = None
@@ -77,6 +79,12 @@ class EditMessageResponse(BaseModel):
     job: JobResponse
     reply: str
     changed: bool
+
+
+class HighlightRangeEditRequest(BaseModel):
+    start_sec: float = Field(ge=0)
+    end_sec: float = Field(gt=0)
+    revision: int = Field(ge=0)
 
 
 class DemoSessionRequest(BaseModel):

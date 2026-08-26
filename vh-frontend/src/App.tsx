@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import type { DragEvent, ReactNode, SVGProps } from 'react'
+import type { DragEvent, PointerEvent as ReactPointerEvent, ReactNode, SVGProps } from 'react'
 
 const API_BASE = (import.meta.env.VITE_API_BASE_URL?.trim() || 'http://122.193.22.119:8777').replace(/\/+$/, '')
 const API_ADDRESS = API_BASE.replace(/^https?:\/\//, '')
@@ -41,6 +41,8 @@ type Job = {
   created_at: string
   updated_at: string
   revision: number
+  attempt: number
+  max_attempts: number
   source_url: string | null
   error_message: string | null
   result: DetectionResult | null
@@ -143,7 +145,13 @@ function resolveSourceUrl(sourceUrl: string | null | undefined) {
 }
 
 function withSourceUrl(job: RemoteJob): Job {
-  return { ...job, source_url: resolveSourceUrl(job.source_url), messages: [] }
+  return {
+    ...job,
+    attempt: job.attempt ?? 0,
+    max_attempts: job.max_attempts ?? 3,
+    source_url: resolveSourceUrl(job.source_url),
+    messages: [],
+  }
 }
 
 type EditMessageStreamResult = {
@@ -162,6 +170,17 @@ type UploadState = {
   phase: 'idle' | 'uploading'
   progress: number
   fileName?: string
+}
+
+type UploadQueueStatus = 'waiting' | 'uploading' | 'submitted' | 'failed'
+
+type UploadQueueItem = {
+  queue_id: string
+  job_id: string
+  file: File
+  status: UploadQueueStatus
+  progress: number
+  error?: string
 }
 
 type WorkflowNode = {
@@ -476,6 +495,8 @@ function mergeRemoteJob(local: Job, remote: RemoteJob): Job {
   return {
     ...local,
     ...remote,
+    attempt: remote.attempt ?? local.attempt ?? 0,
+    max_attempts: remote.max_attempts ?? local.max_attempts ?? 3,
     result,
     source_url: resolveSourceUrl(remote.source_url),
     messages: local.messages,
@@ -517,6 +538,11 @@ const reviewStatusCopy: Record<ReviewStatus, string> = {
   pending: '待复核', accepted: '已采用', rejected: '已排除', revised: '已调整',
 }
 
+function attemptLabel(job: Job) {
+  if (!['queued', 'processing', 'failed'].includes(job.status) || job.attempt < 1) return null
+  return `第 ${Math.min(job.attempt, job.max_attempts)}/${job.max_attempts} 次`
+}
+
 const highlightTypeCopy: Record<string, string> = {
   action: '关键行动', climax: '剧情高潮', cliffhanger: '悬念', conflict: '冲突',
   emotion: '情绪', reveal: '信息揭示', reversal: '剧情反转',
@@ -551,33 +577,76 @@ function Sidebar({ view, onView, online, jobs }: { view: View; onView: (view: Vi
   </aside>
 }
 
-function UploadDropzone({ onFile, compact = false }: { onFile: (file: File) => void; compact?: boolean }) {
+function UploadDropzone({ onFiles, compact = false }: { onFiles: (files: File[]) => void; compact?: boolean }) {
   const inputRef = useRef<HTMLInputElement>(null)
   const [dragging, setDragging] = useState(false)
-  const receive = (files: FileList | null) => { if (files?.[0]) onFile(files[0]) }
+  const receive = (files: FileList | null) => {
+    const selected = Array.from(files || [])
+    if (selected.length) onFiles(selected)
+  }
   const drop = (event: DragEvent<HTMLDivElement>) => {
     event.preventDefault()
     setDragging(false)
     receive(event.dataTransfer.files)
   }
   if (compact) return <>
-    <button className="button primary" onClick={() => inputRef.current?.click()}><Icon name="upload" size={17} />导入新视频</button>
-    <input ref={inputRef} hidden type="file" accept="video/*,.mkv,.m4v" onChange={(event) => { receive(event.target.files); event.target.value = '' }} />
+    <button className="button primary" onClick={() => inputRef.current?.click()}><Icon name="upload" size={17} />批量导入视频</button>
+    <input ref={inputRef} hidden multiple type="file" accept="video/*,.mkv,.m4v" onChange={(event) => { receive(event.target.files); event.target.value = '' }} />
   </>
   return <div className={`dropzone ${dragging ? 'dragging' : ''}`} onDragOver={(event) => { event.preventDefault(); setDragging(true) }} onDragLeave={() => setDragging(false)} onDrop={drop}>
-    <input ref={inputRef} hidden type="file" accept="video/*,.mkv,.m4v" onChange={(event) => { receive(event.target.files); event.target.value = '' }} />
+    <input ref={inputRef} hidden multiple type="file" accept="video/*,.mkv,.m4v" onChange={(event) => { receive(event.target.files); event.target.value = '' }} />
     <div className="drop-icon"><Icon name="upload" size={27} /></div>
     <p className="overline">NEW SOURCE / 01</p>
-    <h2>把原片放到这里</h2>
-    <p>原片上传到后端创建分析任务；前端只通过公开 API 获取状态、结果和视频流。</p>
-    <button className="button primary" onClick={() => inputRef.current?.click()}><Icon name="film" size={17} />选择视频文件</button>
+    <h2>把一组原片放到这里</h2>
+    <p>可以一次选择多个视频；桌面端依次上传，后端按单 GPU 队列完成分析。</p>
+    <button className="button primary" onClick={() => inputRef.current?.click()}><Icon name="film" size={17} />选择一个或多个视频</button>
     <span>MP4 · MOV · MKV · WEBM · AVI · 最大 20 GB</span>
   </div>
 }
 
+function UploadQueuePanel({ queue, jobs, onClear }: { queue: UploadQueueItem[]; jobs: Job[]; onClear: () => void }) {
+  if (!queue.length) return null
+  const jobsById = new Map(jobs.map((item) => [item.job_id, item]))
+  const activeCount = queue.filter((item) => {
+    const live = jobsById.get(item.job_id)
+    return item.status === 'waiting' || item.status === 'uploading' || Boolean(live && ['queued', 'processing'].includes(live.status))
+  }).length
+  return <section className="upload-queue-panel">
+    <header>
+      <div><p className="overline">BATCH INTAKE</p><h2>批量任务队列</h2></div>
+      <div><span><b>{activeCount}</b> 个进行中</span><button type="button" onClick={onClear}>清除已结束</button></div>
+    </header>
+    <div className="upload-queue-list">
+      {queue.map((item, index) => {
+        const live = jobsById.get(item.job_id)
+        const attempt = live ? attemptLabel(live) : null
+        const state = live?.status || item.status
+        const label = item.status === 'waiting'
+          ? '等待上传'
+          : item.status === 'uploading'
+            ? `上传 ${item.progress}%`
+            : item.status === 'failed'
+              ? '上传失败'
+              : live
+                ? statusCopy[live.status]
+                : '已提交'
+        const detail = item.error || live?.error_message || (attempt ? `${attempt}执行` : '等待后端调度')
+        const progress = item.status === 'uploading' ? item.progress : item.status === 'waiting' ? 0 : 100
+        return <article className={`upload-queue-row ${state}`} key={item.queue_id}>
+          <span>{String(index + 1).padStart(2, '0')}</span>
+          <div className="queue-file"><b title={item.file.name}>{item.file.name}</b><small>{formatBytes(item.file.size)} · {item.job_id}</small></div>
+          <div className="queue-state"><b><i />{label}</b><small>{detail}</small></div>
+          <div className="queue-progress"><i><span style={{ width: `${progress}%` }} /></i><small>{attempt || (item.status === 'uploading' ? `${item.progress}%` : '—')}</small></div>
+        </article>
+      })}
+    </div>
+  </section>
+}
+
 function ProgressPanel({ upload, job, onCancel }: { upload: UploadState; job: Job | null; onCancel: () => void }) {
   const uploading = upload.phase !== 'idle'
-  const label = upload.phase === 'uploading' ? `正在上传 ${upload.progress}%` : job ? statusCopy[job.status] : ''
+  const retryLabel = job ? attemptLabel(job) : null
+  const label = upload.phase === 'uploading' ? `正在上传 ${upload.progress}%` : job ? `${statusCopy[job.status]}${retryLabel ? ` · ${retryLabel}` : ''}` : ''
   const number = upload.phase === 'uploading' ? upload.progress : job?.status === 'completed' ? 100 : null
   const internalPipelineActive = job?.status === 'processing'
   const workflowNodeCount = WORKFLOW_STAGES.reduce((total, stage) => total + stage.nodes.length, 0)
@@ -666,7 +735,7 @@ function ProgressPanel({ upload, job, onCancel }: { upload: UploadState; job: Jo
     <div className="progress-heading">
       <div><span className="pulse" /><div><b>{label}</b><small>{uploading ? upload.fileName : job?.original_name}</small></div></div>
       <div className="progress-heading-actions">
-        {job && <span>{job.job_id}</span>}
+        {job && <span>{job.job_id}{retryLabel ? ` · ${retryLabel}` : ''}</span>}
         {upload.phase === 'uploading' && <button onClick={onCancel}><Icon name="x" size={15} />取消上传</button>}
       </div>
     </div>
@@ -742,13 +811,15 @@ function ProgressPanel({ upload, job, onCancel }: { upload: UploadState; job: Jo
   </section>
 }
 
-function Player({ job, selected, reloadToken, onSelect, onPlaybackError }: { job: Job; selected: Highlight | null; reloadToken: number; onSelect: (item: Highlight | null) => void; onPlaybackError: (message: string | null) => void }) {
+function Player({ job, selected, reloadToken, rangeBusy, exportBusy, exportResult, onSelect, onRangeEdit, onExport, onPlaybackError }: { job: Job; selected: Highlight | null; reloadToken: number; rangeBusy: boolean; exportBusy: boolean; exportResult: AdExportResult | null; onSelect: (item: Highlight | null) => void; onRangeEdit: (item: Highlight, startSec: number, endSec: number) => Promise<void>; onExport: (item: Highlight) => Promise<void>; onPlaybackError: (message: string | null) => void }) {
   const source = job.source_url
   const highlights = job.result?.highlights || []
   const sourceDuration = job.result?.video.duration_sec || 1
   const selectedIndex = selected ? highlights.findIndex((item) => item.highlight_id === selected.highlight_id) : -1
   const videoRef = useRef<HTMLVideoElement>(null)
+  const timelineRef = useRef<HTMLDivElement>(null)
   const [inspectedId, setInspectedId] = useState<string | null>(null)
+  const [draftRange, setDraftRange] = useState<{ highlight_id: string; start_sec: number; end_sec: number } | null>(null)
   const inspectedHighlight = highlights.find((item) => item.highlight_id === inspectedId)
     || selected
     || highlights[0]
@@ -756,6 +827,73 @@ function Player({ job, selected, reloadToken, onSelect, onPlaybackError }: { job
   const inspectedIndex = inspectedHighlight
     ? highlights.findIndex((item) => item.highlight_id === inspectedHighlight.highlight_id)
     : -1
+  const selectedRange = selected && draftRange?.highlight_id === selected.highlight_id
+    ? draftRange
+    : selected
+  const inspectedRange = inspectedHighlight && draftRange?.highlight_id === inspectedHighlight.highlight_id
+    ? draftRange
+    : inspectedHighlight
+  useEffect(() => {
+    setDraftRange(selected ? {
+      highlight_id: selected.highlight_id,
+      start_sec: selected.start_sec,
+      end_sec: selected.end_sec,
+    } : null)
+  }, [selected?.highlight_id, selected?.start_sec, selected?.end_sec])
+
+  const normalizeRange = (edge: 'start' | 'end', value: number, current: { start_sec: number; end_sec: number }) => {
+    if (edge === 'start') return {
+      start_sec: Math.max(0, current.end_sec - 24, Math.min(value, current.end_sec - .5)),
+      end_sec: current.end_sec,
+    }
+    return {
+      start_sec: current.start_sec,
+      end_sec: Math.min(sourceDuration, current.start_sec + 24, Math.max(value, current.start_sec + .5)),
+    }
+  }
+  const setDraftEdge = (edge: 'start' | 'end', value: number) => {
+    if (!selected || !Number.isFinite(value)) return
+    const current = selectedRange || selected
+    const normalized = normalizeRange(edge, value, current)
+    setDraftRange({
+      highlight_id: selected.highlight_id,
+      start_sec: Math.round(normalized.start_sec * 100) / 100,
+      end_sec: Math.round(normalized.end_sec * 100) / 100,
+    })
+  }
+  const commitRange = (item: Highlight, range: { start_sec: number; end_sec: number }) => {
+    if (rangeBusy || (range.start_sec === item.start_sec && range.end_sec === item.end_sec)) return
+    void onRangeEdit(item, range.start_sec, range.end_sec).catch(() => {
+      setDraftRange({ highlight_id: item.highlight_id, start_sec: item.start_sec, end_sec: item.end_sec })
+    })
+  }
+  const beginRangeDrag = (event: ReactPointerEvent<HTMLSpanElement>, edge: 'start' | 'end', item: Highlight) => {
+    if (rangeBusy || !timelineRef.current) return
+    event.preventDefault()
+    event.stopPropagation()
+    onSelect(item)
+    const bounds = timelineRef.current.getBoundingClientRect()
+    let next = { start_sec: item.start_sec, end_sec: item.end_sec }
+    setDraftRange({ highlight_id: item.highlight_id, ...next })
+    const update = (clientX: number) => {
+      const seconds = Math.max(0, Math.min(sourceDuration, ((clientX - bounds.left) / bounds.width) * sourceDuration))
+      next = normalizeRange(edge, seconds, next)
+      next = {
+        start_sec: Math.round(next.start_sec * 20) / 20,
+        end_sec: Math.round(next.end_sec * 20) / 20,
+      }
+      setDraftRange({ highlight_id: item.highlight_id, ...next })
+    }
+    const move = (pointerEvent: PointerEvent) => update(pointerEvent.clientX)
+    const finish = (pointerEvent: PointerEvent) => {
+      update(pointerEvent.clientX)
+      window.removeEventListener('pointermove', move)
+      window.removeEventListener('pointerup', finish)
+      commitRange(item, next)
+    }
+    window.addEventListener('pointermove', move)
+    window.addEventListener('pointerup', finish, { once: true })
+  }
   useEffect(() => {
     const player = videoRef.current
     if (!player) return
@@ -812,36 +950,39 @@ function Player({ job, selected, reloadToken, onSelect, onPlaybackError }: { job
       <div className="video-stage"><video ref={videoRef} key={source} controls preload="metadata" onLoadedMetadata={() => onPlaybackError(null)} onError={() => onPlaybackError('视频流已返回，但 Electron 无法解码。请确认视频编码为 Chromium 支持的 H.264/AAC、VP9/Opus 或 AV1。')} /></div>
       <div className="monitor-timeline" aria-label="完整原片高光时间轴">
         <div className="timeline-caption">
-          <div><span>完整原片 · 高光轨道</span><small>点击荧光绿区间预览片段</small></div>
+          <div><span>完整原片 · 高光轨道</span><small>拖动区间两端直接调整入点与出点</small></div>
           {inspectedHighlight ? <div className="timeline-time-readout" aria-label={`片段 ${inspectedIndex + 1} 的入点和出点`}>
             <small>{`片段 ${String(inspectedIndex + 1).padStart(2, '0')}`}</small>
-            <span><i>IN</i><b>{formatTime(inspectedHighlight.start_sec)}</b></span>
-            <span><i>OUT</i><b>{formatTime(inspectedHighlight.end_sec)}</b></span>
+            <span><i>IN</i><b>{formatTime(inspectedRange?.start_sec || 0)}</b></span>
+            <span><i>OUT</i><b>{formatTime(inspectedRange?.end_sec || 0)}</b></span>
           </div> : <b>{formatTime(sourceDuration)}</b>}
         </div>
-        <div className="timeline-track" role="group" aria-label="可选择的高光片段">
+        <div ref={timelineRef} className="timeline-track" role="group" aria-label="可直接编辑的高光片段时间轴">
           {highlights.map((item) => {
-            const start = Math.max(0, Math.min(100, (item.start_sec / sourceDuration) * 100))
-            const end = Math.max(start, Math.min(100, (item.end_sec / sourceDuration) * 100))
+            const visibleRange = draftRange?.highlight_id === item.highlight_id ? draftRange : item
+            const start = Math.max(0, Math.min(100, (visibleRange.start_sec / sourceDuration) * 100))
+            const end = Math.max(start, Math.min(100, (visibleRange.end_sec / sourceDuration) * 100))
             const active = selected?.highlight_id === item.highlight_id
             const inspected = inspectedHighlight?.highlight_id === item.highlight_id
-            return <button
-              type="button"
+            return <div
+              role="button"
+              tabIndex={0}
               key={item.highlight_id}
               className={`timeline-highlight${active ? ' active' : ''}${inspected ? ' inspected' : ''}`}
               style={{ left: `${start}%`, width: `${end - start}%` }}
-              title={`点击预览：${item.description} · 入点 ${formatTime(item.start_sec)} · 出点 ${formatTime(item.end_sec)}`}
-              aria-label={`${item.description}，入点 ${formatTime(item.start_sec)}，出点 ${formatTime(item.end_sec)}，点击预览`}
+              title={`${item.description} · 拖动两端调整范围`}
+              aria-label={`${item.description}，入点 ${formatTime(visibleRange.start_sec)}，出点 ${formatTime(visibleRange.end_sec)}，可拖动两端编辑`}
               aria-pressed={active}
               onClick={() => onSelect(item)}
+              onKeyDown={(event) => { if (event.key === 'Enter' || event.key === ' ') onSelect(item) }}
               onMouseEnter={() => setInspectedId(item.highlight_id)}
               onMouseLeave={() => setInspectedId(null)}
               onFocus={() => setInspectedId(item.highlight_id)}
               onBlur={() => setInspectedId(null)}
-            />
+            ><span className="timeline-handle timeline-handle-in" aria-hidden="true" onPointerDown={(event) => beginRangeDrag(event, 'start', item)} /><span className="timeline-handle timeline-handle-out" aria-hidden="true" onPointerDown={(event) => beginRangeDrag(event, 'end', item)} /></div>
           })}
         </div>
-        <div className="timeline-scale"><span>00:00</span><span>悬停查看出入点 · 点击选择</span><span>{formatTime(sourceDuration)}</span></div>
+        <div className="timeline-scale"><span>00:00</span><span>拖动编辑 · 点击预览 · 最长 24 秒</span><span>{formatTime(sourceDuration)}</span></div>
       </div>
       {selected && <section className="highlight-detail-drawer" key={selected.highlight_id} aria-labelledby="highlight-detail-title">
         <div className="detail-identity">
@@ -857,10 +998,16 @@ function Player({ job, selected, reloadToken, onSelect, onPlaybackError }: { job
         <div className="detail-telemetry">
           <div className="detail-score"><span>HIGHLIGHT SCORE</span><b>{Math.round(selected.score * 100)}</b><i><span style={{ width: `${Math.round(selected.score * 100)}%` }} /></i></div>
           <dl>
-            <div><dt>IN</dt><dd>{formatPreciseTime(selected.start_sec)}</dd></div>
-            <div><dt>OUT</dt><dd>{formatPreciseTime(selected.end_sec)}</dd></div>
-            <div><dt>DURATION</dt><dd>{(selected.end_sec - selected.start_sec).toFixed(2)} s</dd></div>
+            <div><dt>IN</dt><dd>{formatPreciseTime(selectedRange?.start_sec || 0)}</dd></div>
+            <div><dt>OUT</dt><dd>{formatPreciseTime(selectedRange?.end_sec || 0)}</dd></div>
+            <div><dt>DURATION</dt><dd>{((selectedRange?.end_sec || 0) - (selectedRange?.start_sec || 0)).toFixed(2)} s</dd></div>
           </dl>
+          <div className="timeline-editor-controls">
+            <label><span>IN / 秒</span><input type="number" min="0" max={Math.max(0, (selectedRange?.end_sec || selected.end_sec) - .5)} step="0.05" value={(selectedRange?.start_sec ?? selected.start_sec).toFixed(2)} disabled={rangeBusy} onChange={(event) => setDraftEdge('start', Number(event.target.value))} /></label>
+            <label><span>OUT / 秒</span><input type="number" min={(selectedRange?.start_sec || selected.start_sec) + .5} max={sourceDuration} step="0.05" value={(selectedRange?.end_sec ?? selected.end_sec).toFixed(2)} disabled={rangeBusy} onChange={(event) => setDraftEdge('end', Number(event.target.value))} /></label>
+            <div><button type="button" className="range-save" disabled={rangeBusy || !selectedRange || (selectedRange.start_sec === selected.start_sec && selectedRange.end_sec === selected.end_sec)} onClick={() => selectedRange && commitRange(selected, selectedRange)}>{rangeBusy ? '保存中…' : '保存范围'}</button><button type="button" className="clean-export" disabled={exportBusy} onClick={() => { void onExport(selected).catch(() => undefined) }}><Icon name="download" size={14} />{exportBusy ? '导出中…' : '无广告导出'}</button></div>
+            {exportResult && !exportResult.canceled && <small className="clean-export-result" title={exportResult.output_path}>已导出 · {exportResult.output_path}</small>}
+          </div>
         </div>
       </section>}
     </div>
@@ -1137,36 +1284,91 @@ function AdWorkspace({ jobs, assignments, assets, onOpen, onGoReview }: { jobs: 
   </div>
 }
 
-function Workspace({ upload, job, selected, error, chatBusy, playerReloadToken, configuredAdIds, onFile, onSelect, onReview, onAd, onChat, onCancel, onRetry, onPlaybackError }: { upload: UploadState; job: Job | null; selected: Highlight | null; error: string | null; chatBusy: boolean; playerReloadToken: number; configuredAdIds: Set<string>; onFile: (file: File) => void; onSelect: (item: Highlight | null) => void; onReview: (item: Highlight, status: ReviewStatus) => void; onAd: (item: Highlight) => void; onChat: (message: string) => Promise<void>; onCancel: () => void; onRetry: () => void; onPlaybackError: (message: string | null) => void }) {
+type WorkspaceProps = {
+  upload: UploadState
+  uploadQueue: UploadQueueItem[]
+  jobs: Job[]
+  job: Job | null
+  selected: Highlight | null
+  error: string | null
+  chatBusy: boolean
+  rangeBusy: boolean
+  exportBusy: boolean
+  exportResult: AdExportResult | null
+  playerReloadToken: number
+  configuredAdIds: Set<string>
+  onFiles: (files: File[]) => void
+  onSelect: (item: Highlight | null) => void
+  onReview: (item: Highlight, status: ReviewStatus) => void
+  onAd: (item: Highlight) => void
+  onChat: (message: string) => Promise<void>
+  onRangeEdit: (item: Highlight, startSec: number, endSec: number) => Promise<void>
+  onExport: (item: Highlight) => Promise<void>
+  onClearQueue: () => void
+  onCancel: () => void
+  onRetry: () => void
+  onPlaybackError: (message: string | null) => void
+}
+
+function Workspace({ upload, uploadQueue, jobs, job, selected, error, chatBusy, rangeBusy, exportBusy, exportResult, playerReloadToken, configuredAdIds, onFiles, onSelect, onReview, onAd, onChat, onRangeEdit, onExport, onClearQueue, onCancel, onRetry, onPlaybackError }: WorkspaceProps) {
   const busy = upload.phase !== 'idle' || job?.status === 'queued' || job?.status === 'processing'
   const reviewing = job?.status === 'completed'
   return <div className={`view workspace-view${reviewing ? ' task-review' : ''}`}>
-    {!reviewing && <header className="view-header"><div><p className="overline">VIDEO INTELLIGENCE</p><h1>高光提取</h1><p>导入视频，后端完成任务编排与高光提取，再由你做最后判断。</p></div><UploadDropzone compact onFile={onFile} /></header>}
+    {!reviewing && <header className="view-header"><div><p className="overline">VIDEO INTELLIGENCE</p><h1>高光提取</h1><p>批量导入视频，后端排队完成高光提取，并在失败时自动重试至多三次。</p></div><UploadDropzone compact onFiles={onFiles} /></header>}
     {error && <div className="error-banner"><span><Icon name="close" size={16} /></span><div><b>流程没有完成</b><p>{error}</p></div><button onClick={onRetry}><Icon name="retry" size={15} />重新载入</button></div>}
-    {!job && upload.phase === 'idle' && <UploadDropzone onFile={onFile} />}
+    <UploadQueuePanel queue={uploadQueue} jobs={jobs} onClear={onClearQueue} />
+    {!job && upload.phase === 'idle' && !uploadQueue.length && <UploadDropzone onFiles={onFiles} />}
     {busy && <ProgressPanel upload={upload} job={job} onCancel={onCancel} />}
-    {job?.status === 'failed' && <div className="failed-state"><Icon name="close" size={22} /><div><h2>Agent 未能完成分析</h2><p>{job.error_message || '后端未能完成当前任务，可以稍后重新提交。'}</p></div></div>}
-    {job?.status === 'completed' && <div className="review-grid"><HighlightList job={job} selectedId={selected?.highlight_id || null} configuredIds={configuredAdIds} onSelect={onSelect} onReview={onReview} onAd={onAd} /><Player job={job} selected={selected} reloadToken={playerReloadToken} onSelect={onSelect} onPlaybackError={onPlaybackError} /><HighlightAssistant job={job} selected={selected} busy={chatBusy} onSend={onChat} /></div>}
+    {job?.status === 'failed' && <div className="failed-state"><Icon name="close" size={22} /><div><h2>Agent 在 {job.attempt}/{job.max_attempts} 次尝试后停止</h2><p>{job.error_message || '后端未能完成当前任务。'}</p></div></div>}
+    {job?.status === 'completed' && <div className="review-grid"><HighlightList job={job} selectedId={selected?.highlight_id || null} configuredIds={configuredAdIds} onSelect={onSelect} onReview={onReview} onAd={onAd} /><Player job={job} selected={selected} reloadToken={playerReloadToken} rangeBusy={rangeBusy} exportBusy={exportBusy} exportResult={exportResult} onSelect={onSelect} onRangeEdit={onRangeEdit} onExport={onExport} onPlaybackError={onPlaybackError} /><HighlightAssistant job={job} selected={selected} busy={chatBusy} onSend={onChat} /></div>}
   </div>
 }
 
-function Library({ jobs, onOpen, onFile, onDelete }: { jobs: Job[]; onOpen: (job: Job) => void; onFile: (file: File) => void; onDelete: (job: Job) => void }) {
+function Library({ jobs, onOpen, onFiles, onDelete }: { jobs: Job[]; onOpen: (job: Job) => void; onFiles: (files: File[]) => void; onDelete: (job: Job) => void }) {
+  const [query, setQuery] = useState('')
+  const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'completed' | 'failed'>('all')
+  const [sort, setSort] = useState<'newest' | 'oldest' | 'name'>('newest')
+  const filteredJobs = useMemo(() => {
+    const keyword = query.trim().toLocaleLowerCase()
+    const matches = jobs.filter((item) => {
+      const statusMatches = statusFilter === 'all'
+        || (statusFilter === 'active' && ['queued', 'processing'].includes(item.status))
+        || item.status === statusFilter
+      if (!statusMatches) return false
+      if (!keyword) return true
+      const highlightText = item.result?.highlights.map((highlight) => `${highlight.description} ${highlight.reason} ${highlight.highlight_type}`).join(' ') || ''
+      return `${item.original_name} ${item.job_id} ${highlightText}`.toLocaleLowerCase().includes(keyword)
+    })
+    return [...matches].sort((left, right) => sort === 'name'
+      ? left.original_name.localeCompare(right.original_name, 'zh-CN')
+      : sort === 'oldest'
+        ? left.created_at.localeCompare(right.created_at)
+        : right.created_at.localeCompare(left.created_at))
+  }, [jobs, query, sort, statusFilter])
   return <div className="view library-view">
-    <header className="view-header"><div><p className="overline">SERVER TASKS</p><h1>任务归档</h1><p>这里展示后端当前保留的任务、分析结果和编辑会话。</p></div><UploadDropzone compact onFile={onFile} /></header>
+    <header className="view-header"><div><p className="overline">SERVER TASKS</p><h1>任务归档</h1><p>搜索原片、任务编号或高光内容，快速定位历史分析结果。</p></div><UploadDropzone compact onFiles={onFiles} /></header>
     <section className="archive-summary"><div><small>全部任务</small><b>{jobs.length}</b></div><div><small>提取完成</small><b>{jobs.filter((item) => item.status === 'completed').length}</b></div><div><small>处理中</small><b>{jobs.filter((item) => ['queued', 'processing'].includes(item.status)).length}</b></div><div><small>高光片段</small><b>{jobs.reduce((sum, item) => sum + (item.result?.highlights.length || 0), 0)}</b></div></section>
+    <section className="archive-search" aria-label="归档检索">
+      <label><span>SEARCH ARCHIVE</span><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="搜索文件名、任务 ID、高光标题或理由…" /></label>
+      <select value={statusFilter} onChange={(event) => setStatusFilter(event.target.value as typeof statusFilter)} aria-label="按任务状态筛选"><option value="all">全部状态</option><option value="active">正在处理</option><option value="completed">提取完成</option><option value="failed">提取失败</option></select>
+      <select value={sort} onChange={(event) => setSort(event.target.value as typeof sort)} aria-label="归档排序"><option value="newest">最新创建</option><option value="oldest">最早创建</option><option value="name">按文件名</option></select>
+      <span><b>{filteredJobs.length}</b> / {jobs.length} 条结果</span>
+    </section>
     <section className="job-list">
       <div className="job-list-head"><span>视频 / 任务</span><span>大小</span><span>状态</span><span>创建时间</span><span>操作</span></div>
-      {jobs.map((item) => {
+      {filteredJobs.map((item) => {
         const active = item.status === 'queued' || item.status === 'processing'
+        const attempt = attemptLabel(item)
         return <div className="job-row" key={item.job_id}>
           <button className="job-title" onClick={() => onOpen(item)} aria-label={`打开任务 ${item.original_name}`}><i><Icon name="film" size={17} /></i><span><b>{item.original_name}</b><small>{item.job_id}</small></span></button>
           <span>{formatBytes(item.size_bytes)}</span>
-          <span><i className={`status-dot ${item.status}`} />{statusCopy[item.status]}</span>
+          <span className="job-status-stack"><b><i className={`status-dot ${item.status}`} />{statusCopy[item.status]}</b>{attempt && <small>{attempt}</small>}</span>
           <span>{formatDate(item.created_at)}</span>
           <div className="job-actions"><button className="open-job" onClick={() => onOpen(item)} aria-label={`打开任务 ${item.original_name}`}>→</button><button className="delete-job" disabled={active} title={active ? '分析中的任务不能删除' : '删除任务'} onClick={() => onDelete(item)} aria-label={`删除任务 ${item.original_name}`}><Icon name="trash" size={15} /></button></div>
         </div>
       })}
       {!jobs.length && <div className="empty-archive"><Icon name="folder" size={25} /><h2>还没有导入记录</h2><p>从第一条视频开始建立高光任务库。</p></div>}
+      {jobs.length > 0 && !filteredJobs.length && <div className="empty-archive"><Icon name="folder" size={25} /><h2>没有匹配的任务</h2><p>换一个关键词或状态条件再试。</p></div>}
     </section>
   </div>
 }
@@ -1198,12 +1400,16 @@ export default function App() {
   const [job, setJob] = useState<Job | null>(null)
   const [selected, setSelected] = useState<Highlight | null>(null)
   const [upload, setUpload] = useState<UploadState>({ phase: 'idle', progress: 0 })
+  const [uploadQueue, setUploadQueue] = useState<UploadQueueItem[]>([])
   const [error, setError] = useState<string | null>(null)
   const [online, setOnline] = useState(false)
   const [deleteCandidate, setDeleteCandidate] = useState<Job | null>(null)
   const [deleteBusy, setDeleteBusy] = useState(false)
   const [deleteError, setDeleteError] = useState<string | null>(null)
   const [chatBusy, setChatBusy] = useState(false)
+  const [rangeBusy, setRangeBusy] = useState(false)
+  const [cleanExportBusy, setCleanExportBusy] = useState(false)
+  const [cleanExportResult, setCleanExportResult] = useState<AdExportResult | null>(null)
   const [playerReloadToken, setPlayerReloadToken] = useState(0)
   const [adAssignments, setAdAssignments] = useState<Record<string, AdAssignment>>(() => {
     try {
@@ -1216,6 +1422,8 @@ export default function App() {
   const [adAssets, setAdAssets] = useState<AdAsset[]>([])
   const [adStudioTarget, setAdStudioTarget] = useState<Highlight | null>(null)
   const uploadRequest = useRef<XMLHttpRequest | null>(null)
+  const pendingUploads = useRef<UploadQueueItem[]>([])
+  const uploadWorkerRunning = useRef(false)
 
   useEffect(() => {
     try {
@@ -1240,7 +1448,7 @@ export default function App() {
 
   const refreshJobs = useCallback(async () => {
     try {
-      const remoteJobs = await requestJson<RemoteJob[]>('/api/jobs')
+      const remoteJobs = await requestJson<RemoteJob[]>('/api/jobs?limit=100')
       const records = remoteJobs.map(withSourceUrl)
       setJobs(records)
       setJob((current) => {
@@ -1273,50 +1481,89 @@ export default function App() {
   useEffect(() => { void refreshJobs() }, [refreshJobs])
 
   useEffect(() => {
-    if (!job || !['queued', 'processing'].includes(job.status)) return
-    let cancelled = false
-    const timer = window.setInterval(async () => {
-      try {
-        const latest = await requestJson<RemoteJob>(`/api/jobs/${job.job_id}`)
-        if (cancelled) return
-        const saved = await persistJob(mergeRemoteJob(job, latest))
-        if (cancelled) return
-        setOnline(true)
-        if (!['queued', 'processing'].includes(saved.status)) {
-          window.clearInterval(timer)
-        }
-      } catch (reason) {
-        if (!cancelled) setError(reason instanceof Error ? reason.message : '任务状态查询失败')
-      }
-    }, 1800)
-    return () => { cancelled = true; window.clearInterval(timer) }
-  }, [job?.job_id, job?.status, persistJob])
+    if (!jobs.some((item) => ['queued', 'processing'].includes(item.status))) return
+    const timer = window.setTimeout(() => { void refreshJobs() }, 1800)
+    return () => window.clearTimeout(timer)
+  }, [jobs, refreshJobs])
 
   useEffect(() => {
     if (!job?.result?.highlights.length) setSelected(null)
     else if (selected) setSelected(job.result.highlights.find((item) => item.highlight_id === selected.highlight_id) || null)
   }, [job?.updated_at])
 
-  const handleFile = async (file: File) => {
-    const extension = file.name.includes('.') ? file.name.slice(file.name.lastIndexOf('.')).toLowerCase() : ''
-    if (!VIDEO_EXTENSIONS.includes(extension)) { setError('请选择 MP4、MOV、MKV、WEBM、AVI 或 M4V 视频。'); return }
-    if (file.size > 20 * 1024 ** 3) { setError('视频不能超过 20 GB。'); return }
-    const jobId = createJobId()
+  useEffect(() => setCleanExportResult(null), [job?.job_id, selected?.highlight_id])
+
+  const drainUploadQueue = useCallback(async () => {
+    if (uploadWorkerRunning.current) return
+    uploadWorkerRunning.current = true
+    try {
+      while (pendingUploads.current.length) {
+        const item = pendingUploads.current.shift()
+        if (!item) break
+        setUploadQueue((current) => current.map((entry) => entry.queue_id === item.queue_id ? { ...entry, status: 'uploading', progress: 0, error: undefined } : entry))
+        setUpload({ phase: 'uploading', progress: 0, fileName: item.file.name })
+        try {
+          const created = await uploadVideo(
+            item.job_id,
+            item.file,
+            (progress) => {
+              setUpload({ phase: 'uploading', progress, fileName: item.file.name })
+              setUploadQueue((current) => current.map((entry) => entry.queue_id === item.queue_id ? { ...entry, progress } : entry))
+            },
+            (request) => { uploadRequest.current = request },
+          )
+          await persistJob(withSourceUrl(created))
+          setUploadQueue((current) => current.map((entry) => entry.queue_id === item.queue_id ? { ...entry, status: 'submitted', progress: 100 } : entry))
+          setOnline(true)
+        } catch (reason) {
+          const message = reason instanceof Error ? reason.message : '视频导入失败'
+          setUploadQueue((current) => current.map((entry) => entry.queue_id === item.queue_id ? { ...entry, status: 'failed', error: message } : entry))
+        } finally {
+          uploadRequest.current = null
+          setUpload({ phase: 'idle', progress: 0 })
+        }
+      }
+    } finally {
+      uploadWorkerRunning.current = false
+    }
+  }, [persistJob])
+
+  const handleFiles = useCallback((files: File[]) => {
+    const entries = files.map((file): UploadQueueItem => {
+      const extension = file.name.includes('.') ? file.name.slice(file.name.lastIndexOf('.')).toLowerCase() : ''
+      const errorMessage = !VIDEO_EXTENSIONS.includes(extension)
+        ? '不支持的视频格式'
+        : file.size > 20 * 1024 ** 3
+          ? '视频不能超过 20 GB'
+          : undefined
+      return {
+        queue_id: `queue_${crypto.randomUUID()}`,
+        job_id: createJobId(),
+        file,
+        status: errorMessage ? 'failed' : 'waiting',
+        progress: 0,
+        error: errorMessage,
+      }
+    })
+    const validEntries = entries.filter((item) => item.status === 'waiting')
+    pendingUploads.current.push(...validEntries)
+    setUploadQueue((current) => [...current, ...entries].slice(-100))
     setView('workspace')
     setJob(null)
     setSelected(null)
+    setCleanExportResult(null)
     setError(null)
-    setUpload({ phase: 'uploading', progress: 0, fileName: file.name })
-    try {
-      const created = await uploadVideo(jobId, file, (progress) => setUpload({ phase: 'uploading', progress, fileName: file.name }), (request) => { uploadRequest.current = request })
-      await persistJob(withSourceUrl(created))
-      setUpload({ phase: 'idle', progress: 0 })
-      setOnline(true)
-    } catch (reason) {
-      setUpload({ phase: 'idle', progress: 0 })
-      const message = reason instanceof Error ? reason.message : '视频导入失败'
-      setError(message)
-    }
+    void drainUploadQueue()
+  }, [drainUploadQueue])
+
+  const clearFinishedQueue = () => {
+    const jobsById = new Map(jobs.map((item) => [item.job_id, item]))
+    setUploadQueue((current) => current.filter((item) => {
+      if (item.status === 'waiting' || item.status === 'uploading') return true
+      if (item.status !== 'submitted') return false
+      const live = jobsById.get(item.job_id)
+      return !live || ['queued', 'processing'].includes(live.status)
+    }))
   }
 
   const review = async (item: Highlight, reviewStatus: ReviewStatus) => {
@@ -1333,6 +1580,60 @@ export default function App() {
       await persistJob(updated)
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : '复核状态保存失败')
+    }
+  }
+
+  const editHighlightRange = async (item: Highlight, startSec: number, endSec: number) => {
+    if (!job?.result) return
+    const currentJob = job
+    setRangeBusy(true)
+    setError(null)
+    try {
+      const remote = await requestJson<RemoteJob>(
+        `/api/jobs/${currentJob.job_id}/highlights/${encodeURIComponent(item.highlight_id)}/range`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            start_sec: startSec,
+            end_sec: endSec,
+            revision: currentJob.revision,
+          }),
+        },
+      )
+      await persistJob(mergeRemoteJob(currentJob, remote))
+      setOnline(true)
+    } catch (reason) {
+      setError(reason instanceof Error ? reason.message : '时间范围保存失败')
+      throw reason
+    } finally {
+      setRangeBusy(false)
+    }
+  }
+
+  const exportCleanHighlight = async (item: Highlight) => {
+    if (!job?.source_url) throw new Error('当前任务没有可用的原片地址')
+    if (!window.adStudio?.exportCleanHighlight) {
+      const reason = new Error('无广告导出仅在 Electron 桌面端可用')
+      setError(reason.message)
+      throw reason
+    }
+    setCleanExportBusy(true)
+    setCleanExportResult(null)
+    setError(null)
+    try {
+      const result = await window.adStudio.exportCleanHighlight<AdExportResult>({
+        job_id: job.job_id,
+        original_name: job.original_name,
+        source_url: job.source_url,
+        highlight: item,
+      })
+      setCleanExportResult(result)
+    } catch (reason) {
+      setError(reason instanceof Error ? reason.message : '高光导出失败')
+      throw reason
+    } finally {
+      setCleanExportBusy(false)
     }
   }
 
@@ -1416,6 +1717,7 @@ export default function App() {
     setJob(record)
     setSelected(null)
     setError(null)
+    setCleanExportResult(null)
     setView('workspace')
     return
 
@@ -1463,9 +1765,9 @@ export default function App() {
     <WindowChrome theme={theme} onToggleTheme={() => setTheme((current) => current === 'dark' ? 'light' : 'dark')} />
     <Sidebar view={view} onView={setView} online={online} jobs={jobs} />
     <main>{view === 'workspace'
-      ? <Workspace upload={upload} job={job} selected={activeHighlight} error={error} chatBusy={chatBusy} playerReloadToken={playerReloadToken} configuredAdIds={configuredAdIds} onFile={handleFile} onSelect={setSelected} onReview={review} onAd={openAdStudio} onChat={sendEditMessage} onCancel={() => uploadRequest.current?.abort()} onRetry={() => { setError(null); setPlayerReloadToken((value) => value + 1); void refreshJobs() }} onPlaybackError={setError} />
+      ? <Workspace upload={upload} uploadQueue={uploadQueue} jobs={jobs} job={job} selected={activeHighlight} error={error} chatBusy={chatBusy} rangeBusy={rangeBusy} exportBusy={cleanExportBusy} exportResult={cleanExportResult} playerReloadToken={playerReloadToken} configuredAdIds={configuredAdIds} onFiles={handleFiles} onSelect={setSelected} onReview={review} onAd={openAdStudio} onChat={sendEditMessage} onRangeEdit={editHighlightRange} onExport={exportCleanHighlight} onClearQueue={clearFinishedQueue} onCancel={() => uploadRequest.current?.abort()} onRetry={() => { setError(null); setPlayerReloadToken((value) => value + 1); void refreshJobs() }} onPlaybackError={setError} />
       : view === 'library'
-        ? <Library jobs={jobs} onOpen={openJob} onFile={handleFile} onDelete={requestDelete} />
+        ? <Library jobs={jobs} onOpen={openJob} onFiles={handleFiles} onDelete={requestDelete} />
         : <AdWorkspace jobs={jobs} assignments={adAssignments} assets={adAssets} onOpen={openAdStudioFromQueue} onGoReview={() => setView('workspace')} />}
     </main>
     {deleteCandidate && <DeleteDialog job={deleteCandidate} busy={deleteBusy} error={deleteError} onCancel={closeDelete} onConfirm={confirmDelete} />}

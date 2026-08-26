@@ -30,5 +30,6 @@ interface Window {
     listAssets: <T>() => Promise<T[]>
     deleteAsset: (assetId: string) => Promise<void>
     exportHighlight: <T>(input: unknown) => Promise<T>
+    exportCleanHighlight: <T>(input: unknown) => Promise<T>
   }
 }
