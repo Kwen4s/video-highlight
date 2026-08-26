@@ -15,7 +15,7 @@ from torch.optim import AdamW
 from torch.utils.data import DataLoader
 
 from .config import HighlightModelConfig
-from .dataset import EpisodeBatch, EpisodeDataset, load_silver_videos, split_by_drama
+from .dataset import EpisodeBatch, EpisodeDataset, load_silver_videos, split_by_video
 from .decoding import (
     choose_decoder,
     decode_segments,
@@ -32,15 +32,12 @@ CHECKPOINT_SCHEMA = 3
 def fit_highlight_model(config: HighlightModelConfig) -> dict[str, Any]:
     _set_seed(config.seed)
     videos = load_silver_videos(config.annotations)
-    splits = split_by_drama(videos, config.seed)
+    splits = split_by_video(videos, config.seed)
     config.output_dir.mkdir(parents=True, exist_ok=True)
     _write_json(config.output_dir / "config.json", asdict(config))
     _write_json(
-        config.output_dir / "drama_split.json",
-        {
-            name: sorted({video.drama_id for video in subset})
-            for name, subset in splits.items()
-        },
+        config.output_dir / "video_split.json",
+        {name: [video.video_id for video in subset] for name, subset in splits.items()},
     )
 
     feature_report: dict[str, int] | None = None
@@ -157,6 +154,7 @@ def fit_highlight_model(config: HighlightModelConfig) -> dict[str, Any]:
     report = {
         "schema": CHECKPOINT_SCHEMA,
         "method": "NarrativeTransitionSegmentQualityLocalizer",
+        "split": "random_video_80_10_10",
         "videos": {name: len(subset) for name, subset in splits.items()},
         "best_epoch": int(best["epoch"]),
         "threshold": best_threshold,

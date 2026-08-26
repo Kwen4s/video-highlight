@@ -153,7 +153,7 @@ def train_run(
     silver_run_id: str = typer.Option("gemini37_transition_v1", "--silver-run-id"),
     annotations: Path | None = typer.Option(None, "--annotations"),
     output_dir: Path = typer.Option(
-        Path("outputs/highlight_model/segment_quality"), "--output-dir"
+        Path("outputs/highlight_model/segment_quality_random_video"), "--output-dir"
     ),
     vision_model_path: Path = typer.Option(
         Path("/data1/modelscope_models/Qwen3-VL-Embedding-2B"),

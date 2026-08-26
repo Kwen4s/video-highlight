@@ -109,21 +109,25 @@ def load_silver_videos(path: Path) -> list[SilverVideo]:
     return videos
 
 
-def split_by_drama(videos: list[SilverVideo], seed: int) -> dict[str, list[SilverVideo]]:
-    drama_ids = sorted({video.drama_id for video in videos})
-    if len(drama_ids) < 3:
-        raise ValueError("at least three dramas are required")
-    drama_ids.sort(key=lambda value: hashlib.sha256(f"{seed}:{value}".encode()).hexdigest())
-    train_end = max(1, round(len(drama_ids) * 0.8))
-    val_end = min(len(drama_ids) - 1, max(train_end + 1, round(len(drama_ids) * 0.9)))
-    assignment = {
-        drama_id: "train" if index < train_end else "val" if index < val_end else "test"
-        for index, drama_id in enumerate(drama_ids)
+def split_by_video(videos: list[SilverVideo], seed: int) -> dict[str, list[SilverVideo]]:
+    if len(videos) < 3:
+        raise ValueError("at least three videos are required")
+    shuffled = sorted(
+        videos,
+        key=lambda video: hashlib.sha256(
+            f"{seed}:{video.video_id}".encode()
+        ).hexdigest(),
+    )
+    train_end = max(1, round(len(shuffled) * 0.8))
+    val_end = min(
+        len(shuffled) - 1,
+        max(train_end + 1, round(len(shuffled) * 0.9)),
+    )
+    return {
+        "train": shuffled[:train_end],
+        "val": shuffled[train_end:val_end],
+        "test": shuffled[val_end:],
     }
-    result = {name: [] for name in ("train", "val", "test")}
-    for video in videos:
-        result[assignment[video.drama_id]].append(video)
-    return result
 
 
 class EpisodeDataset(Dataset[EpisodeBatch]):

@@ -1,3 +1,4 @@
+from dataclasses import replace
 from pathlib import Path
 
 import torch
@@ -7,6 +8,7 @@ from vh_agent.highlight_model.dataset import (
     HighlightAnnotation,
     SilverVideo,
     build_targets,
+    split_by_video,
 )
 from vh_agent.highlight_model.decoding import decode_segments, segment_metrics
 from vh_agent.highlight_model.losses import highlight_localization_loss
@@ -67,6 +69,28 @@ def test_targets_are_centered_on_decisive_evidence(tmp_path: Path) -> None:
     assert targets.sample_weight[32] == config.hard_negative_weight
 
     assert targets.segments.tolist() == [[14.0, 28.0]]
+
+
+def test_video_split_is_seeded_and_disjoint(tmp_path: Path) -> None:
+    videos = [
+        replace(
+            _video(tmp_path),
+            video_id=f"video_{index}",
+            drama_id=f"drama_{index % 2}",
+        )
+        for index in range(10)
+    ]
+    splits = split_by_video(videos, seed=13)
+
+    assert {name: len(rows) for name, rows in splits.items()} == {
+        "train": 8,
+        "val": 1,
+        "test": 1,
+    }
+    assert splits == split_by_video(list(reversed(videos)), seed=13)
+    assert len({video.video_id for rows in splits.values() for video in rows}) == 10
+
+
 def test_transition_model_runs_end_to_end_and_constrains_offsets(tmp_path: Path) -> None:
     torch.manual_seed(3)
     config = _config(tmp_path)

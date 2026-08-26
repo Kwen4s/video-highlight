@@ -133,6 +133,8 @@ local preprocessing
 
 模型以 decisive anchor 为事件中心生成 eventness 热图，并在其中心采样区域内密集回归完整银标段的起止偏移，避免只在真实峰值附近训练、却从预测峰读取未受监督偏移。setup、decisive 与 reaction 时间监督三个受时间掩码约束的注意力位置；它们的位置、存在性与预测边界共同进入片段质量头。训练损失包括 event focal loss、Smooth L1 + temporal IoU 边界损失、anchor attention loss、预测片段 IoU 质量损失和片段内 hard-negative 排序损失。推理分数由 eventness 与 anchor-aware segment quality 联合给出，再执行 temporal NMS。验证集报告段级 `F1@IoU 0.3/0.5/0.7`，仍按较严格的 `0.5/0.7` 均值选择阈值、Top-K 与最优 checkpoint。
 
+训练数据使用固定 seed 按视频随机划分为 80%/10%/10%，同一部剧的不同视频允许进入不同子集；运行目录保存完整 `video_split.json`，确保实验可复现。
+
 
 ## Pipeline
 
