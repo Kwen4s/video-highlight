@@ -13,6 +13,7 @@ from torch import Tensor, nn
 @dataclass
 class TransitionOutput:
     event_logits: Tensor
+    segment_quality_logits: Tensor
     offsets: Tensor
     anchor_positions: Tensor
     anchor_presence: Tensor
@@ -365,6 +366,13 @@ class NarrativeTransitionLocalizer(nn.Module):
         )
         self.event_head = nn.Sequential(nn.LayerNorm(model_dim), nn.Linear(model_dim, 1))
         self.offset_head = nn.Sequential(nn.LayerNorm(model_dim), nn.Linear(model_dim, 2))
+        self.segment_quality_head = nn.Sequential(
+            nn.LayerNorm(model_dim + 8),
+            nn.Linear(model_dim + 8, model_dim),
+            nn.GELU(),
+            nn.Dropout(dropout),
+            nn.Linear(model_dim, 1),
+        )
 
     def forward(
         self,
@@ -400,8 +408,28 @@ class NarrativeTransitionLocalizer(nn.Module):
         )
         distances = F.softplus(self.offset_head(transition))
         offsets = torch.stack([-distances[:, 0], distances[:, 1]], dim=1)
+        centers = torch.arange(
+            len(transition), device=transition.device, dtype=transition.dtype
+        )[:, None]
+        anchor_scale = transition.new_tensor(
+            [max(1, self.decoder.max_before_sec), 2, max(1, self.decoder.max_after_sec)]
+        )
+        anchor_delta = ((anchor_positions - centers) / anchor_scale).clamp(-1.0, 1.0)
+        distance_scale = transition.new_tensor(
+            [max(1, self.decoder.max_before_sec), max(1, self.decoder.max_after_sec)]
+        )
+        quality_features = torch.cat(
+            [
+                transition,
+                anchor_delta,
+                anchor_presence,
+                (distances.detach() / distance_scale).clamp_max(2.0),
+            ],
+            dim=1,
+        )
         return TransitionOutput(
             event_logits=self.event_head(transition).squeeze(-1),
+            segment_quality_logits=self.segment_quality_head(quality_features).squeeze(-1),
             offsets=offsets,
             anchor_positions=anchor_positions,
             anchor_presence=anchor_presence,

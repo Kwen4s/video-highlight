@@ -60,13 +60,13 @@ def test_targets_are_centered_on_decisive_evidence(tmp_path: Path) -> None:
 
     assert targets.eventness[20] == torch.tensor(0.9)
     assert targets.eventness[14] < 0.001
-    assert targets.boundary_mask.nonzero().flatten().tolist() == [19, 20, 21]
+    assert targets.boundary_mask.nonzero().flatten().tolist() == list(range(16, 25))
     assert targets.offsets[20].tolist() == [-6.0, 8.0]
     assert targets.anchor_positions[20].tolist() == [16.0, 20.0, 24.0]
     assert targets.anchor_mask[20].all()
     assert targets.sample_weight[32] == config.hard_negative_weight
 
-
+    assert targets.segments.tolist() == [[14.0, 28.0]]
 def test_transition_model_runs_end_to_end_and_constrains_offsets(tmp_path: Path) -> None:
     torch.manual_seed(3)
     config = _config(tmp_path)
@@ -95,9 +95,12 @@ def test_transition_model_runs_end_to_end_and_constrains_offsets(tmp_path: Path)
     losses.total.backward()
 
     assert output.event_logits.shape == (40,)
+    assert output.segment_quality_logits.shape == (40,)
     assert output.offsets.shape == (40, 2)
     assert output.anchor_positions.shape == (40, 3)
     assert torch.isfinite(losses.total)
+    assert torch.isfinite(losses.quality)
+    assert torch.isfinite(losses.ranking)
     assert (output.offsets[:, 0] <= 0).all()
     assert (output.offsets[:, 1] >= 0).all()
     assert any(parameter.grad is not None for parameter in model.parameters())
@@ -109,6 +112,7 @@ def test_peak_decoder_and_segment_iou_metrics(tmp_path: Path) -> None:
     offsets = torch.zeros((40, 2))
     offsets[20] = torch.tensor([-6.0, 8.0])
     output = TransitionOutput(
+        segment_quality_logits=logits,
         event_logits=logits,
         offsets=offsets,
         anchor_positions=torch.zeros(40, 3),
@@ -122,6 +126,7 @@ def test_peak_decoder_and_segment_iou_metrics(tmp_path: Path) -> None:
     assert predictions[0].start_sec == 14.0
     assert predictions[0].end_sec == 28.0
     assert metrics["f1_iou_0.5"] == 1.0
+    assert metrics["f1_iou_0.3"] == 1.0
     assert metrics["f1_iou_0.7"] == 1.0
 
 

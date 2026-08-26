@@ -18,6 +18,8 @@ class LossOutput:
     event: Tensor
     boundary: Tensor
     anchor: Tensor
+    quality: Tensor
+    ranking: Tensor
 
 
 def highlight_localization_loss(output: TransitionOutput, targets: EpisodeTargets) -> LossOutput:
@@ -37,6 +39,12 @@ def highlight_localization_loss(output: TransitionOutput, targets: EpisodeTarget
     ).sum() / sample_weight.sum().clamp_min(1)
 
     boundary_mask = targets.boundary_mask.to(device)
+    centers = torch.arange(
+        len(output.offsets), device=device, dtype=output.offsets.dtype
+    )
+    predicted_segments = torch.stack(
+        [centers + output.offsets[:, 0], centers + output.offsets[:, 1]], dim=1
+    )
     if boundary_mask.any():
         target_offsets = targets.offsets.to(device)[boundary_mask]
         predicted_offsets = output.offsets[boundary_mask]
@@ -46,27 +54,17 @@ def highlight_localization_loss(output: TransitionOutput, targets: EpisodeTarget
             reduction="mean",
             beta=1.0,
         )
-        centers = torch.arange(
-            len(output.offsets),
-            device=device,
-            dtype=output.offsets.dtype,
-        )[boundary_mask]
-        predicted_segments = torch.stack(
-            [
-                centers + predicted_offsets[:, 0],
-                centers + predicted_offsets[:, 1],
-            ],
-            dim=1,
-        )
+        positive_centers = centers[boundary_mask]
+        positive_segments = predicted_segments[boundary_mask]
         target_segments = torch.stack(
             [
-                centers + target_offsets[:, 0],
-                centers + target_offsets[:, 1],
+                positive_centers + target_offsets[:, 0],
+                positive_centers + target_offsets[:, 1],
             ],
             dim=1,
         )
         boundary_loss = regression + _temporal_iou_loss(
-            predicted_segments,
+            positive_segments,
             target_segments,
         )
     else:
@@ -94,8 +92,41 @@ def highlight_localization_loss(output: TransitionOutput, targets: EpisodeTarget
     else:
         presence_loss = torch.zeros((), device=device)
     anchor_loss = position_loss + 0.25 * presence_loss
-    total = event_loss + 0.5 * boundary_loss + 0.25 * anchor_loss
-    return LossOutput(total, event_loss, boundary_loss, anchor_loss)
+
+    target_segments = targets.segments.to(device)
+    if len(target_segments):
+        quality_target = _pairwise_temporal_iou(
+            predicted_segments.detach(), target_segments
+        ).amax(dim=1)
+    else:
+        quality_target = torch.zeros(len(predicted_segments), device=device)
+    quality_loss = _balanced_quality_loss(
+        output.segment_quality_logits,
+        quality_target,
+        sample_weight,
+    )
+    combined_score = F.logsigmoid(output.event_logits) + F.logsigmoid(
+        output.segment_quality_logits
+    )
+    positive = event_target >= 0.3
+    negative = (event_target <= 0.05) & (quality_target < 0.1)
+    ranking_loss = _hard_negative_ranking_loss(combined_score, positive, negative)
+
+    total = (
+        event_loss
+        + 0.5 * boundary_loss
+        + 0.25 * anchor_loss
+        + 0.5 * quality_loss
+        + 0.25 * ranking_loss
+    )
+    return LossOutput(
+        total,
+        event_loss,
+        boundary_loss,
+        anchor_loss,
+        quality_loss,
+        ranking_loss,
+    )
 
 
 def _temporal_iou_loss(predicted: Tensor, target: Tensor) -> Tensor:
@@ -108,3 +139,49 @@ def _temporal_iou_loss(predicted: Tensor, target: Tensor) -> Tensor:
         - torch.minimum(predicted[:, 0], target[:, 0])
     ).clamp_min(1e-6)
     return (1.0 - intersection / union).mean()
+
+
+def _pairwise_temporal_iou(predicted: Tensor, target: Tensor) -> Tensor:
+    intersection = (
+        torch.minimum(predicted[:, None, 1], target[None, :, 1])
+        - torch.maximum(predicted[:, None, 0], target[None, :, 0])
+    ).clamp_min(0)
+    union = (
+        torch.maximum(predicted[:, None, 1], target[None, :, 1])
+        - torch.minimum(predicted[:, None, 0], target[None, :, 0])
+    ).clamp_min(1e-6)
+    return intersection / union
+
+
+def _balanced_quality_loss(logits: Tensor, target: Tensor, weight: Tensor) -> Tensor:
+    probability = torch.sigmoid(logits)
+    focal = (probability - target).abs().square()
+    losses = focal * F.binary_cross_entropy_with_logits(logits, target, reduction="none")
+    positive = target >= 0.3
+    negative = target < 0.1
+    parts: list[Tensor] = []
+    for mask in (positive, negative):
+        if mask.any():
+            parts.append(
+                (losses[mask] * weight[mask]).sum()
+                / weight[mask].sum().clamp_min(1)
+            )
+    return torch.stack(parts).mean() if parts else torch.zeros((), device=logits.device)
+
+
+def _hard_negative_ranking_loss(
+    scores: Tensor,
+    positive: Tensor,
+    negative: Tensor,
+    margin: float = 0.2,
+    hard_negative_count: int = 64,
+) -> Tensor:
+    if not positive.any() or not negative.any():
+        return torch.zeros((), device=scores.device)
+    positive_scores = scores[positive]
+    negative_scores = scores[negative].topk(
+        min(hard_negative_count, int(negative.sum()))
+    ).values
+    return F.softplus(
+        margin + negative_scores[:, None] - positive_scores[None, :]
+    ).mean()

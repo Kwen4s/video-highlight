@@ -27,7 +27,10 @@ def decode_segments(
     min_duration_sec: float = 6.0,
     max_duration_sec: float = 24.0,
 ) -> list[PredictedSegment]:
-    scores = torch.sigmoid(output.event_logits.detach()).cpu()
+    scores = (
+        torch.sigmoid(output.event_logits.detach())
+        * torch.sigmoid(output.segment_quality_logits.detach())
+    ).cpu()
     if len(scores) == 1:
         peaks = torch.ones_like(scores, dtype=torch.bool)
     else:
@@ -63,7 +66,7 @@ def segment_metrics(
     videos: list[SilverVideo],
 ) -> dict[str, float]:
     metrics: dict[str, float] = {}
-    for threshold in (0.5, 0.7):
+    for threshold in (0.3, 0.5, 0.7):
         tp = fp = fn = 0
         for video in videos:
             predicted = predictions.get(video.video_id, [])
@@ -105,7 +108,7 @@ def choose_decoder(
         }
     )
     for top_k in top_k_choices:
-        for threshold in np.linspace(0.1, 0.9, 17):
+        for threshold in np.linspace(0.05, 0.8, 16):
             predictions = {
                 video.video_id: decode_segments(
                     outputs[video.video_id],

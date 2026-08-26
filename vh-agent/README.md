@@ -123,7 +123,7 @@ local preprocessing
   -> temporally pooled scene memory
   -> causal before / local event / bounded after + global salience
   -> narrative transition vector
-  -> eventness peak + start/end offsets
+  -> eventness peak + start/end offsets + anchor-aware segment quality
   -> temporal NMS
 ```
 
@@ -131,7 +131,7 @@ local preprocessing
 
 场景记忆只由媒体缓存中的镜头边界和时序特征池化得到。层级骨干的局部注意力、下采样和上采样均为因果计算；before 分支只能访问过去 32 秒和在当前时刻前已经结束的场景；event 分支访问 `[t-2,t+2]`；after 分支最多访问未来 8 秒。全片场景记忆仅进入显著性上下文，不进入三种状态，因此不会把未来剧情泄漏给 before。
 
-模型以 decisive anchor 为事件中心生成 eventness 热图，并在事件中心附近回归完整银标段的起止偏移。setup、decisive 与 reaction 时间只监督三个受时间掩码约束的注意力位置；反应缺失时由 learned empty state 表示。训练损失为 event focal loss、Smooth L1 + temporal IoU 边界损失和 anchor attention loss。验证集按段级 `F1@IoU 0.5/0.7` 联合选择峰值阈值与 Top-K，加载最优检查点后再固定解码测试集。
+模型以 decisive anchor 为事件中心生成 eventness 热图，并在其中心采样区域内密集回归完整银标段的起止偏移，避免只在真实峰值附近训练、却从预测峰读取未受监督偏移。setup、decisive 与 reaction 时间监督三个受时间掩码约束的注意力位置；它们的位置、存在性与预测边界共同进入片段质量头。训练损失包括 event focal loss、Smooth L1 + temporal IoU 边界损失、anchor attention loss、预测片段 IoU 质量损失和片段内 hard-negative 排序损失。推理分数由 eventness 与 anchor-aware segment quality 联合给出，再执行 temporal NMS。验证集报告段级 `F1@IoU 0.3/0.5/0.7`，仍按较严格的 `0.5/0.7` 均值选择阈值、Top-K 与最优 checkpoint。
 
 
 ## Pipeline

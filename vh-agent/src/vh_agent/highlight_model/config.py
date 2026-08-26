@@ -28,7 +28,7 @@ class HighlightModelConfig:
     audio_window_sec: int = 30
     audio_overlap_sec: int = 5
     event_sigma_sec: float = 1.5
-    boundary_radius_sec: int = 1
+    center_sampling_radius_sec: int = 4
     hard_negative_weight: float = 2.0
     max_before_sec: int = 32
     max_after_sec: int = 8

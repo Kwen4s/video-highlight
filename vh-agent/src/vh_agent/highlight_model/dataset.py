@@ -45,6 +45,7 @@ class EpisodeTargets:
     boundary_mask: Tensor
     anchor_positions: Tensor
     anchor_mask: Tensor
+    segments: Tensor
 
 
 @dataclass(frozen=True)
@@ -175,6 +176,10 @@ def build_targets(video: SilverVideo, config: HighlightModelConfig) -> EpisodeTa
     anchor_positions = torch.zeros((length, 3))
     anchor_mask = torch.zeros((length, 3), dtype=torch.bool)
     assignment_quality = torch.full((length,), -1.0)
+    segments = torch.tensor(
+        [[item.start_sec, item.end_sec] for item in video.highlights],
+        dtype=torch.float32,
+    ).reshape(-1, 2)
 
     for start, end in video.hard_negative_intervals:
         negative = (grid >= start) & (grid <= end)
@@ -191,12 +196,16 @@ def build_targets(video: SilverVideo, config: HighlightModelConfig) -> EpisodeTa
             eventness = torch.maximum(eventness, gaussian * quality)
             center = round(event_time)
             for index in range(
-                max(0, center - config.boundary_radius_sec),
-                min(length, center + config.boundary_radius_sec + 1),
+                max(0, center - config.center_sampling_radius_sec),
+                min(length, center + config.center_sampling_radius_sec + 1),
             ):
-                if quality < assignment_quality[index]:
+                distance = abs(index - event_time)
+                assignment = quality * (
+                    1.0 - distance / (config.center_sampling_radius_sec + 1.0)
+                )
+                if assignment < assignment_quality[index]:
                     continue
-                assignment_quality[index] = quality
+                assignment_quality[index] = assignment
                 boundary_mask[index] = True
                 offsets[index, 0] = highlight.start_sec - index
                 offsets[index, 1] = highlight.end_sec - index
@@ -214,6 +223,7 @@ def build_targets(video: SilverVideo, config: HighlightModelConfig) -> EpisodeTa
         boundary_mask=boundary_mask,
         anchor_positions=anchor_positions,
         anchor_mask=anchor_mask,
+        segments=segments,
     )
 
 

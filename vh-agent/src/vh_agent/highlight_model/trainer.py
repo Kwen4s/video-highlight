@@ -26,7 +26,7 @@ from .encoders import FrozenMomentFeatureExtractor
 from .losses import highlight_localization_loss
 from .network import NarrativeTransitionLocalizer, TransitionOutput
 
-CHECKPOINT_SCHEMA = 2
+CHECKPOINT_SCHEMA = 3
 
 
 def fit_highlight_model(config: HighlightModelConfig) -> dict[str, Any]:
@@ -156,7 +156,7 @@ def fit_highlight_model(config: HighlightModelConfig) -> dict[str, Any]:
     test_metrics = segment_metrics(test_predictions, splits["test"])
     report = {
         "schema": CHECKPOINT_SCHEMA,
-        "method": "NarrativeTransitionLocalizer",
+        "method": "NarrativeTransitionSegmentQualityLocalizer",
         "videos": {name: len(subset) for name, subset in splits.items()},
         "best_epoch": int(best["epoch"]),
         "threshold": best_threshold,
@@ -191,7 +191,14 @@ def _train_epoch(
     )
     model.train()
     optimizer.zero_grad(set_to_none=True)
-    totals = {"loss": 0.0, "event": 0.0, "boundary": 0.0, "anchor": 0.0}
+    totals = {
+        "loss": 0.0,
+        "event": 0.0,
+        "boundary": 0.0,
+        "anchor": 0.0,
+        "quality": 0.0,
+        "ranking": 0.0,
+    }
     for step, batch in enumerate(loader, start=1):
         with _autocast(config.device):
             output = _forward(model, batch, config.device)
@@ -205,6 +212,8 @@ def _train_epoch(
         totals["event"] += float(losses.event.detach())
         totals["boundary"] += float(losses.boundary.detach())
         totals["anchor"] += float(losses.anchor.detach())
+        totals["quality"] += float(losses.quality.detach())
+        totals["ranking"] += float(losses.ranking.detach())
         if step % 25 == 0 or step == len(loader):
             print(f"epoch={epoch} episodes={step}/{len(loader)}")
     return {key: value / max(1, len(loader)) for key, value in totals.items()}
@@ -232,6 +241,7 @@ def _evaluate(
         total_loss += float(losses.total)
         outputs[batch.video.video_id] = TransitionOutput(
             event_logits=output.event_logits.float().cpu(),
+            segment_quality_logits=output.segment_quality_logits.float().cpu(),
             offsets=output.offsets.float().cpu(),
             anchor_positions=output.anchor_positions.float().cpu(),
             anchor_presence=output.anchor_presence.float().cpu(),
