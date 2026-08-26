@@ -90,7 +90,8 @@ def test_transition_model_runs_end_to_end_and_constrains_offsets(tmp_path: Path)
         torch.ones(40, 2),
         torch.tensor([[0, 12], [12, 26], [26, 40]]),
     )
-    losses = highlight_localization_loss(output, targets)
+    with torch.autocast(device_type="cpu", dtype=torch.bfloat16):
+        losses = highlight_localization_loss(output, targets)
     losses.total.backward()
 
     assert output.event_logits.shape == (40,)

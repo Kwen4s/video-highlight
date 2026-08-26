@@ -84,8 +84,11 @@ def highlight_localization_loss(output: TransitionOutput, targets: EpisodeTarget
     else:
         position_loss = torch.zeros((), device=device)
     if boundary_mask.any():
-        presence_loss = F.binary_cross_entropy(
-            output.anchor_presence[boundary_mask].clamp(1e-6, 1.0 - 1e-6),
+        presence_probability = output.anchor_presence[boundary_mask].float().clamp(
+            1e-6, 1.0 - 1e-6
+        )
+        presence_loss = F.binary_cross_entropy_with_logits(
+            torch.logit(presence_probability),
             targets.anchor_mask.to(device)[boundary_mask].float(),
         )
     else:
