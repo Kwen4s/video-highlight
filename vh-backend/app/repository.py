@@ -95,10 +95,10 @@ class JobRepository:
             row = connection.execute("SELECT * FROM jobs WHERE job_id = ?", (job_id,)).fetchone()
         return dict(row) if row else None
 
-    def list(self, limit: int = 50) -> list[dict[str, Any]]:
+    def list(self) -> list[dict[str, Any]]:
         with self._connect() as connection:
             rows = connection.execute(
-                "SELECT * FROM jobs ORDER BY created_at DESC LIMIT ?", (limit,)
+                "SELECT * FROM jobs ORDER BY created_at DESC"
             ).fetchall()
         return [dict(row) for row in rows]
 

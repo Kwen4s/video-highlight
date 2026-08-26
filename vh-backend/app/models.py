@@ -69,6 +69,11 @@ class JobResponse(BaseModel):
     result: DetectionResult | None = None
 
 
+class JobDeletionRequest(BaseModel):
+    confirmed: Literal[True]
+    job_id: str = Field(min_length=1, max_length=52)
+
+
 class EditMessageRequest(BaseModel):
     message: str = Field(min_length=1, max_length=500)
     revision: int = Field(ge=0)

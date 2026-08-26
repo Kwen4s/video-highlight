@@ -23,7 +23,6 @@ interface Window {
     }) => Promise<T>
     saveJob: <T>(job: T) => Promise<T>
     listJobs: <T>() => Promise<T[]>
-    deleteJob: (jobId: string) => Promise<void>
   }
   adStudio?: {
     importAsset: <T>(file: File, kind: 'video' | 'image') => Promise<T>

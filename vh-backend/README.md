@@ -70,20 +70,20 @@ runtime/
         └── cache/
 ```
 
-`agent.log`、缓存、对话计划和物理路径都不会通过 API 返回给前端。前端只使用后端返回的公开 API 路径，不读取服务器文件路径。任务不会按超时自动删除，包括长期停留在排队或处理状态的任务；已完成或失败的任务也会一直保留，直到用户主动删除。
+`agent.log`、缓存、对话计划和物理路径都不会通过 API 返回给前端。前端只使用后端返回的公开 API 路径，不读取服务器文件路径。任务不会按超时自动删除，包括长期停留在排队或处理状态的任务；已完成或失败的任务也会一直保留，直到用户在确认对话框中主动删除。
 
 ## API
 
 - `GET /health`：健康检查。
 - `POST /api/jobs`：multipart 上传；字段为 `file`、`job_id`、`language`。
-- `GET /api/jobs`：列出服务端保留的任务。
+- `GET /api/jobs`：列出服务端保留的全部任务，不按时间或数量隐藏旧任务。
 - `GET /api/jobs/{job_id}`：查询任务状态和公开结果。
 - `GET|HEAD /api/jobs/{job_id}/source`：读取原视频；支持浏览器媒体播放所需的字节范围请求。
 - `POST /api/demo-jobs/{job_id}/session`：为白名单内置 Demo 创建或重置对话上下文，不上传视频。
 - `POST /api/jobs/{job_id}/highlights/{highlight_id}/range`：使用 `start_sec`、`end_sec` 和 `revision` 直接调整高光时间范围。
 - `POST /api/jobs/{job_id}/messages`：发送查询或编辑请求；请求携带 `message`、`revision` 和可选的 `selected_highlight_id`。
 - `POST /api/jobs/{job_id}/messages/stream`：以 NDJSON 流式返回对话回复与最终任务结果。
-- `DELETE /api/jobs/{job_id}`：删除已完成或失败的任务。
+- `DELETE /api/jobs/{job_id}`：删除已完成或失败的任务；仅接受用户确认后发送的 `{"confirmed": true, "job_id": "<job_id>"}`，任务号不匹配或缺少确认时不会删除。
 
 任务状态为 `queued → processing → completed`，失败时为 `failed`。检测失败会自动重试，默认最多执行 3 次；公开任务响应中的 `attempt` 和 `max_attempts` 用于展示当前尝试次数。当前使用单检测工作线程，避免多个 GPU 任务并发争用显存。结果和编辑对话没有有效期限制；结果修改仍使用乐观版本号，版本冲突返回 `409`。
 
@@ -91,7 +91,7 @@ runtime/
 
 复制 `.env.example` 为本地 `.env` 后可调整：
 
-- `VH_STORAGE_DIR`：服务端临时数据根目录，默认 `./runtime`。
+- `VH_STORAGE_DIR`：服务端持久化数据根目录，默认 `./runtime`。
 - `VH_AGENT_ROOT`：`vh-agent` 根目录。
 - `VH_AGENT_UV_EXECUTABLE`：uv 可执行文件。
 - `VH_AGENT_TIMEOUT_SEC`：检测任务超时秒数。

@@ -23,6 +23,7 @@ from .models import (
     EditMessageRequest,
     EditMessageResponse,
     HighlightRangeEditRequest,
+    JobDeletionRequest,
     JobResponse,
 )
 from .repository import JobRepository
@@ -179,9 +180,8 @@ def create_app(
         return serialize_job(row)
 
     @application.get("/api/jobs", response_model=list[JobResponse])
-    def list_jobs(limit: int = 50) -> list[JobResponse]:
-        safe_limit = max(1, min(limit, 100))
-        return [serialize_job(row) for row in app_repository.list(safe_limit)]
+    def list_jobs() -> list[JobResponse]:
+        return [serialize_job(row) for row in app_repository.list()]
 
     @application.post("/api/demo-jobs/{job_id}/session", response_model=JobResponse)
     def open_demo_session(job_id: str, request: DemoSessionRequest) -> JobResponse:
@@ -396,16 +396,18 @@ def create_app(
         )
 
     @application.delete("/api/jobs/{job_id}", status_code=status.HTTP_204_NO_CONTENT)
-    def delete_job(job_id: str) -> Response:
+    def delete_job(job_id: str, request: JobDeletionRequest) -> Response:
+        if request.job_id != job_id:
+            raise HTTPException(status_code=409, detail="删除确认与当前任务不匹配")
         row = require_job(app_repository, job_id)
         if row["status"] in {"queued", "processing"}:
-            raise HTTPException(status_code=409, detail="正在分析的任务不能清理")
+            raise HTTPException(status_code=409, detail="正在分析的任务不能删除")
         try:
             purge_job(app_settings, app_repository, job_id)
         except JobFilesLockedError as error:
             raise HTTPException(
                 status_code=423,
-                detail="临时任务文件仍被占用，请等待几秒后重试",
+                detail="任务文件仍被占用，请等待几秒后重试",
             ) from error
         return Response(status_code=status.HTTP_204_NO_CONTENT)
 
@@ -417,7 +419,7 @@ def require_job(repository: JobRepository, job_id: str) -> dict[str, Any]:
         raise HTTPException(status_code=422, detail="无效的任务编号")
     row = repository.get(job_id)
     if row is None:
-        raise HTTPException(status_code=404, detail="临时任务不存在或已清理")
+        raise HTTPException(status_code=404, detail="任务不存在或已被用户删除")
     return row
 
 

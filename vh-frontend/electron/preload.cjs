@@ -14,7 +14,6 @@ contextBridge.exposeInMainWorld('localLibrary', {
   },
   saveJob: (job) => ipcRenderer.invoke('library:save-job', job),
   listJobs: () => ipcRenderer.invoke('library:list-jobs'),
-  deleteJob: (jobId) => ipcRenderer.invoke('library:delete-job', jobId),
 })
 
 contextBridge.exposeInMainWorld('adStudio', {

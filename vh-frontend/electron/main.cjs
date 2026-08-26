@@ -270,12 +270,6 @@ async function listJobs() {
   return tasks.filter(Boolean).sort((left, right) => right.created_at.localeCompare(left.created_at))
 }
 
-async function deleteLocalJob(jobIdValue) {
-  const jobDirectory = path.resolve(getJobDirectory(jobIdValue))
-  if (path.dirname(jobDirectory) !== path.resolve(getJobsRoot())) throw new Error('本地任务目录无效')
-  await rm(jobDirectory, { recursive: true, force: true })
-}
-
 function publicAdAsset(asset) {
   return {
     asset_id: asset.asset_id,
@@ -768,7 +762,6 @@ function registerIpcHandlers() {
   ipcMain.handle('library:import-source', (_event, input) => importSource(input))
   ipcMain.handle('library:save-job', (_event, input) => saveJob(input))
   ipcMain.handle('library:list-jobs', () => listJobs())
-  ipcMain.handle('library:delete-job', (_event, jobId) => deleteLocalJob(jobId))
   ipcMain.handle('ads:import-asset', (_event, input) => importAdAsset(input))
   ipcMain.handle('ads:list-assets', () => listAdAssets())
   ipcMain.handle('ads:delete-asset', (_event, assetId) => deleteAdAsset(assetId))

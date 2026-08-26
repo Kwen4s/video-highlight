@@ -409,6 +409,29 @@ def test_stale_queued_job_is_not_deleted_automatically(tmp_path) -> None:
         assert (settings.jobs_dir / "job_stalequeue").exists()
 
 
+def test_list_jobs_returns_every_submitted_job_without_hidden_limit(tmp_path) -> None:
+    client, _settings, repository, _runner = make_client(tmp_path)
+
+    with client:
+        for index in range(125):
+            repository.create(
+                job_id=f"job_bulk{index:04d}",
+                original_name=f"video-{index}.mp4",
+                stored_name="original.mp4",
+                content_type="video/mp4",
+                size_bytes=index,
+                language="zh",
+            )
+
+        listed = client.get("/api/jobs")
+
+        assert listed.status_code == 200
+        assert len(listed.json()) == 125
+        assert {job["job_id"] for job in listed.json()} == {
+            f"job_bulk{index:04d}" for index in range(125)
+        }
+
+
 def test_delete_cleans_finished_temporary_job_and_reports_locked_files(
     tmp_path, monkeypatch
 ) -> None:
@@ -416,7 +439,25 @@ def test_delete_cleans_finished_temporary_job_and_reports_locked_files(
 
     with client:
         create_completed_job(settings, repository, "job_finished1")
-        deleted = client.delete("/api/jobs/job_finished1")
+        unconfirmed = client.delete("/api/jobs/job_finished1")
+        assert unconfirmed.status_code == 422
+        assert repository.get("job_finished1") is not None
+        assert (settings.jobs_dir / "job_finished1").exists()
+
+        mismatched = client.request(
+            "DELETE",
+            "/api/jobs/job_finished1",
+            json={"confirmed": True, "job_id": "job_different1"},
+        )
+        assert mismatched.status_code == 409
+        assert repository.get("job_finished1") is not None
+        assert (settings.jobs_dir / "job_finished1").exists()
+
+        deleted = client.request(
+            "DELETE",
+            "/api/jobs/job_finished1",
+            json={"confirmed": True, "job_id": "job_finished1"},
+        )
         assert deleted.status_code == 204
         assert repository.get("job_finished1") is None
         assert not (settings.jobs_dir / "job_finished1").exists()
@@ -428,7 +469,11 @@ def test_delete_cleans_finished_temporary_job_and_reports_locked_files(
 
         monkeypatch.setattr(main_module.time, "sleep", lambda _delay: None)
         monkeypatch.setattr(main_module.Path, "replace", locked_replace)
-        locked = client.delete("/api/jobs/job_locked123")
+        locked = client.request(
+            "DELETE",
+            "/api/jobs/job_locked123",
+            json={"confirmed": True, "job_id": "job_locked123"},
+        )
         assert locked.status_code == 423
         assert repository.get("job_locked123") is not None
         assert (settings.jobs_dir / "job_locked123").exists()

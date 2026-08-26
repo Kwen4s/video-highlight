@@ -1379,7 +1379,7 @@ function DeleteDialog({ job, busy, error, onCancel, onConfirm }: { job: Job; bus
       <div className="dialog-mark"><Icon name="trash" size={21} /></div>
       <p className="overline">DELETE LOCAL TASK</p>
       <h2 id="delete-title">删除这个任务？</h2>
-      <p>本地任务记录、原视频、复核状态和编辑对话都会永久删除，此操作无法撤销。</p>
+      <p>任务记录、原视频、复核状态和编辑对话都会永久删除，此操作无法撤销。</p>
       <div className="delete-target"><Icon name="film" size={17} /><div><b>{job.original_name}</b><small>{job.job_id} · {formatBytes(job.size_bytes)}</small></div></div>
       {error && <div className="dialog-error">{error}</div>}
       <div className="dialog-actions"><button disabled={busy} onClick={onCancel}>取消</button><button className="confirm-delete" disabled={busy} onClick={onConfirm}>{busy ? '正在删除…' : '永久删除'}</button></div>
@@ -1448,7 +1448,7 @@ export default function App() {
 
   const refreshJobs = useCallback(async () => {
     try {
-      const remoteJobs = await requestJson<RemoteJob[]>('/api/jobs?limit=100')
+      const remoteJobs = await requestJson<RemoteJob[]>('/api/jobs')
       const records = remoteJobs.map(withSourceUrl)
       setJobs(records)
       setJob((current) => {
@@ -1745,7 +1745,11 @@ export default function App() {
     setDeleteBusy(true)
     setDeleteError(null)
     try {
-      await requestEmpty(`/api/jobs/${deleteCandidate.job_id}`, { method: 'DELETE' })
+      await requestEmpty(`/api/jobs/${deleteCandidate.job_id}`, {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ confirmed: true, job_id: deleteCandidate.job_id }),
+      })
       setJobs((current) => current.filter((record) => record.job_id !== deleteCandidate.job_id))
       if (job?.job_id === deleteCandidate.job_id) { setJob(null); setSelected(null) }
       setDeleteCandidate(null)
