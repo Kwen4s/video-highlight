@@ -90,7 +90,6 @@ def segment_metrics(
     return metrics
 
 
-
 def predictions_as_json(
     predictions: dict[str, list[PredictedSegment]],
 ) -> list[dict[str, object]]:

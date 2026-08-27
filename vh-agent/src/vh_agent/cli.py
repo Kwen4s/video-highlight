@@ -153,7 +153,7 @@ def train_run(
     silver_run_id: str = typer.Option("gemini37_transition_v1", "--silver-run-id"),
     annotations: Path | None = typer.Option(None, "--annotations"),
     output_dir: Path = typer.Option(
-        Path("outputs/highlight_model/random_video"), "--output-dir"
+        Path("outputs/highlight_model/seed_7_supv"), "--output-dir"
     ),
     vision_model_path: Path = typer.Option(
         Path("/data1/modelscope_models/Qwen3-VL-Embedding-2B"),
@@ -177,7 +177,7 @@ def train_run(
     stage: str = typer.Option("all", "--stage", help="features, train, or all"),
     device: str = typer.Option("cuda:0", "--device"),
     feature_device: str = typer.Option("cuda:0", "--feature-device"),
-    epochs: int = typer.Option(8, "--epochs", min=1),
+    epochs: int = typer.Option(20, "--epochs", min=1),
     learning_rate: float = typer.Option(2e-4, "--learning-rate", min=1e-7),
     gradient_accumulation: int = typer.Option(4, "--gradient-accumulation", min=1),
     model_dim: int = typer.Option(512, "--model-dim", min=128),
@@ -186,7 +186,9 @@ def train_run(
         2, "--temporal-layers-per-level", min=1
     ),
     vision_batch_size: int = typer.Option(8, "--vision-batch-size", min=1),
-    seed: int = typer.Option(13, "--seed"),
+    seed: int = typer.Option(7, "--seed"),
+    init_checkpoint: Path | None = typer.Option(None, "--init-checkpoint"),
+    finetune_heads: bool = typer.Option(False, "--finetune-heads"),
 ) -> None:
     """Cache frozen multimodal moments and train the narrative-transition localizer."""
     if stage not in {"features", "train", "all"}:
@@ -213,6 +215,8 @@ def train_run(
             temporal_layers_per_level=temporal_layers_per_level,
             vision_batch_size=vision_batch_size,
             seed=seed,
+            init_checkpoint=init_checkpoint,
+            finetune_heads=finetune_heads,
         )
     )
     console.print_json(json.dumps(report, ensure_ascii=False))

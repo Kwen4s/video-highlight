@@ -333,8 +333,14 @@ class NarrativeTransitionLocalizer(nn.Module):
         dropout: float,
         max_before_sec: int,
         max_after_sec: int,
+        max_center_offset_sec: float = 8.0,
+        min_segment_duration_sec: float = 6.0,
+        max_segment_duration_sec: float = 24.0,
     ) -> None:
         super().__init__()
+        self.max_center_offset_sec = max_center_offset_sec
+        self.min_segment_duration_sec = min_segment_duration_sec
+        self.max_segment_duration_sec = max_segment_duration_sec
         self.vision_projection = nn.Sequential(
             nn.LayerNorm(vision_dim),
             nn.Linear(vision_dim, model_dim),
@@ -347,6 +353,11 @@ class NarrativeTransitionLocalizer(nn.Module):
         )
         self.gate = nn.Sequential(
             nn.Linear(2 * model_dim + 2, model_dim),
+            nn.GELU(),
+            nn.Linear(model_dim, model_dim),
+        )
+        self.change_proj = nn.Sequential(
+            nn.Linear(3, model_dim),
             nn.GELU(),
             nn.Linear(model_dim, model_dim),
         )
@@ -373,6 +384,8 @@ class NarrativeTransitionLocalizer(nn.Module):
             nn.Dropout(dropout),
             nn.Linear(model_dim, 1),
         )
+        nn.init.constant_(self.event_head[-1].bias, -2.0)
+        nn.init.constant_(self.segment_quality_head[-1].bias, -0.4)
 
     def forward(
         self,
@@ -398,6 +411,17 @@ class NarrativeTransitionLocalizer(nn.Module):
             visual_weight,
         )
         moments = visual_weight * visual + (1.0 - visual_weight) * acoustic
+        energy = audio_prior[:, :1] if audio_prior.shape[1] else visual.new_zeros(len(visual), 1)
+        moments = moments + self.change_proj(
+            torch.cat(
+                [
+                    _adjacent_change(vision),
+                    _adjacent_change(audio),
+                    _adjacent_change(energy),
+                ],
+                dim=1,
+            )
+        )
         encoded = self.temporal(moments)
         scenes, scene_positions = self.scene_pool(encoded, scene_bounds)
         transition, anchor_positions, anchor_presence = self.decoder(
@@ -435,6 +459,19 @@ class NarrativeTransitionLocalizer(nn.Module):
             anchor_presence=anchor_presence,
             transition=transition,
         )
+
+
+def _adjacent_change(sequence: Tensor) -> Tensor:
+    if len(sequence) == 1:
+        return sequence.new_zeros((1, 1))
+    change = sequence.new_zeros((len(sequence), 1))
+    if sequence.shape[1] == 1:
+        change[1:] = (sequence[1:] - sequence[:-1]).abs()
+    else:
+        similarity = F.cosine_similarity(sequence[1:], sequence[:-1], dim=-1, eps=1e-6)
+        change[1:, 0] = (1.0 - similarity).clamp_min(0)
+    change[0] = change[1]
+    return change
 
 
 def _downsample(sequence: Tensor, factor: int) -> Tensor:

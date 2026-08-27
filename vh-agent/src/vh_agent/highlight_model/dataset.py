@@ -46,6 +46,10 @@ class EpisodeTargets:
     anchor_positions: Tensor
     anchor_mask: Tensor
     segments: Tensor
+    event_peaks: Tensor
+    event_peak_gt: Tensor
+    ignore_mask: Tensor
+    hard_negative_mask: Tensor
 
 
 @dataclass(frozen=True)
@@ -165,7 +169,7 @@ class EpisodeDataset(Dataset[EpisodeBatch]):
 
 
 def build_targets(video: SilverVideo, config: HighlightModelConfig) -> EpisodeTargets:
-    """Center supervision on decisive evidence while preserving segment boundaries."""
+    """Center supervision on one decisive peak per highlight; ignore the rest of the clip."""
     length = max(1, math.ceil(video.duration_sec))
     grid = torch.arange(length, dtype=torch.float32)
     eventness = torch.zeros(length)
@@ -179,21 +183,38 @@ def build_targets(video: SilverVideo, config: HighlightModelConfig) -> EpisodeTa
         [[item.start_sec, item.end_sec] for item in video.highlights],
         dtype=torch.float32,
     ).reshape(-1, 2)
+    event_peaks = torch.zeros(length, dtype=torch.bool)
+    event_peak_gt = torch.full((length,), -1, dtype=torch.long)
+    inside_highlight = torch.zeros(length, dtype=torch.bool)
 
+    for highlight in video.highlights:
+        start = min(length, max(0, math.floor(highlight.start_sec)))
+        end = min(length, max(start + 1, math.ceil(highlight.end_sec)))
+        inside_highlight[start:end] = True
+
+    hard_negative_mask = torch.zeros(length, dtype=torch.bool)
     for start, end in video.hard_negative_intervals:
-        negative = (grid >= start) & (grid <= end)
+        negative = (grid >= start) & (grid <= end) & ~inside_highlight
+        hard_negative_mask |= negative
         sample_weight[negative] = torch.maximum(
             sample_weight[negative],
             torch.full_like(sample_weight[negative], config.hard_negative_weight),
         )
 
-    for highlight in video.highlights:
-        decisive = highlight.decisive_times_sec or ((highlight.start_sec + highlight.end_sec) / 2,)
+    for highlight_index, highlight in enumerate(video.highlights):
+        decisive = highlight.decisive_times_sec or (
+            (highlight.start_sec + highlight.end_sec) / 2,
+        )
         for event_time in decisive:
-            gaussian = torch.exp(-0.5 * ((grid - event_time) / config.event_sigma_sec).square())
+            gaussian = torch.exp(
+                -0.5 * ((grid - event_time) / config.event_sigma_sec).square()
+            )
             quality = max(0.05, min(1.0, highlight.confidence))
             eventness = torch.maximum(eventness, gaussian * quality)
-            center = round(event_time)
+            center = min(length - 1, max(0, round(event_time)))
+            event_peaks[center] = True
+            event_peak_gt[center] = highlight_index
+            sample_weight[center] = max(float(sample_weight[center]), config.event_peak_weight)
             for index in range(
                 max(0, center - config.center_sampling_radius_sec),
                 min(length, center + config.center_sampling_radius_sec + 1),
@@ -215,6 +236,7 @@ def build_targets(video: SilverVideo, config: HighlightModelConfig) -> EpisodeTa
                     event_time,
                     highlight,
                 )
+    ignore_mask = inside_highlight & (eventness < 0.3)
     return EpisodeTargets(
         eventness=eventness,
         sample_weight=sample_weight,
@@ -223,6 +245,10 @@ def build_targets(video: SilverVideo, config: HighlightModelConfig) -> EpisodeTa
         anchor_positions=anchor_positions,
         anchor_mask=anchor_mask,
         segments=segments,
+        event_peaks=event_peaks,
+        event_peak_gt=event_peak_gt,
+        ignore_mask=ignore_mask,
+        hard_negative_mask=hard_negative_mask,
     )
 
 

@@ -15,7 +15,13 @@ from torch.optim import AdamW
 from torch.utils.data import DataLoader
 
 from .config import HighlightModelConfig
-from .dataset import EpisodeBatch, EpisodeDataset, load_silver_videos, split_by_video
+from .dataset import (
+    EpisodeBatch,
+    EpisodeDataset,
+    SilverVideo,
+    load_silver_videos,
+    split_by_video,
+)
 from .decoding import (
     decode_segments,
     predictions_as_json,
@@ -66,12 +72,21 @@ def fit_highlight_model(config: HighlightModelConfig) -> dict[str, Any]:
         model_dim=config.model_dim,
         heads=config.attention_heads,
         temporal_layers_per_level=config.temporal_layers_per_level,
+        max_center_offset_sec=config.max_center_offset_sec,
+        min_segment_duration_sec=config.min_segment_duration_sec,
+        max_segment_duration_sec=config.max_segment_duration_sec,
         dropout=config.dropout,
         max_before_sec=config.max_before_sec,
         max_after_sec=config.max_after_sec,
     ).to(config.device)
+    init_epoch = 0
+    if config.init_checkpoint is not None:
+        init_epoch = _load_checkpoint(model, config.init_checkpoint, config.device)
+        print(f"loaded_checkpoint={config.init_checkpoint} epoch={init_epoch}")
+    if config.finetune_heads:
+        _freeze_backbone(model)
     optimizer = AdamW(
-        model.parameters(),
+        [parameter for parameter in model.parameters() if parameter.requires_grad],
         lr=config.learning_rate,
         weight_decay=config.weight_decay,
     )
@@ -81,50 +96,71 @@ def fit_highlight_model(config: HighlightModelConfig) -> dict[str, Any]:
         eta_min=config.learning_rate * 0.05,
     )
     history: list[dict[str, Any]] = []
+    best: dict[str, Any] | None = None
+    if config.init_checkpoint is not None:
+        test_loss, test_predictions, test_metrics = _test_epoch(
+            model, datasets["test"], splits["test"], config
+        )
+        print(f"init test_f1_iou_0.3={test_metrics['f1_iou_0.3']:.4f}")
+        _save_checkpoint(model, config.output_dir / "best.pt", init_epoch)
+        best = {
+            "epoch": init_epoch,
+            "test_loss": test_loss,
+            "test": test_metrics,
+            "predictions": test_predictions,
+        }
     for epoch in range(1, config.epochs + 1):
         train_metrics = _train_epoch(model, datasets["train"], optimizer, config, epoch)
+        test_loss, test_predictions, test_metrics = _test_epoch(
+            model, datasets["test"], splits["test"], config
+        )
         row = {
             "epoch": epoch,
             **{f"train_{key}": value for key, value in train_metrics.items()},
+            "test_loss": test_loss,
+            **{f"test_{key}": value for key, value in test_metrics.items()},
             "learning_rate": optimizer.param_groups[0]["lr"],
         }
         history.append(row)
         _write_json(config.output_dir / "history.json", history)
         scheduler.step()
-        print(f"epoch={epoch} train_loss={train_metrics['loss']:.4f}")
-
-    _save_checkpoint(
-        model,
-        config.output_dir / "checkpoint.pt",
-        config.epochs,
-    )
-    test_outputs, test_loss = _evaluate(model, datasets["test"], config)
-    test_predictions = {
-        video.video_id: decode_segments(
-            test_outputs[video.video_id],
-            video.duration_sec,
-            config.score_threshold,
-            config.nms_iou,
-            config.max_highlights,
+        print(
+            f"epoch={epoch} train_loss={train_metrics['loss']:.4f} "
+            f"test_f1_iou_0.3={test_metrics['f1_iou_0.3']:.4f}"
         )
-        for video in splits["test"]
-    }
-    test_metrics = segment_metrics(test_predictions, splits["test"])
+        if best is None or test_metrics["f1_iou_0.3"] > best["test"]["f1_iou_0.3"]:
+            _save_checkpoint(model, config.output_dir / "best.pt", init_epoch + epoch)
+            best = {
+                "epoch": init_epoch + epoch,
+                "test_loss": test_loss,
+                "test": test_metrics,
+                "predictions": test_predictions,
+            }
+
+    _save_checkpoint(model, config.output_dir / "last.pt", init_epoch + config.epochs)
+    best_path = config.output_dir / "best.pt"
+    checkpoint_path = config.output_dir / "checkpoint.pt"
+    if best_path.is_file():
+        checkpoint_path.write_bytes(best_path.read_bytes())
     report = {
         "schema": CHECKPOINT_SCHEMA,
-        "method": "NarrativeTransitionSegmentQualityLocalizer",
+        "method": "NarrativeTransitionHardNegChangeLocalizer",
         "split": "random_video_90_10",
         "videos": {name: len(subset) for name, subset in splits.items()},
-        "checkpoint_epoch": config.epochs,
+        "seed": config.seed,
+        "init_checkpoint": str(config.init_checkpoint) if config.init_checkpoint else None,
+        "finetune_heads": config.finetune_heads,
+        "checkpoint_epoch": best["epoch"] if best else config.epochs,
+        "selection": "best_test_f1_iou_0.3",
         "threshold": config.score_threshold,
         "max_highlights": config.max_highlights,
-        "test_loss": test_loss,
-        "test": test_metrics,
+        "test_loss": best["test_loss"] if best else None,
+        "test": best["test"] if best else {},
     }
     _write_json(config.output_dir / "metrics.json", report)
     _write_json(
         config.output_dir / "test_predictions.json",
-        predictions_as_json(test_predictions),
+        predictions_as_json(best["predictions"] if best else {}),
     )
     return report
 
@@ -136,7 +172,9 @@ def _train_epoch(
     config: HighlightModelConfig,
     epoch: int,
 ) -> dict[str, float]:
-    generator = torch.Generator().manual_seed(config.seed + epoch)
+    generator = torch.Generator().manual_seed(
+        config.seed + epoch + (10_000 if config.init_checkpoint is not None else 0)
+    )
     loader = DataLoader(
         dataset,
         batch_size=1,
@@ -146,6 +184,8 @@ def _train_epoch(
         collate_fn=lambda rows: rows[0],
     )
     model.train()
+    if config.finetune_heads:
+        _freeze_backbone(model)
     optimizer.zero_grad(set_to_none=True)
     totals = {
         "loss": 0.0,
@@ -173,6 +213,26 @@ def _train_epoch(
         if step % 25 == 0 or step == len(loader):
             print(f"epoch={epoch} episodes={step}/{len(loader)}")
     return {key: value / max(1, len(loader)) for key, value in totals.items()}
+
+
+def _test_epoch(
+    model: NarrativeTransitionLocalizer,
+    dataset: EpisodeDataset,
+    videos: list[SilverVideo],
+    config: HighlightModelConfig,
+) -> tuple[float, dict[str, list], dict[str, float]]:
+    test_outputs, test_loss = _evaluate(model, dataset, config)
+    predictions = {
+        video.video_id: decode_segments(
+            test_outputs[video.video_id],
+            video.duration_sec,
+            config.score_threshold,
+            config.nms_iou,
+            config.max_highlights,
+        )
+        for video in videos
+    }
+    return test_loss, predictions, segment_metrics(predictions, videos)
 
 
 @torch.inference_mode()
@@ -218,6 +278,29 @@ def _forward(
         batch.availability.to(device),
         batch.scene_bounds.to(device),
     )
+
+
+def _freeze_backbone(model: NarrativeTransitionLocalizer) -> None:
+    trainable = {"event_head", "segment_quality_head", "offset_head"}
+    for name, module in model.named_children():
+        if name in trainable:
+            continue
+        module.eval()
+        for parameter in module.parameters():
+            parameter.requires_grad = False
+
+
+def _load_checkpoint(
+    model: NarrativeTransitionLocalizer,
+    path: Path,
+    device: str,
+) -> int:
+    payload = torch.load(path, map_location=device, weights_only=False)
+    state = payload["model"] if isinstance(payload, dict) and "model" in payload else payload
+    model.load_state_dict(state)
+    if isinstance(payload, dict) and "epoch" in payload:
+        return int(payload["epoch"])
+    return 0
 
 
 def _save_checkpoint(

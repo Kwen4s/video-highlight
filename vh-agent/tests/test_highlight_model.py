@@ -62,13 +62,41 @@ def test_targets_are_centered_on_decisive_evidence(tmp_path: Path) -> None:
 
     assert targets.eventness[20] == torch.tensor(0.9)
     assert targets.eventness[14] < 0.001
+    assert targets.eventness[19] > 0.5
     assert targets.boundary_mask.nonzero().flatten().tolist() == list(range(16, 25))
     assert targets.offsets[20].tolist() == [-6.0, 8.0]
     assert targets.anchor_positions[20].tolist() == [16.0, 20.0, 24.0]
     assert targets.anchor_mask[20].all()
+    assert targets.sample_weight[20] == config.event_peak_weight
     assert targets.sample_weight[32] == config.hard_negative_weight
-
     assert targets.segments.tolist() == [[14.0, 28.0]]
+    assert targets.event_peaks.nonzero().flatten().tolist() == [20]
+    assert targets.event_peak_gt[20].item() == 0
+    assert bool(targets.ignore_mask[14])
+    assert not bool(targets.ignore_mask[20])
+    assert not bool(targets.ignore_mask[32])
+    assert bool(targets.hard_negative_mask[32])
+    assert not bool(targets.hard_negative_mask[20])
+
+
+def test_all_decisive_times_receive_event_peaks(tmp_path: Path) -> None:
+    video = replace(
+        _video(tmp_path),
+        highlights=(
+            HighlightAnnotation(
+                start_sec=14.0,
+                end_sec=28.0,
+                confidence=0.9,
+                setup_times_sec=(16.0,),
+                decisive_times_sec=(16.0, 21.0, 26.0),
+                reaction_times_sec=(24.0,),
+            ),
+        ),
+    )
+    targets = build_targets(video, _config(tmp_path))
+    assert targets.event_peaks.nonzero().flatten().tolist() == [16, 21, 26]
+    assert targets.eventness[21] == torch.tensor(0.9)
+    assert not bool(targets.ignore_mask[21])
 
 
 def test_video_split_is_seeded_and_disjoint(tmp_path: Path) -> None:
@@ -126,7 +154,34 @@ def test_transition_model_runs_end_to_end_and_constrains_offsets(tmp_path: Path)
     assert torch.isfinite(losses.ranking)
     assert (output.offsets[:, 0] <= 0).all()
     assert (output.offsets[:, 1] >= 0).all()
+    assert (output.offsets[:, 0] < output.offsets[:, 1]).all()
     assert any(parameter.grad is not None for parameter in model.parameters())
+
+
+def test_candidate_ranking_penalizes_off_peak_scores(tmp_path: Path) -> None:
+    targets = build_targets(_video(tmp_path), _config(tmp_path))
+    offsets = torch.zeros((40, 2))
+    offsets[:, 0] = -6.0
+    offsets[:, 1] = 8.0
+
+    def output_for(peak_values: dict[int, float]) -> TransitionOutput:
+        logits = torch.full((40,), -4.0)
+        for index, value in peak_values.items():
+            logits[index] = value
+        return TransitionOutput(
+            event_logits=logits,
+            segment_quality_logits=logits.clone(),
+            offsets=offsets,
+            anchor_positions=torch.zeros(40, 3),
+            anchor_presence=torch.zeros(40, 3),
+            transition=torch.empty(0),
+        )
+
+    centered = highlight_localization_loss(output_for({20: 4.0}), targets)
+    distractor = highlight_localization_loss(output_for({5: 6.0, 20: 4.0}), targets)
+    assert centered.ranking < distractor.ranking
+    assert torch.isfinite(centered.quality)
+    assert torch.isfinite(distractor.quality)
 
 
 def test_peak_decoder_and_segment_iou_metrics(tmp_path: Path) -> None:

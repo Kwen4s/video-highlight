@@ -131,7 +131,7 @@ local preprocessing
 
 场景记忆只由媒体缓存中的镜头边界和时序特征池化得到。层级骨干的局部注意力、下采样和上采样均为因果计算；before 分支只能访问过去 32 秒和在当前时刻前已经结束的场景；event 分支访问 `[t-2,t+2]`；after 分支最多访问未来 8 秒。全片场景记忆仅进入显著性上下文，不进入三种状态，因此不会把未来剧情泄漏给 before。
 
-模型以 decisive anchor 为事件中心生成 eventness 热图，并在其中心采样区域内密集回归完整银标段的起止偏移，避免只在真实峰值附近训练、却从预测峰读取未受监督偏移。setup、decisive 与 reaction 时间监督三个受时间掩码约束的注意力位置；它们的位置、存在性与预测边界共同进入片段质量头。训练损失包括 event focal loss、Smooth L1 + temporal IoU 边界损失、anchor attention loss、预测片段 IoU 质量损失和片段内 hard-negative 排序损失。推理分数由 eventness 与 anchor-aware segment quality 联合给出，再执行 temporal NMS。
+模型以 decisive anchor 为事件中心生成更尖锐的 eventness 热图，并在中心采样区域内回归完整银标段的起止偏移；边界损失额外约束预测片段中心。setup、decisive 与 reaction 时间监督三个受时间掩码约束的注意力位置，并进入片段质量头。分类和排序只把每个高光的 decisive 秒当作正峰：其它局部峰是难负样本，质量头只在这些候选上预测与匹配银标的 IoU。推理分数仍由 eventness 与 segment quality 相乘，再执行 temporal NMS。
 
 训练数据使用固定 seed 按视频随机划分为 90% 训练集和 10% 测试集，同一部剧的不同视频允许进入不同子集；不设置验证集，也不使用测试集选择 checkpoint 或搜索解码参数。模型固定训练 8 轮并保存最终轮 `checkpoint.pt`，以固定阈值 0.05 和最多 12 个片段在测试集上执行一次段级 `F1@IoU 0.3/0.5/0.7` 评估。运行目录保存完整 `video_split.json`，确保实验可复现。
 
@@ -221,11 +221,6 @@ vh evaluate score --run-id phase3_v0_13 --include-silver
 
 0.13.0 的 5 条人工金标结果保存在 `outputs/evaluations/phase3_v0_13`：候选召回、语义验证召回和最终召回均为 100%，精确率 61.5%，F1 76.2%，共输出 13 段。该目录是 Qwen/SiliconFlow 的历史隔离 listwise 基线；每次推理或边界逻辑变更都必须使用独立运行 ID 重跑 Gemini，不能复用旧 trace。
 
-0.12.0 的 5 条人工金标结果保存在 `outputs/evaluations/phase2_v0_12`：候选召回、语义验证召回和最终召回均为 100%，精确率 60.0%，F1 75.0%；平均云调用从 0.11.0 的 12 次降到 7 次（下降 41.7%）。第二阶段已完成。
-
-0.11.0 的第一阶段结果保存在 `outputs/evaluations/phase1_v0_11`：候选召回 100%，语义验证召回 87.5%，最终召回 100%，精确率 61.5%，F1 76.2%。
-
-历史 10 条长视频的 0.8.0 结果保存在 `outputs/evaluations/baseline_0.8`：候选召回 96.7%，最终召回 40.0%，精确率 33.3%，F1 36.4%。
 
 ## Silver Labels
 

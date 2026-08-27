@@ -16,7 +16,7 @@ class HighlightModelConfig:
     stage: Literal["features", "train", "all"] = "all"
     device: str = "cuda:0"
     feature_device: str = "cuda:0"
-    epochs: int = 8
+    epochs: int = 20
     learning_rate: float = 2e-4
     weight_decay: float = 1e-2
     gradient_accumulation: int = 4
@@ -29,10 +29,16 @@ class HighlightModelConfig:
     audio_overlap_sec: int = 5
     event_sigma_sec: float = 1.5
     center_sampling_radius_sec: int = 4
-    hard_negative_weight: float = 2.0
+    event_peak_weight: float = 4.0
+    hard_negative_weight: float = 6.0
     max_before_sec: int = 32
     max_after_sec: int = 8
     nms_iou: float = 0.4
+    max_center_offset_sec: float = 8.0
+    min_segment_duration_sec: float = 6.0
+    max_segment_duration_sec: float = 24.0
     score_threshold: float = 0.05
     max_highlights: int = 12
-    seed: int = 13
+    seed: int = 7
+    init_checkpoint: Path | None = None
+    finetune_heads: bool = False
