@@ -1,0 +1,4711 @@
+{
+  "pipeline_version": "0.21.0",
+  "preprocess": {
+    "video": {
+      "path": "/data1/my_short_drama/zh/良辰入清欢/(洋洋放映官)P20_第20集_#良辰入清欢【火爆新剧重磅来袭，免费观看全集，评论区链接自取】_480P.mp4",
+      "duration_sec": 153.8322,
+      "width": 480,
+      "height": 852,
+      "fps": 25.0,
+      "has_audio": true,
+      "title": "良辰入清欢",
+      "language": "zh"
+    },
+    "scenes": [
+      {
+        "start_sec": 0.0,
+        "end_sec": 2.0
+      },
+      {
+        "start_sec": 2.0,
+        "end_sec": 4.92
+      },
+      {
+        "start_sec": 4.92,
+        "end_sec": 7.48
+      },
+      {
+        "start_sec": 7.48,
+        "end_sec": 9.36
+      },
+      {
+        "start_sec": 9.36,
+        "end_sec": 10.6
+      },
+      {
+        "start_sec": 10.6,
+        "end_sec": 12.04
+      },
+      {
+        "start_sec": 12.04,
+        "end_sec": 15.08
+      },
+      {
+        "start_sec": 15.08,
+        "end_sec": 17.68
+      },
+      {
+        "start_sec": 17.68,
+        "end_sec": 20.0
+      },
+      {
+        "start_sec": 20.0,
+        "end_sec": 22.48
+      },
+      {
+        "start_sec": 22.48,
+        "end_sec": 28.92
+      },
+      {
+        "start_sec": 28.92,
+        "end_sec": 31.44
+      },
+      {
+        "start_sec": 31.44,
+        "end_sec": 35.16
+      },
+      {
+        "start_sec": 35.16,
+        "end_sec": 37.48
+      },
+      {
+        "start_sec": 37.48,
+        "end_sec": 38.36
+      },
+      {
+        "start_sec": 38.36,
+        "end_sec": 41.64
+      },
+      {
+        "start_sec": 41.64,
+        "end_sec": 44.24
+      },
+      {
+        "start_sec": 44.24,
+        "end_sec": 47.32
+      },
+      {
+        "start_sec": 47.32,
+        "end_sec": 53.0
+      },
+      {
+        "start_sec": 53.0,
+        "end_sec": 55.6
+      },
+      {
+        "start_sec": 55.6,
+        "end_sec": 61.08
+      },
+      {
+        "start_sec": 61.08,
+        "end_sec": 64.84
+      },
+      {
+        "start_sec": 64.84,
+        "end_sec": 66.56
+      },
+      {
+        "start_sec": 66.56,
+        "end_sec": 71.04
+      },
+      {
+        "start_sec": 71.04,
+        "end_sec": 74.6
+      },
+      {
+        "start_sec": 74.6,
+        "end_sec": 77.48
+      },
+      {
+        "start_sec": 77.48,
+        "end_sec": 80.4
+      },
+      {
+        "start_sec": 80.4,
+        "end_sec": 83.2
+      },
+      {
+        "start_sec": 83.2,
+        "end_sec": 87.16
+      },
+      {
+        "start_sec": 87.16,
+        "end_sec": 91.6
+      },
+      {
+        "start_sec": 91.6,
+        "end_sec": 95.32
+      },
+      {
+        "start_sec": 95.32,
+        "end_sec": 96.96
+      },
+      {
+        "start_sec": 96.96,
+        "end_sec": 99.84
+      },
+      {
+        "start_sec": 99.84,
+        "end_sec": 106.64
+      },
+      {
+        "start_sec": 106.64,
+        "end_sec": 109.08
+      },
+      {
+        "start_sec": 109.08,
+        "end_sec": 111.48
+      },
+      {
+        "start_sec": 111.48,
+        "end_sec": 116.8
+      },
+      {
+        "start_sec": 116.8,
+        "end_sec": 119.36
+      },
+      {
+        "start_sec": 119.36,
+        "end_sec": 121.56
+      },
+      {
+        "start_sec": 121.56,
+        "end_sec": 124.68
+      },
+      {
+        "start_sec": 124.68,
+        "end_sec": 128.72
+      },
+      {
+        "start_sec": 128.72,
+        "end_sec": 131.76
+      },
+      {
+        "start_sec": 131.76,
+        "end_sec": 133.88
+      },
+      {
+        "start_sec": 133.88,
+        "end_sec": 135.88
+      },
+      {
+        "start_sec": 135.88,
+        "end_sec": 138.4
+      },
+      {
+        "start_sec": 138.4,
+        "end_sec": 141.36
+      },
+      {
+        "start_sec": 141.36,
+        "end_sec": 144.12
+      },
+      {
+        "start_sec": 144.12,
+        "end_sec": 145.0
+      },
+      {
+        "start_sec": 145.0,
+        "end_sec": 146.6
+      },
+      {
+        "start_sec": 146.6,
+        "end_sec": 149.04
+      },
+      {
+        "start_sec": 149.04,
+        "end_sec": 150.48
+      },
+      {
+        "start_sec": 150.48,
+        "end_sec": 151.6
+      },
+      {
+        "start_sec": 151.6,
+        "end_sec": 153.8
+      }
+    ],
+    "transcript": [
+      {
+        "start_sec": 4.85,
+        "end_sec": 7.65,
+        "text": "少夫人 早餐在那边",
+        "source": "asr",
+        "confidence": 0.7115780376468834
+      },
+      {
+        "start_sec": 7.65,
+        "end_sec": 9.05,
+        "text": "饱了",
+        "source": "asr",
+        "confidence": 0.7115780376468834
+      },
+      {
+        "start_sec": 9.05,
+        "end_sec": 17.28,
+        "text": "这小两口 昨天还好好的",
+        "source": "asr",
+        "confidence": 0.7115780376468834
+      },
+      {
+        "start_sec": 17.28,
+        "end_sec": 20.48,
+        "text": "今天怎么就跟接了仇人似的",
+        "source": "asr",
+        "confidence": 0.7115780376468834
+      },
+      {
+        "start_sec": 19.0,
+        "end_sec": 20.5,
+        "text": "见了仇人似的",
+        "source": "ocr",
+        "confidence": 0.9998035430908203
+      },
+      {
+        "start_sec": 20.48,
+        "end_sec": 25.2,
+        "text": "这房子都快结冰了",
+        "source": "asr",
+        "confidence": 0.7115780376468834
+      },
+      {
+        "start_sec": 21.0,
+        "end_sec": 22.5,
+        "text": "哎",
+        "source": "ocr",
+        "confidence": 0.9972457885742188
+      },
+      {
+        "start_sec": 25.2,
+        "end_sec": 26.92,
+        "text": "不愧是小书犯",
+        "source": "asr",
+        "confidence": 0.7115780376468834
+      },
+      {
+        "start_sec": 26.0,
+        "end_sec": 27.5,
+        "text": "不愧是小说反派",
+        "source": "ocr",
+        "confidence": 0.999939501285553
+      },
+      {
+        "start_sec": 26.92,
+        "end_sec": 28.82,
+        "text": "他阴晴不定 动不动就发脾气",
+        "source": "asr",
+        "confidence": 0.7115780376468834
+      },
+      {
+        "start_sec": 28.82,
+        "end_sec": 31.12,
+        "text": "这要是原主的话早就离家出走",
+        "source": "asr",
+        "confidence": 0.7115780376468834
+      },
+      {
+        "start_sec": 31.12,
+        "end_sec": 32.62,
+        "text": "该死的傅星期",
+        "source": "asr",
+        "confidence": 0.7115780376468834
+      },
+      {
+        "start_sec": 32.0,
+        "end_sec": 33.5,
+        "text": "该死的傅羡祁",
+        "source": "ocr",
+        "confidence": 0.9774269461631775
+      },
+      {
+        "start_sec": 32.62,
+        "end_sec": 34.58,
+        "text": "我劝你好好珍惜我",
+        "source": "asr",
+        "confidence": 0.7115780376468834
+      },
+      {
+        "start_sec": 33.0,
+        "end_sec": 35.5,
+        "text": "我劝你最好好珍惜我",
+        "source": "ocr",
+        "confidence": 0.9999111890792847
+      },
+      {
+        "start_sec": 34.58,
+        "end_sec": 35.08,
+        "text": "不然",
+        "source": "asr",
+        "confidence": 0.7115780376468834
+      },
+      {
+        "start_sec": 35.0,
+        "end_sec": 36.5,
+        "text": "语秋",
+        "source": "ocr",
+        "confidence": 0.9997124671936035
+      },
+      {
+        "start_sec": 35.08,
+        "end_sec": 39.69,
+        "text": "笑笑",
+        "source": "asr",
+        "confidence": 0.7115780376468834
+      },
+      {
+        "start_sec": 36.0,
+        "end_sec": 37.5,
+        "text": "smenmu",
+        "source": "ocr",
+        "confidence": 0.6478789448738098
+      },
+      {
+        "start_sec": 39.0,
+        "end_sec": 40.5,
+        "text": "夏夏",
+        "source": "ocr",
+        "confidence": 0.9999945163726807
+      },
+      {
+        "start_sec": 39.69,
+        "end_sec": 41.93,
+        "text": "你怎么戴个墨镜啊",
+        "source": "asr",
+        "confidence": 0.7776004819389642
+      },
+      {
+        "start_sec": 41.93,
+        "end_sec": 47.44,
+        "text": "谁欺负你了",
+        "source": "asr",
+        "confidence": 0.7776004819389642
+      },
+      {
+        "start_sec": 47.44,
+        "end_sec": 48.74,
+        "text": "玉琼",
+        "source": "asr",
+        "confidence": 0.7776004819389642
+      },
+      {
+        "start_sec": 48.0,
+        "end_sec": 49.5,
+        "text": "语秋",
+        "source": "ocr",
+        "confidence": 0.9994460344314575
+      },
+      {
+        "start_sec": 48.74,
+        "end_sec": 50.72,
+        "text": "胡子明他出轨了",
+        "source": "asr",
+        "confidence": 0.7776004819389642
+      },
+      {
+        "start_sec": 50.72,
+        "end_sec": 51.8,
+        "text": "我要分手他",
+        "source": "asr",
+        "confidence": 0.7776004819389642
+      },
+      {
+        "start_sec": 51.0,
+        "end_sec": 53.5,
+        "text": "我要分手他还威胁我",
+        "source": "ocr",
+        "confidence": 0.9994524717330933
+      },
+      {
+        "start_sec": 51.8,
+        "end_sec": 54.9,
+        "text": "他威胁你什么",
+        "source": "asr",
+        "confidence": 0.7776004819389642
+      },
+      {
+        "start_sec": 54.9,
+        "end_sec": 56.08,
+        "text": "他说",
+        "source": "asr",
+        "confidence": 0.7776004819389642
+      },
+      {
+        "start_sec": 56.0,
+        "end_sec": 58.5,
+        "text": "他说如果要是分手的话",
+        "source": "ocr",
+        "confidence": 0.9999240040779114
+      },
+      {
+        "start_sec": 56.08,
+        "end_sec": 57.84,
+        "text": "如果要是分手的话",
+        "source": "asr",
+        "confidence": 0.7776004819389642
+      },
+      {
+        "start_sec": 57.84,
+        "end_sec": 59.34,
+        "text": "就让我在恋爱期间",
+        "source": "asr",
+        "confidence": 0.7776004819389642
+      },
+      {
+        "start_sec": 59.34,
+        "end_sec": 60.98,
+        "text": "花他的钱全都还给他",
+        "source": "asr",
+        "confidence": 0.7776004819389642
+      },
+      {
+        "start_sec": 60.98,
+        "end_sec": 62.48,
+        "text": "他还要告我",
+        "source": "asr",
+        "confidence": 0.7776004819389642
+      },
+      {
+        "start_sec": 62.48,
+        "end_sec": 64.68,
+        "text": "要让我在学校严密扫地",
+        "source": "asr",
+        "confidence": 0.7776004819389642
+      },
+      {
+        "start_sec": 63.0,
+        "end_sec": 65.5,
+        "text": "要让我在学校颜面扫地",
+        "source": "ocr",
+        "confidence": 0.9999257326126099
+      },
+      {
+        "start_sec": 64.68,
+        "end_sec": 67.32,
+        "text": "秋秋",
+        "source": "asr",
+        "confidence": 0.7776004819389642
+      },
+      {
+        "start_sec": 67.32,
+        "end_sec": 68.74,
+        "text": "你认识的人多",
+        "source": "asr",
+        "confidence": 0.7776004819389642
+      },
+      {
+        "start_sec": 68.74,
+        "end_sec": 70.62,
+        "text": "能不能帮我想想办法",
+        "source": "asr",
+        "confidence": 0.7776004819389642
+      },
+      {
+        "start_sec": 70.62,
+        "end_sec": 72.52,
+        "text": "好",
+        "source": "asr",
+        "confidence": 0.7776004819389642
+      },
+      {
+        "start_sec": 72.52,
+        "end_sec": 73.82,
+        "text": "我帮你想办法",
+        "source": "asr",
+        "confidence": 0.7776004819389642
+      },
+      {
+        "start_sec": 73.82,
+        "end_sec": 92.78,
+        "text": "喂 张曼",
+        "source": "asr",
+        "confidence": 0.7776004819389642
+      },
+      {
+        "start_sec": 77.0,
+        "end_sec": 78.5,
+        "text": "知来电 话 at s0 m 筛选来电 m O 19141944263 184 1329 6216",
+        "source": "ocr",
+        "confidence": 0.7777295443746779
+      },
+      {
+        "start_sec": 78.0,
+        "end_sec": 79.5,
+        "text": "床电 50 普选来电",
+        "source": "ocr",
+        "confidence": 0.7548954884211222
+      },
+      {
+        "start_sec": 79.0,
+        "end_sec": 80.5,
+        "text": "来电 50 传表初 待选来电 三 1914194 4263 O 184 1329 62 264104",
+        "source": "ocr",
+        "confidence": 0.8160766760508219
+      },
+      {
+        "start_sec": 92.0,
+        "end_sec": 93.5,
+        "text": "喂张妈",
+        "source": "ocr",
+        "confidence": 0.9998747706413269
+      },
+      {
+        "start_sec": 92.78,
+        "end_sec": 95.0,
+        "text": "我想问一下",
+        "source": "asr",
+        "confidence": 0.7776004819389642
+      },
+      {
+        "start_sec": 95.0,
+        "end_sec": 96.66,
+        "text": "富家有没有什么",
+        "source": "asr",
+        "confidence": 0.8193953001112317
+      },
+      {
+        "start_sec": 95.0,
+        "end_sec": 97.5,
+        "text": "傅家有没有什么交好的",
+        "source": "ocr",
+        "confidence": 0.9991194009780884
+      },
+      {
+        "start_sec": 96.66,
+        "end_sec": 98.34,
+        "text": "交好的擅长处理",
+        "source": "asr",
+        "confidence": 0.8193953001112317
+      },
+      {
+        "start_sec": 97.0,
+        "end_sec": 100.5,
+        "text": "擅长处理情感关系的律师",
+        "source": "ocr",
+        "confidence": 0.9999454617500305
+      },
+      {
+        "start_sec": 98.34,
+        "end_sec": 99.56,
+        "text": "情感关系的律师",
+        "source": "asr",
+        "confidence": 0.8193953001112317
+      },
+      {
+        "start_sec": 99.56,
+        "end_sec": 101.42,
+        "text": "情感关系",
+        "source": "asr",
+        "confidence": 0.8193953001112317
+      },
+      {
+        "start_sec": 101.42,
+        "end_sec": 103.66,
+        "text": "难怪今天早上",
+        "source": "asr",
+        "confidence": 0.8193953001112317
+      },
+      {
+        "start_sec": 103.0,
+        "end_sec": 105.5,
+        "text": "难怪今天早上气压那么低",
+        "source": "ocr",
+        "confidence": 0.9998138546943665
+      },
+      {
+        "start_sec": 103.66,
+        "end_sec": 104.44,
+        "text": "气氧那么低",
+        "source": "asr",
+        "confidence": 0.8193953001112317
+      },
+      {
+        "start_sec": 104.44,
+        "end_sec": 106.44,
+        "text": "邵夫人这是要和少爷离婚",
+        "source": "asr",
+        "confidence": 0.8193953001112317
+      },
+      {
+        "start_sec": 105.0,
+        "end_sec": 107.5,
+        "text": "少夫人这是要和少爷离婚",
+        "source": "ocr",
+        "confidence": 0.999933660030365
+      },
+      {
+        "start_sec": 106.44,
+        "end_sec": 107.68,
+        "text": "没有",
+        "source": "asr",
+        "confidence": 0.8193953001112317
+      },
+      {
+        "start_sec": 107.68,
+        "end_sec": 108.72,
+        "text": "邵夫人",
+        "source": "asr",
+        "confidence": 0.8193953001112317
+      },
+      {
+        "start_sec": 108.0,
+        "end_sec": 109.5,
+        "text": "少夫人",
+        "source": "ocr",
+        "confidence": 0.9990139603614807
+      },
+      {
+        "start_sec": 108.72,
+        "end_sec": 110.98,
+        "text": "富家没有这样的律师",
+        "source": "asr",
+        "confidence": 0.8193953001112317
+      },
+      {
+        "start_sec": 110.0,
+        "end_sec": 111.5,
+        "text": "傅家没有这样的律师",
+        "source": "ocr",
+        "confidence": 0.9997702836990356
+      },
+      {
+        "start_sec": 110.98,
+        "end_sec": 123.26,
+        "text": "没关系",
+        "source": "asr",
+        "confidence": 0.8193953001112317
+      },
+      {
+        "start_sec": 112.0,
+        "end_sec": 113.5,
+        "text": "哦",
+        "source": "ocr",
+        "confidence": 0.998078465461731
+      },
+      {
+        "start_sec": 113.0,
+        "end_sec": 114.5,
+        "text": "那我再问问其他人",
+        "source": "ocr",
+        "confidence": 0.9999551773071289
+      },
+      {
+        "start_sec": 123.0,
+        "end_sec": 125.5,
+        "text": "没关系我还会继续找的",
+        "source": "ocr",
+        "confidence": 0.9997817873954773
+      },
+      {
+        "start_sec": 123.26,
+        "end_sec": 124.54,
+        "text": "我还会继续找的",
+        "source": "asr",
+        "confidence": 0.8193953001112317
+      },
+      {
+        "start_sec": 124.54,
+        "end_sec": 128.43,
+        "text": "我先带你销售去",
+        "source": "asr",
+        "confidence": 0.8193953001112317
+      },
+      {
+        "start_sec": 126.0,
+        "end_sec": 127.5,
+        "text": "哎别难受别难受",
+        "source": "ocr",
+        "confidence": 0.9992329478263855
+      },
+      {
+        "start_sec": 128.0,
+        "end_sec": 129.5,
+        "text": "我先带你消愁去",
+        "source": "ocr",
+        "confidence": 0.999893844127655
+      },
+      {
+        "start_sec": 129.0,
+        "end_sec": 130.5,
+        "text": "走走走走走",
+        "source": "ocr",
+        "confidence": 0.9999645352363586
+      },
+      {
+        "start_sec": 145.0,
+        "end_sec": 146.5,
+        "text": "喂",
+        "source": "ocr",
+        "confidence": 0.9972556233406067
+      },
+      {
+        "start_sec": 148.0,
+        "end_sec": 149.5,
+        "text": "少夫人要跟您离婚",
+        "source": "ocr",
+        "confidence": 0.9997830390930176
+      },
+      {
+        "start_sec": 149.0,
+        "end_sec": 150.5,
+        "text": "A",
+        "source": "ocr",
+        "confidence": 0.6507070064544678
+      },
+      {
+        "start_sec": 152.0,
+        "end_sec": 154.5,
+        "text": "良辰入清欢",
+        "source": "ocr",
+        "confidence": 0.996523380279541
+      }
+    ],
+    "audio_events": [
+      {
+        "start_sec": 0.0,
+        "end_sec": 13.41,
+        "emotion": "happy",
+        "event": "bgm",
+        "confidence": null
+      },
+      {
+        "start_sec": 13.41,
+        "end_sec": 36.34,
+        "emotion": "happy",
+        "event": "bgm",
+        "confidence": null
+      },
+      {
+        "start_sec": 36.34,
+        "end_sec": 44.01,
+        "emotion": "happy",
+        "event": "bgm",
+        "confidence": null
+      },
+      {
+        "start_sec": 44.01,
+        "end_sec": 61.2,
+        "emotion": "happy",
+        "event": "bgm",
+        "confidence": null
+      },
+      {
+        "start_sec": 61.2,
+        "end_sec": 75.42,
+        "emotion": "happy",
+        "event": "bgm",
+        "confidence": null
+      },
+      {
+        "start_sec": 75.42,
+        "end_sec": 90.39,
+        "emotion": "happy",
+        "event": "bgm",
+        "confidence": null
+      },
+      {
+        "start_sec": 90.39,
+        "end_sec": 104.86,
+        "emotion": "happy",
+        "event": "bgm",
+        "confidence": null
+      },
+      {
+        "start_sec": 104.86,
+        "end_sec": 113.99,
+        "emotion": "happy",
+        "event": "bgm",
+        "confidence": null
+      },
+      {
+        "start_sec": 113.99,
+        "end_sec": 122.56,
+        "emotion": "happy",
+        "event": "bgm",
+        "confidence": null
+      },
+      {
+        "start_sec": 122.56,
+        "end_sec": 131.19,
+        "emotion": "happy",
+        "event": "bgm",
+        "confidence": null
+      },
+      {
+        "start_sec": 131.19,
+        "end_sec": 145.25,
+        "emotion": "happy",
+        "event": "bgm",
+        "confidence": null
+      },
+      {
+        "start_sec": 145.25,
+        "end_sec": 150.91,
+        "emotion": "happy",
+        "event": "bgm",
+        "confidence": null
+      }
+    ],
+    "frame_samples": [
+      {
+        "timestamp_sec": 0.0,
+        "path": "/data1/video-highlight-cache/ded8352d8232848d/frames/frame_000001.jpg",
+        "change_score": 0.0,
+        "semantic_change_score": 0.0
+      },
+      {
+        "timestamp_sec": 1.0,
+        "path": "/data1/video-highlight-cache/ded8352d8232848d/frames/frame_000002.jpg",
+        "change_score": 0.003180529922246933,
+        "semantic_change_score": 0.0
+      },
+      {
+        "timestamp_sec": 2.0,
+        "path": "/data1/video-highlight-cache/ded8352d8232848d/frames/frame_000003.jpg",
+        "change_score": 0.33788105845451355,
+        "semantic_change_score": 0.0
+      },
+      {
+        "timestamp_sec": 3.0,
+        "path": "/data1/video-highlight-cache/ded8352d8232848d/frames/frame_000004.jpg",
+        "change_score": 0.1471536010503769,
+        "semantic_change_score": 1.0
+      },
+      {
+        "timestamp_sec": 4.0,
+        "path": "/data1/video-highlight-cache/ded8352d8232848d/frames/frame_000005.jpg",
+        "change_score": 0.15137962996959686,
+        "semantic_change_score": 1.0
+      },
+      {
+        "timestamp_sec": 5.0,
+        "path": "/data1/video-highlight-cache/ded8352d8232848d/frames/frame_000006.jpg",
+        "change_score": 0.21262255311012268,
+        "semantic_change_score": 1.0
+      },
+      {
+        "timestamp_sec": 6.0,
+        "path": "/data1/video-highlight-cache/ded8352d8232848d/frames/frame_000007.jpg",
+        "change_score": 0.04743029922246933,
+        "semantic_change_score": 0.8818954767825147
+      },
+      {
+        "timestamp_sec": 7.0,
+        "path": "/data1/video-highlight-cache/ded8352d8232848d/frames/frame_000008.jpg",
+        "change_score": 0.1879078596830368,
+        "semantic_change_score": 0.0
+      },
+      {
+        "timestamp_sec": 8.0,
+        "path": "/data1/video-highlight-cache/ded8352d8232848d/frames/frame_000009.jpg",
+        "change_score": 0.09218079596757889,
+        "semantic_change_score": 0.31392369612701626
+      },
+      {
+        "timestamp_sec": 9.0,
+        "path": "/data1/video-highlight-cache/ded8352d8232848d/frames/frame_000010.jpg",
+        "change_score": 0.22264093160629272,
+        "semantic_change_score": 0.13889403107773116
+      },
+      {
+        "timestamp_sec": 10.0,
+        "path": "/data1/video-highlight-cache/ded8352d8232848d/frames/frame_000011.jpg",
+        "change_score": 0.08926355838775635,
+        "semantic_change_score": 0.7441912229557471
+      },
+      {
+        "timestamp_sec": 11.0,
+        "path": "/data1/video-highlight-cache/ded8352d8232848d/frames/frame_000012.jpg",
+        "change_score": 0.24477538466453552,
+        "semantic_change_score": 0.6755620006674438
+      },
+      {
+        "timestamp_sec": 12.0,
+        "path": "/data1/video-highlight-cache/ded8352d8232848d/frames/frame_000013.jpg",
+        "change_score": 0.2822437882423401,
+        "semantic_change_score": 0.0
+      },
+      {
+        "timestamp_sec": 13.0,
+        "path": "/data1/video-highlight-cache/ded8352d8232848d/frames/frame_000014.jpg",
+        "change_score": 0.07295975089073181,
+        "semantic_change_score": 0.0
+      },
+      {
+        "timestamp_sec": 14.0,
+        "path": "/data1/video-highlight-cache/ded8352d8232848d/frames/frame_000015.jpg",
+        "change_score": 0.055793315172195435,
+        "semantic_change_score": 0.1822813685073868
+      },
+      {
+        "timestamp_sec": 15.0,
+        "path": "/data1/video-highlight-cache/ded8352d8232848d/frames/frame_000016.jpg",
+        "change_score": 0.16546031832695007,
+        "semantic_change_score": 0.0
+      },
+      {
+        "timestamp_sec": 16.0,
+        "path": "/data1/video-highlight-cache/ded8352d8232848d/frames/frame_000017.jpg",
+        "change_score": 0.007320389151573181,
+        "semantic_change_score": 0.0
+      },
+      {
+        "timestamp_sec": 17.0,
+        "path": "/data1/video-highlight-cache/ded8352d8232848d/frames/frame_000018.jpg",
+        "change_score": 0.006628178525716066,
+        "semantic_change_score": 0.0
+      },
+      {
+        "timestamp_sec": 18.0,
+        "path": "/data1/video-highlight-cache/ded8352d8232848d/frames/frame_000019.jpg",
+        "change_score": 0.28966471552848816,
+        "semantic_change_score": 0.14113895372633345
+      },
+      {
+        "timestamp_sec": 19.0,
+        "path": "/data1/video-highlight-cache/ded8352d8232848d/frames/frame_000020.jpg",
+        "change_score": 0.002401194768026471,
+        "semantic_change_score": 0.026798406898739382
+      },
+      {
+        "timestamp_sec": 20.0,
+        "path": "/data1/video-highlight-cache/ded8352d8232848d/frames/frame_000021.jpg",
+        "change_score": 0.2627374529838562,
+        "semantic_change_score": 0.0
+      },
+      {
+        "timestamp_sec": 21.0,
+        "path": "/data1/video-highlight-cache/ded8352d8232848d/frames/frame_000022.jpg",
+        "change_score": 0.04437806457281113,
+        "semantic_change_score": 0.1642372073543285
+      },
+      {
+        "timestamp_sec": 22.0,
+        "path": "/data1/video-highlight-cache/ded8352d8232848d/frames/frame_000023.jpg",
+        "change_score": 0.22268976271152496,
+        "semantic_change_score": 0.016688951837042113
+      },
+      {
+        "timestamp_sec": 23.0,
+        "path": "/data1/video-highlight-cache/ded8352d8232848d/frames/frame_000024.jpg",
+        "change_score": 0.008015471510589123,
+        "semantic_change_score": 0.0
+      },
+      {
+        "timestamp_sec": 24.0,
+        "path": "/data1/video-highlight-cache/ded8352d8232848d/frames/frame_000025.jpg",
+        "change_score": 0.0029813877772539854,
+        "semantic_change_score": 0.0
+      },
+      {
+        "timestamp_sec": 25.0,
+        "path": "/data1/video-highlight-cache/ded8352d8232848d/frames/frame_000026.jpg",
+        "change_score": 0.05711263045668602,
+        "semantic_change_score": 0.08657812505457511
+      },
+      {
+        "timestamp_sec": 26.0,
+        "path": "/data1/video-highlight-cache/ded8352d8232848d/frames/frame_000027.jpg",
+        "change_score": 0.21210171282291412,
+        "semantic_change_score": 0.731769529318785
+      },
+      {
+        "timestamp_sec": 27.0,
+        "path": "/data1/video-highlight-cache/ded8352d8232848d/frames/frame_000028.jpg",
+        "change_score": 0.003643918549641967,
+        "semantic_change_score": 0.5709460650189294
+      },
+      {
+        "timestamp_sec": 28.0,
+        "path": "/data1/video-highlight-cache/ded8352d8232848d/frames/frame_000029.jpg",
+        "change_score": 0.004431870300322771,
+        "semantic_change_score": 0.709942657626434
+      },
+      {
+        "timestamp_sec": 29.0,
+        "path": "/data1/video-highlight-cache/ded8352d8232848d/frames/frame_000030.jpg",
+        "change_score": 0.23067554831504822,
+        "semantic_change_score": 0.0
+      },
+      {
+        "timestamp_sec": 30.0,
+        "path": "/data1/video-highlight-cache/ded8352d8232848d/frames/frame_000031.jpg",
+        "change_score": 0.03742532059550285,
+        "semantic_change_score": 0.02193959411671502
+      },
+      {
+        "timestamp_sec": 31.0,
+        "path": "/data1/video-highlight-cache/ded8352d8232848d/frames/frame_000032.jpg",
+        "change_score": 0.18309015035629272,
+        "semantic_change_score": 0.34477026693622675
+      },
+      {
+        "timestamp_sec": 32.0,
+        "path": "/data1/video-highlight-cache/ded8352d8232848d/frames/frame_000033.jpg",
+        "change_score": 0.11513097584247589,
+        "semantic_change_score": 0.32942001296149115
+      },
+      {
+        "timestamp_sec": 33.0,
+        "path": "/data1/video-highlight-cache/ded8352d8232848d/frames/frame_000034.jpg",
+        "change_score": 0.10691539943218231,
+        "semantic_change_score": 0.7413277558489443
+      },
+      {
+        "timestamp_sec": 34.0,
+        "path": "/data1/video-highlight-cache/ded8352d8232848d/frames/frame_000035.jpg",
+        "change_score": 0.1222321167588234,
+        "semantic_change_score": 0.03061572798523114
+      },
+      {
+        "timestamp_sec": 35.0,
+        "path": "/data1/video-highlight-cache/ded8352d8232848d/frames/frame_000036.jpg",
+        "change_score": 0.2384851723909378,
+        "semantic_change_score": 0.0
+      },
+      {
+        "timestamp_sec": 36.0,
+        "path": "/data1/video-highlight-cache/ded8352d8232848d/frames/frame_000037.jpg",
+        "change_score": 0.07095492631196976,
+        "semantic_change_score": 0.026529143192089488
+      },
+      {
+        "timestamp_sec": 37.0,
+        "path": "/data1/video-highlight-cache/ded8352d8232848d/frames/frame_000038.jpg",
+        "change_score": 0.2998027801513672,
+        "semantic_change_score": 0.37644622076639184
+      },
+      {
+        "timestamp_sec": 38.0,
+        "path": "/data1/video-highlight-cache/ded8352d8232848d/frames/frame_000039.jpg",
+        "change_score": 0.2096334993839264,
+        "semantic_change_score": 0.15220924838275074
+      },
+      {
+        "timestamp_sec": 39.0,
+        "path": "/data1/video-highlight-cache/ded8352d8232848d/frames/frame_000040.jpg",
+        "change_score": 0.08299632370471954,
+        "semantic_change_score": 0.5342722211620317
+      },
+      {
+        "timestamp_sec": 40.0,
+        "path": "/data1/video-highlight-cache/ded8352d8232848d/frames/frame_000041.jpg",
+        "change_score": 0.06835075467824936,
+        "semantic_change_score": 0.6326573057308398
+      },
+      {
+        "timestamp_sec": 41.0,
+        "path": "/data1/video-highlight-cache/ded8352d8232848d/frames/frame_000042.jpg",
+        "change_score": 0.07882104068994522,
+        "semantic_change_score": 0.0
+      },
+      {
+        "timestamp_sec": 42.0,
+        "path": "/data1/video-highlight-cache/ded8352d8232848d/frames/frame_000043.jpg",
+        "change_score": 0.2230430394411087,
+        "semantic_change_score": 0.0
+      },
+      {
+        "timestamp_sec": 43.0,
+        "path": "/data1/video-highlight-cache/ded8352d8232848d/frames/frame_000044.jpg",
+        "change_score": 0.10324467718601227,
+        "semantic_change_score": 0.3825402172970814
+      },
+      {
+        "timestamp_sec": 44.0,
+        "path": "/data1/video-highlight-cache/ded8352d8232848d/frames/frame_000045.jpg",
+        "change_score": 0.20732805132865906,
+        "semantic_change_score": 0.15341267933582042
+      },
+      {
+        "timestamp_sec": 45.0,
+        "path": "/data1/video-highlight-cache/ded8352d8232848d/frames/frame_000046.jpg",
+        "change_score": 0.09557100385427475,
+        "semantic_change_score": 0.4167335327620582
+      },
+      {
+        "timestamp_sec": 46.0,
+        "path": "/data1/video-highlight-cache/ded8352d8232848d/frames/frame_000047.jpg",
+        "change_score": 0.12555816769599915,
+        "semantic_change_score": 0.44405236798060793
+      },
+      {
+        "timestamp_sec": 47.0,
+        "path": "/data1/video-highlight-cache/ded8352d8232848d/frames/frame_000048.jpg",
+        "change_score": 0.20914043486118317,
+        "semantic_change_score": 0.22783805693212744
+      },
+      {
+        "timestamp_sec": 48.0,
+        "path": "/data1/video-highlight-cache/ded8352d8232848d/frames/frame_000049.jpg",
+        "change_score": 0.16069623827934265,
+        "semantic_change_score": 0.49295421342133516
+      },
+      {
+        "timestamp_sec": 49.0,
+        "path": "/data1/video-highlight-cache/ded8352d8232848d/frames/frame_000050.jpg",
+        "change_score": 0.1759449690580368,
+        "semantic_change_score": 0.5125374325769076
+      },
+      {
+        "timestamp_sec": 50.0,
+        "path": "/data1/video-highlight-cache/ded8352d8232848d/frames/frame_000051.jpg",
+        "change_score": 0.09890184551477432,
+        "semantic_change_score": 0.2272893686242371
+      },
+      {
+        "timestamp_sec": 51.0,
+        "path": "/data1/video-highlight-cache/ded8352d8232848d/frames/frame_000052.jpg",
+        "change_score": 0.024684052914381027,
+        "semantic_change_score": 0.015692866639211083
+      },
+      {
+        "timestamp_sec": 52.0,
+        "path": "/data1/video-highlight-cache/ded8352d8232848d/frames/frame_000053.jpg",
+        "change_score": 0.04302140697836876,
+        "semantic_change_score": 0.13011755837513325
+      },
+      {
+        "timestamp_sec": 53.0,
+        "path": "/data1/video-highlight-cache/ded8352d8232848d/frames/frame_000054.jpg",
+        "change_score": 0.3249147832393646,
+        "semantic_change_score": 0.12136077240580453
+      },
+      {
+        "timestamp_sec": 54.0,
+        "path": "/data1/video-highlight-cache/ded8352d8232848d/frames/frame_000055.jpg",
+        "change_score": 0.03898495063185692,
+        "semantic_change_score": 0.0
+      },
+      {
+        "timestamp_sec": 55.0,
+        "path": "/data1/video-highlight-cache/ded8352d8232848d/frames/frame_000056.jpg",
+        "change_score": 0.012333409860730171,
+        "semantic_change_score": 0.0
+      },
+      {
+        "timestamp_sec": 56.0,
+        "path": "/data1/video-highlight-cache/ded8352d8232848d/frames/frame_000057.jpg",
+        "change_score": 0.3014083504676819,
+        "semantic_change_score": 0.0
+      },
+      {
+        "timestamp_sec": 57.0,
+        "path": "/data1/video-highlight-cache/ded8352d8232848d/frames/frame_000058.jpg",
+        "change_score": 0.03695427253842354,
+        "semantic_change_score": 0.12890968203068018
+      },
+      {
+        "timestamp_sec": 58.0,
+        "path": "/data1/video-highlight-cache/ded8352d8232848d/frames/frame_000059.jpg",
+        "change_score": 0.04447859153151512,
+        "semantic_change_score": 0.31647090538968775
+      },
+      {
+        "timestamp_sec": 59.0,
+        "path": "/data1/video-highlight-cache/ded8352d8232848d/frames/frame_000060.jpg",
+        "change_score": 0.030107805505394936,
+        "semantic_change_score": 0.04758886734285303
+      },
+      {
+        "timestamp_sec": 60.0,
+        "path": "/data1/video-highlight-cache/ded8352d8232848d/frames/frame_000061.jpg",
+        "change_score": 0.04601236805319786,
+        "semantic_change_score": 0.0
+      },
+      {
+        "timestamp_sec": 61.0,
+        "path": "/data1/video-highlight-cache/ded8352d8232848d/frames/frame_000062.jpg",
+        "change_score": 0.22279123961925507,
+        "semantic_change_score": 0.2552181750461765
+      },
+      {
+        "timestamp_sec": 62.0,
+        "path": "/data1/video-highlight-cache/ded8352d8232848d/frames/frame_000063.jpg",
+        "change_score": 0.05242513120174408,
+        "semantic_change_score": 0.17232178664090034
+      },
+      {
+        "timestamp_sec": 63.0,
+        "path": "/data1/video-highlight-cache/ded8352d8232848d/frames/frame_000064.jpg",
+        "change_score": 0.055140357464551926,
+        "semantic_change_score": 0.5104182509988636
+      },
+      {
+        "timestamp_sec": 64.0,
+        "path": "/data1/video-highlight-cache/ded8352d8232848d/frames/frame_000065.jpg",
+        "change_score": 0.0311580877751112,
+        "semantic_change_score": 0.0
+      },
+      {
+        "timestamp_sec": 65.0,
+        "path": "/data1/video-highlight-cache/ded8352d8232848d/frames/frame_000066.jpg",
+        "change_score": 0.20913372933864594,
+        "semantic_change_score": 0.1166791402232031
+      },
+      {
+        "timestamp_sec": 66.0,
+        "path": "/data1/video-highlight-cache/ded8352d8232848d/frames/frame_000067.jpg",
+        "change_score": 0.03337354585528374,
+        "semantic_change_score": 0.003455656744658942
+      },
+      {
+        "timestamp_sec": 67.0,
+        "path": "/data1/video-highlight-cache/ded8352d8232848d/frames/frame_000068.jpg",
+        "change_score": 0.22073951363563538,
+        "semantic_change_score": 0.0
+      },
+      {
+        "timestamp_sec": 68.0,
+        "path": "/data1/video-highlight-cache/ded8352d8232848d/frames/frame_000069.jpg",
+        "change_score": 0.09632448852062225,
+        "semantic_change_score": 0.540608491523115
+      },
+      {
+        "timestamp_sec": 69.0,
+        "path": "/data1/video-highlight-cache/ded8352d8232848d/frames/frame_000070.jpg",
+        "change_score": 0.06409218162298203,
+        "semantic_change_score": 0.546154434801826
+      },
+      {
+        "timestamp_sec": 70.0,
+        "path": "/data1/video-highlight-cache/ded8352d8232848d/frames/frame_000071.jpg",
+        "change_score": 0.04143305867910385,
+        "semantic_change_score": 0.27516845651883304
+      },
+      {
+        "timestamp_sec": 71.0,
+        "path": "/data1/video-highlight-cache/ded8352d8232848d/frames/frame_000072.jpg",
+        "change_score": 0.23894378542900085,
+        "semantic_change_score": 0.364644976755366
+      },
+      {
+        "timestamp_sec": 72.0,
+        "path": "/data1/video-highlight-cache/ded8352d8232848d/frames/frame_000073.jpg",
+        "change_score": 0.03813093528151512,
+        "semantic_change_score": 0.0
+      },
+      {
+        "timestamp_sec": 73.0,
+        "path": "/data1/video-highlight-cache/ded8352d8232848d/frames/frame_000074.jpg",
+        "change_score": 0.04223824292421341,
+        "semantic_change_score": 0.0
+      },
+      {
+        "timestamp_sec": 74.0,
+        "path": "/data1/video-highlight-cache/ded8352d8232848d/frames/frame_000075.jpg",
+        "change_score": 0.059734031558036804,
+        "semantic_change_score": 0.17669605176213726
+      },
+      {
+        "timestamp_sec": 75.0,
+        "path": "/data1/video-highlight-cache/ded8352d8232848d/frames/frame_000076.jpg",
+        "change_score": 0.16896063089370728,
+        "semantic_change_score": 0.5025607042007996
+      },
+      {
+        "timestamp_sec": 76.0,
+        "path": "/data1/video-highlight-cache/ded8352d8232848d/frames/frame_000077.jpg",
+        "change_score": 0.03711703419685364,
+        "semantic_change_score": 0.5558288765638649
+      },
+      {
+        "timestamp_sec": 77.0,
+        "path": "/data1/video-highlight-cache/ded8352d8232848d/frames/frame_000078.jpg",
+        "change_score": 0.15448547899723053,
+        "semantic_change_score": 1.0
+      },
+      {
+        "timestamp_sec": 78.0,
+        "path": "/data1/video-highlight-cache/ded8352d8232848d/frames/frame_000079.jpg",
+        "change_score": 0.025420304387807846,
+        "semantic_change_score": 0.9701133162016417
+      },
+      {
+        "timestamp_sec": 79.0,
+        "path": "/data1/video-highlight-cache/ded8352d8232848d/frames/frame_000080.jpg",
+        "change_score": 0.03756318986415863,
+        "semantic_change_score": 0.17884158816052562
+      },
+      {
+        "timestamp_sec": 80.0,
+        "path": "/data1/video-highlight-cache/ded8352d8232848d/frames/frame_000081.jpg",
+        "change_score": 0.2165536880493164,
+        "semantic_change_score": 0.21392588706991236
+      },
+      {
+        "timestamp_sec": 81.0,
+        "path": "/data1/video-highlight-cache/ded8352d8232848d/frames/frame_000082.jpg",
+        "change_score": 0.03590016067028046,
+        "semantic_change_score": 0.16812755987068992
+      },
+      {
+        "timestamp_sec": 82.0,
+        "path": "/data1/video-highlight-cache/ded8352d8232848d/frames/frame_000083.jpg",
+        "change_score": 0.04041341319680214,
+        "semantic_change_score": 0.186448922929297
+      },
+      {
+        "timestamp_sec": 83.0,
+        "path": "/data1/video-highlight-cache/ded8352d8232848d/frames/frame_000084.jpg",
+        "change_score": 0.3143478035926819,
+        "semantic_change_score": 1.0
+      },
+      {
+        "timestamp_sec": 84.0,
+        "path": "/data1/video-highlight-cache/ded8352d8232848d/frames/frame_000085.jpg",
+        "change_score": 0.114014632999897,
+        "semantic_change_score": 1.0
+      },
+      {
+        "timestamp_sec": 85.0,
+        "path": "/data1/video-highlight-cache/ded8352d8232848d/frames/frame_000086.jpg",
+        "change_score": 0.13239507377147675,
+        "semantic_change_score": 0.9076222268299057
+      },
+      {
+        "timestamp_sec": 86.0,
+        "path": "/data1/video-highlight-cache/ded8352d8232848d/frames/frame_000087.jpg",
+        "change_score": 0.17328335344791412,
+        "semantic_change_score": 0.0
+      },
+      {
+        "timestamp_sec": 87.0,
+        "path": "/data1/video-highlight-cache/ded8352d8232848d/frames/frame_000088.jpg",
+        "change_score": 0.36662644147872925,
+        "semantic_change_score": 0.0
+      },
+      {
+        "timestamp_sec": 88.0,
+        "path": "/data1/video-highlight-cache/ded8352d8232848d/frames/frame_000089.jpg",
+        "change_score": 0.11513001471757889,
+        "semantic_change_score": 0.0
+      },
+      {
+        "timestamp_sec": 89.0,
+        "path": "/data1/video-highlight-cache/ded8352d8232848d/frames/frame_000090.jpg",
+        "change_score": 0.10683785378932953,
+        "semantic_change_score": 0.0
+      },
+      {
+        "timestamp_sec": 90.0,
+        "path": "/data1/video-highlight-cache/ded8352d8232848d/frames/frame_000091.jpg",
+        "change_score": 0.10606522113084793,
+        "semantic_change_score": 0.0
+      },
+      {
+        "timestamp_sec": 91.0,
+        "path": "/data1/video-highlight-cache/ded8352d8232848d/frames/frame_000092.jpg",
+        "change_score": 0.08725394308567047,
+        "semantic_change_score": 0.0
+      },
+      {
+        "timestamp_sec": 92.0,
+        "path": "/data1/video-highlight-cache/ded8352d8232848d/frames/frame_000093.jpg",
+        "change_score": 0.29515260457992554,
+        "semantic_change_score": 0.3605602971299601
+      },
+      {
+        "timestamp_sec": 93.0,
+        "path": "/data1/video-highlight-cache/ded8352d8232848d/frames/frame_000094.jpg",
+        "change_score": 0.04565812647342682,
+        "semantic_change_score": 0.08463517149208609
+      },
+      {
+        "timestamp_sec": 94.0,
+        "path": "/data1/video-highlight-cache/ded8352d8232848d/frames/frame_000095.jpg",
+        "change_score": 0.05159888043999672,
+        "semantic_change_score": 0.39545915971306905
+      },
+      {
+        "timestamp_sec": 95.0,
+        "path": "/data1/video-highlight-cache/ded8352d8232848d/frames/frame_000096.jpg",
+        "change_score": 0.2345396727323532,
+        "semantic_change_score": 0.24876378428547796
+      },
+      {
+        "timestamp_sec": 96.0,
+        "path": "/data1/video-highlight-cache/ded8352d8232848d/frames/frame_000097.jpg",
+        "change_score": 0.03750861808657646,
+        "semantic_change_score": 1.0
+      },
+      {
+        "timestamp_sec": 97.0,
+        "path": "/data1/video-highlight-cache/ded8352d8232848d/frames/frame_000098.jpg",
+        "change_score": 0.3496735095977783,
+        "semantic_change_score": 0.18150691782281242
+      },
+      {
+        "timestamp_sec": 98.0,
+        "path": "/data1/video-highlight-cache/ded8352d8232848d/frames/frame_000099.jpg",
+        "change_score": 0.009835516102612019,
+        "semantic_change_score": 0.40703368876354296
+      },
+      {
+        "timestamp_sec": 99.0,
+        "path": "/data1/video-highlight-cache/ded8352d8232848d/frames/frame_000100.jpg",
+        "change_score": 0.017861519008874893,
+        "semantic_change_score": 0.0
+      },
+      {
+        "timestamp_sec": 100.0,
+        "path": "/data1/video-highlight-cache/ded8352d8232848d/frames/frame_000101.jpg",
+        "change_score": 0.3503369987010956,
+        "semantic_change_score": 0.0
+      },
+      {
+        "timestamp_sec": 101.0,
+        "path": "/data1/video-highlight-cache/ded8352d8232848d/frames/frame_000102.jpg",
+        "change_score": 0.0398763008415699,
+        "semantic_change_score": 0.0
+      },
+      {
+        "timestamp_sec": 102.0,
+        "path": "/data1/video-highlight-cache/ded8352d8232848d/frames/frame_000103.jpg",
+        "change_score": 0.046503521502017975,
+        "semantic_change_score": 0.285280134276222
+      },
+      {
+        "timestamp_sec": 103.0,
+        "path": "/data1/video-highlight-cache/ded8352d8232848d/frames/frame_000104.jpg",
+        "change_score": 0.079834945499897,
+        "semantic_change_score": 0.485437056592055
+      },
+      {
+        "timestamp_sec": 104.0,
+        "path": "/data1/video-highlight-cache/ded8352d8232848d/frames/frame_000105.jpg",
+        "change_score": 0.07421395927667618,
+        "semantic_change_score": 0.5187701888243496
+      },
+      {
+        "timestamp_sec": 105.0,
+        "path": "/data1/video-highlight-cache/ded8352d8232848d/frames/frame_000106.jpg",
+        "change_score": 0.05357211083173752,
+        "semantic_change_score": 0.2308053556805275
+      },
+      {
+        "timestamp_sec": 106.0,
+        "path": "/data1/video-highlight-cache/ded8352d8232848d/frames/frame_000107.jpg",
+        "change_score": 0.06635358929634094,
+        "semantic_change_score": 0.0
+      },
+      {
+        "timestamp_sec": 107.0,
+        "path": "/data1/video-highlight-cache/ded8352d8232848d/frames/frame_000108.jpg",
+        "change_score": 0.2824888825416565,
+        "semantic_change_score": 0.0
+      },
+      {
+        "timestamp_sec": 108.0,
+        "path": "/data1/video-highlight-cache/ded8352d8232848d/frames/frame_000109.jpg",
+        "change_score": 0.01678251288831234,
+        "semantic_change_score": 0.0
+      },
+      {
+        "timestamp_sec": 109.0,
+        "path": "/data1/video-highlight-cache/ded8352d8232848d/frames/frame_000110.jpg",
+        "change_score": 0.33082300424575806,
+        "semantic_change_score": 0.02582645382556094
+      },
+      {
+        "timestamp_sec": 110.0,
+        "path": "/data1/video-highlight-cache/ded8352d8232848d/frames/frame_000111.jpg",
+        "change_score": 0.022109566256403923,
+        "semantic_change_score": 0.14698400833955425
+      },
+      {
+        "timestamp_sec": 111.0,
+        "path": "/data1/video-highlight-cache/ded8352d8232848d/frames/frame_000112.jpg",
+        "change_score": 0.3383157253265381,
+        "semantic_change_score": 0.0
+      },
+      {
+        "timestamp_sec": 112.0,
+        "path": "/data1/video-highlight-cache/ded8352d8232848d/frames/frame_000113.jpg",
+        "change_score": 0.04267386719584465,
+        "semantic_change_score": 0.0
+      },
+      {
+        "timestamp_sec": 113.0,
+        "path": "/data1/video-highlight-cache/ded8352d8232848d/frames/frame_000114.jpg",
+        "change_score": 0.05546300485730171,
+        "semantic_change_score": 0.0
+      },
+      {
+        "timestamp_sec": 114.0,
+        "path": "/data1/video-highlight-cache/ded8352d8232848d/frames/frame_000115.jpg",
+        "change_score": 0.07573242485523224,
+        "semantic_change_score": 0.2514011714876407
+      },
+      {
+        "timestamp_sec": 115.0,
+        "path": "/data1/video-highlight-cache/ded8352d8232848d/frames/frame_000116.jpg",
+        "change_score": 0.11841777712106705,
+        "semantic_change_score": 0.0
+      },
+      {
+        "timestamp_sec": 116.0,
+        "path": "/data1/video-highlight-cache/ded8352d8232848d/frames/frame_000117.jpg",
+        "change_score": 0.09331054985523224,
+        "semantic_change_score": 0.0
+      },
+      {
+        "timestamp_sec": 117.0,
+        "path": "/data1/video-highlight-cache/ded8352d8232848d/frames/frame_000118.jpg",
+        "change_score": 0.2628379762172699,
+        "semantic_change_score": 0.5919454588580615
+      },
+      {
+        "timestamp_sec": 118.0,
+        "path": "/data1/video-highlight-cache/ded8352d8232848d/frames/frame_000119.jpg",
+        "change_score": 0.05842428654432297,
+        "semantic_change_score": 0.8718190446282367
+      },
+      {
+        "timestamp_sec": 119.0,
+        "path": "/data1/video-highlight-cache/ded8352d8232848d/frames/frame_000120.jpg",
+        "change_score": 0.2183823585510254,
+        "semantic_change_score": 0.808852615906436
+      },
+      {
+        "timestamp_sec": 120.0,
+        "path": "/data1/video-highlight-cache/ded8352d8232848d/frames/frame_000121.jpg",
+        "change_score": 0.04542164504528046,
+        "semantic_change_score": 0.0
+      },
+      {
+        "timestamp_sec": 121.0,
+        "path": "/data1/video-highlight-cache/ded8352d8232848d/frames/frame_000122.jpg",
+        "change_score": 0.023788871243596077,
+        "semantic_change_score": 0.0
+      },
+      {
+        "timestamp_sec": 122.0,
+        "path": "/data1/video-highlight-cache/ded8352d8232848d/frames/frame_000123.jpg",
+        "change_score": 0.21175800263881683,
+        "semantic_change_score": 0.18486953887637653
+      },
+      {
+        "timestamp_sec": 123.0,
+        "path": "/data1/video-highlight-cache/ded8352d8232848d/frames/frame_000124.jpg",
+        "change_score": 0.05292107164859772,
+        "semantic_change_score": 0.039741481439379625
+      },
+      {
+        "timestamp_sec": 124.0,
+        "path": "/data1/video-highlight-cache/ded8352d8232848d/frames/frame_000125.jpg",
+        "change_score": 0.06327933818101883,
+        "semantic_change_score": 0.31990243000969415
+      },
+      {
+        "timestamp_sec": 125.0,
+        "path": "/data1/video-highlight-cache/ded8352d8232848d/frames/frame_000126.jpg",
+        "change_score": 0.24484336376190186,
+        "semantic_change_score": 0.0
+      },
+      {
+        "timestamp_sec": 126.0,
+        "path": "/data1/video-highlight-cache/ded8352d8232848d/frames/frame_000127.jpg",
+        "change_score": 0.10828929394483566,
+        "semantic_change_score": 0.0
+      },
+      {
+        "timestamp_sec": 127.0,
+        "path": "/data1/video-highlight-cache/ded8352d8232848d/frames/frame_000128.jpg",
+        "change_score": 0.11917126178741455,
+        "semantic_change_score": 0.0
+      },
+      {
+        "timestamp_sec": 128.0,
+        "path": "/data1/video-highlight-cache/ded8352d8232848d/frames/frame_000129.jpg",
+        "change_score": 0.11200118809938431,
+        "semantic_change_score": 0.0
+      },
+      {
+        "timestamp_sec": 129.0,
+        "path": "/data1/video-highlight-cache/ded8352d8232848d/frames/frame_000130.jpg",
+        "change_score": 0.20649126172065735,
+        "semantic_change_score": 0.0
+      },
+      {
+        "timestamp_sec": 130.0,
+        "path": "/data1/video-highlight-cache/ded8352d8232848d/frames/frame_000131.jpg",
+        "change_score": 0.16288679838180542,
+        "semantic_change_score": 0.0
+      },
+      {
+        "timestamp_sec": 131.0,
+        "path": "/data1/video-highlight-cache/ded8352d8232848d/frames/frame_000132.jpg",
+        "change_score": 0.15394262969493866,
+        "semantic_change_score": 0.7301895102099527
+      },
+      {
+        "timestamp_sec": 132.0,
+        "path": "/data1/video-highlight-cache/ded8352d8232848d/frames/frame_000133.jpg",
+        "change_score": 0.2894952595233917,
+        "semantic_change_score": 1.0
+      },
+      {
+        "timestamp_sec": 133.0,
+        "path": "/data1/video-highlight-cache/ded8352d8232848d/frames/frame_000134.jpg",
+        "change_score": 0.0248104315251112,
+        "semantic_change_score": 1.0
+      },
+      {
+        "timestamp_sec": 134.0,
+        "path": "/data1/video-highlight-cache/ded8352d8232848d/frames/frame_000135.jpg",
+        "change_score": 0.3388844132423401,
+        "semantic_change_score": 1.0
+      },
+      {
+        "timestamp_sec": 135.0,
+        "path": "/data1/video-highlight-cache/ded8352d8232848d/frames/frame_000136.jpg",
+        "change_score": 0.11335401237010956,
+        "semantic_change_score": 0.5829606878163571
+      },
+      {
+        "timestamp_sec": 136.0,
+        "path": "/data1/video-highlight-cache/ded8352d8232848d/frames/frame_000137.jpg",
+        "change_score": 0.31989219784736633,
+        "semantic_change_score": 1.0
+      },
+      {
+        "timestamp_sec": 137.0,
+        "path": "/data1/video-highlight-cache/ded8352d8232848d/frames/frame_000138.jpg",
+        "change_score": 0.10090954601764679,
+        "semantic_change_score": 0.8129988959552972
+      },
+      {
+        "timestamp_sec": 138.0,
+        "path": "/data1/video-highlight-cache/ded8352d8232848d/frames/frame_000139.jpg",
+        "change_score": 0.3090035319328308,
+        "semantic_change_score": 1.0
+      },
+      {
+        "timestamp_sec": 139.0,
+        "path": "/data1/video-highlight-cache/ded8352d8232848d/frames/frame_000140.jpg",
+        "change_score": 0.020611213520169258,
+        "semantic_change_score": 0.0
+      },
+      {
+        "timestamp_sec": 140.0,
+        "path": "/data1/video-highlight-cache/ded8352d8232848d/frames/frame_000141.jpg",
+        "change_score": 0.12263423204421997,
+        "semantic_change_score": 0.0
+      },
+      {
+        "timestamp_sec": 141.0,
+        "path": "/data1/video-highlight-cache/ded8352d8232848d/frames/frame_000142.jpg",
+        "change_score": 0.26827606558799744,
+        "semantic_change_score": 0.0
+      },
+      {
+        "timestamp_sec": 142.0,
+        "path": "/data1/video-highlight-cache/ded8352d8232848d/frames/frame_000143.jpg",
+        "change_score": 0.243608295917511,
+        "semantic_change_score": 0.0
+      },
+      {
+        "timestamp_sec": 143.0,
+        "path": "/data1/video-highlight-cache/ded8352d8232848d/frames/frame_000144.jpg",
+        "change_score": 0.23904813826084137,
+        "semantic_change_score": 0.0
+      },
+      {
+        "timestamp_sec": 144.0,
+        "path": "/data1/video-highlight-cache/ded8352d8232848d/frames/frame_000145.jpg",
+        "change_score": 0.22697609663009644,
+        "semantic_change_score": 0.6103709710862218
+      },
+      {
+        "timestamp_sec": 145.0,
+        "path": "/data1/video-highlight-cache/ded8352d8232848d/frames/frame_000146.jpg",
+        "change_score": 0.09801527857780457,
+        "semantic_change_score": 0.5635327398312466
+      },
+      {
+        "timestamp_sec": 146.0,
+        "path": "/data1/video-highlight-cache/ded8352d8232848d/frames/frame_000147.jpg",
+        "change_score": 0.09326363354921341,
+        "semantic_change_score": 1.0
+      },
+      {
+        "timestamp_sec": 147.0,
+        "path": "/data1/video-highlight-cache/ded8352d8232848d/frames/frame_000148.jpg",
+        "change_score": 0.20834098756313324,
+        "semantic_change_score": 0.7544270541439144
+      },
+      {
+        "timestamp_sec": 148.0,
+        "path": "/data1/video-highlight-cache/ded8352d8232848d/frames/frame_000149.jpg",
+        "change_score": 0.009625842794775963,
+        "semantic_change_score": 0.6837805767514287
+      },
+      {
+        "timestamp_sec": 149.0,
+        "path": "/data1/video-highlight-cache/ded8352d8232848d/frames/frame_000150.jpg",
+        "change_score": 0.3920525014400482,
+        "semantic_change_score": 1.0
+      },
+      {
+        "timestamp_sec": 150.0,
+        "path": "/data1/video-highlight-cache/ded8352d8232848d/frames/frame_000151.jpg",
+        "change_score": 0.36829906702041626,
+        "semantic_change_score": 0.0
+      },
+      {
+        "timestamp_sec": 151.0,
+        "path": "/data1/video-highlight-cache/ded8352d8232848d/frames/frame_000152.jpg",
+        "change_score": 0.17377929389476776,
+        "semantic_change_score": 0.0
+      },
+      {
+        "timestamp_sec": 152.0,
+        "path": "/data1/video-highlight-cache/ded8352d8232848d/frames/frame_000153.jpg",
+        "change_score": 0.2323586791753769,
+        "semantic_change_score": 1.0
+      },
+      {
+        "timestamp_sec": 153.0,
+        "path": "/data1/video-highlight-cache/ded8352d8232848d/frames/frame_000154.jpg",
+        "change_score": 0.06646465510129929,
+        "semantic_change_score": 1.0
+      }
+    ],
+    "saliency_per_second": [
+      0.169,
+      0.3107,
+      0.5461,
+      0.7408,
+      0.9058,
+      0.9354,
+      0.8579,
+      0.7165,
+      0.6433,
+      0.7099,
+      0.7956,
+      0.81,
+      0.6392,
+      0.5079,
+      0.4836,
+      0.5906,
+      0.6196,
+      0.6601,
+      0.691,
+      0.6476,
+      0.6465,
+      0.6398,
+      0.63,
+      0.5862,
+      0.5627,
+      0.5534,
+      0.7003,
+      0.7475,
+      0.7641,
+      0.686,
+      0.6103,
+      0.6658,
+      0.6639,
+      0.7409,
+      0.6634,
+      0.6866,
+      0.5872,
+      0.6801,
+      0.6964,
+      0.7507,
+      0.7286,
+      0.6338,
+      0.5351,
+      0.5367,
+      0.6203,
+      0.722,
+      0.8189,
+      0.8691,
+      0.8925,
+      0.8761,
+      0.8309,
+      0.7835,
+      0.7506,
+      0.7152,
+      0.6747,
+      0.7005,
+      0.7662,
+      0.7488,
+      0.7483,
+      0.7016,
+      0.696,
+      0.7892,
+      0.7525,
+      0.7591,
+      0.6772,
+      0.6009,
+      0.633,
+      0.7171,
+      0.7857,
+      0.7744,
+      0.6772,
+      0.6171,
+      0.5102,
+      0.4855,
+      0.5206,
+      0.5849,
+      0.6398,
+      0.7146,
+      0.655,
+      0.5427,
+      0.5113,
+      0.4879,
+      0.567,
+      0.7535,
+      0.7383,
+      0.6954,
+      0.5398,
+      0.5149,
+      0.4221,
+      0.4152,
+      0.4939,
+      0.5587,
+      0.6712,
+      0.6208,
+      0.787,
+      0.8976,
+      1.0,
+      0.8931,
+      0.8027,
+      0.686,
+      0.6475,
+      0.6183,
+      0.7068,
+      0.779,
+      0.8194,
+      0.8114,
+      0.7703,
+      0.698,
+      0.6161,
+      0.6436,
+      0.6001,
+      0.553,
+      0.4414,
+      0.3971,
+      0.388,
+      0.4181,
+      0.5098,
+      0.6451,
+      0.6866,
+      0.6982,
+      0.5359,
+      0.5237,
+      0.5498,
+      0.5792,
+      0.633,
+      0.6157,
+      0.6262,
+      0.5829,
+      0.5475,
+      0.4982,
+      0.5239,
+      0.6479,
+      0.7329,
+      0.7745,
+      0.7602,
+      0.7181,
+      0.752,
+      0.6736,
+      0.6427,
+      0.4236,
+      0.3766,
+      0.3847,
+      0.4082,
+      0.4829,
+      0.6797,
+      0.8475,
+      0.9895,
+      0.9962,
+      0.9967,
+      0.9157,
+      0.7095,
+      0.5656,
+      0.5304,
+      0.4504
+    ]
+  },
+  "local_candidates": [
+    {
+      "start_sec": 0.0,
+      "end_sec": 20.0,
+      "local_score": 0.5070420430451228,
+      "audio_score": 0.32339938276021013,
+      "visual_score": 0.9963418831168568,
+      "semantic_score": 0.77091191272558,
+      "scene_score": 1.0,
+      "cue_score": 0.0,
+      "filter_penalty": 0.0,
+      "filter_reasons": [],
+      "transcript": "少夫人 早餐在那边 饱了 这小两口 昨天还好好的 今天怎么就跟接了仇人似的 见了仇人似的"
+    },
+    {
+      "start_sec": 3.4800000000000004,
+      "end_sec": 11.48,
+      "local_score": 0.6320958455844323,
+      "audio_score": 0.8035698806175966,
+      "visual_score": 0.23370815813541412,
+      "semantic_score": 0.9606318255941716,
+      "scene_score": 1.0,
+      "cue_score": 0.0,
+      "filter_penalty": 0.0,
+      "filter_reasons": [],
+      "transcript": "少夫人 早餐在那边 饱了 这小两口 昨天还好好的"
+    },
+    {
+      "start_sec": 24.92,
+      "end_sec": 32.92,
+      "local_score": 0.5400977953687849,
+      "audio_score": 0.7779540474364793,
+      "visual_score": 0.22138863056898117,
+      "semantic_score": 0.6708860839880496,
+      "scene_score": 1.0,
+      "cue_score": 0.0,
+      "filter_penalty": 0.0,
+      "filter_reasons": [],
+      "transcript": "这房子都快结冰了 不愧是小书犯 不愧是小说反派 他阴晴不定 动不动就发脾气 这要是原主的话早就离家出走 该死的傅星期 该死的傅羡祁 我劝你好好珍惜我"
+    },
+    {
+      "start_sec": 43.32,
+      "end_sec": 51.32,
+      "local_score": 0.7657778257073772,
+      "audio_score": 1.0,
+      "visual_score": 0.2082342430949211,
+      "semantic_score": 0.4831813379929502,
+      "scene_score": 1.0,
+      "cue_score": 1.0,
+      "filter_penalty": 0.0,
+      "filter_reasons": [],
+      "transcript": "谁欺负你了 玉琼 语秋 胡子明他出轨了 我要分手他 我要分手他还威胁我"
+    },
+    {
+      "start_sec": 57.08,
+      "end_sec": 65.08,
+      "local_score": 0.7298069815913679,
+      "audio_score": 1.0,
+      "visual_score": 0.2159624844789505,
+      "semantic_score": 0.36070244381157596,
+      "scene_score": 1.0,
+      "cue_score": 1.0,
+      "filter_penalty": 0.0,
+      "filter_reasons": [],
+      "transcript": "他说如果要是分手的话 如果要是分手的话 就让我在恋爱期间 花他的钱全都还给他 他还要告我 要让我在学校严密扫地 要让我在学校颜面扫地 秋秋"
+    },
+    {
+      "start_sec": 91.32,
+      "end_sec": 99.32,
+      "local_score": 0.5624905905565464,
+      "audio_score": 1.0,
+      "visual_score": 0.32241305708885193,
+      "semantic_score": 0.600830949492204,
+      "scene_score": 1.0,
+      "cue_score": 0.0,
+      "filter_penalty": 0.0,
+      "filter_reasons": [],
+      "transcript": "喂 张曼 喂张妈 我想问一下 富家有没有什么 傅家有没有什么交好的 交好的擅长处理 擅长处理情感关系的律师 情感关系的律师"
+    },
+    {
+      "start_sec": 102.64,
+      "end_sec": 110.64,
+      "local_score": 0.7475684093516322,
+      "audio_score": 0.9560103660171211,
+      "visual_score": 0.3066559433937073,
+      "semantic_score": 0.41167086703231065,
+      "scene_score": 1.0,
+      "cue_score": 1.0,
+      "filter_penalty": 0.0,
+      "filter_reasons": [],
+      "transcript": "难怪今天早上 难怪今天早上气压那么低 气氧那么低 邵夫人这是要和少爷离婚 少夫人这是要和少爷离婚 没有 邵夫人 少夫人 富家没有这样的律师 傅家没有这样的律师"
+    },
+    {
+      "start_sec": 133.88,
+      "end_sec": 153.8322,
+      "local_score": 0.65,
+      "audio_score": 0.0,
+      "visual_score": 1.0,
+      "semantic_score": 1.0,
+      "scene_score": 1.0,
+      "cue_score": 0.5,
+      "filter_penalty": 0.0,
+      "filter_reasons": [],
+      "transcript": "喂 少夫人要跟您离婚 A 良辰入清欢"
+    }
+  ],
+  "reasoning": {
+    "scenes": [
+      {
+        "scene_id": "scene_0001",
+        "start_sec": 0.0,
+        "end_sec": 9.36,
+        "shot_ids": [
+          "shot_0001",
+          "shot_0002",
+          "shot_0003",
+          "shot_0004"
+        ],
+        "local_score": 0.6320958455844323,
+        "transcript": "[4.85-7.65s ASR] 少夫人 早餐在那边\n[7.65-9.05s ASR] 饱了\n[9.05-17.28s ASR] 这小两口 昨天还好好的",
+        "audio_context": "happy/bgm",
+        "frame_samples": [
+          {
+            "timestamp_sec": 0.0,
+            "path": "/data1/video-highlight-cache/ded8352d8232848d/frames/frame_000001.jpg",
+            "change_score": 0.0,
+            "semantic_change_score": 0.0
+          },
+          {
+            "timestamp_sec": 1.0,
+            "path": "/data1/video-highlight-cache/ded8352d8232848d/frames/frame_000002.jpg",
+            "change_score": 0.003180529922246933,
+            "semantic_change_score": 0.0
+          },
+          {
+            "timestamp_sec": 2.0,
+            "path": "/data1/video-highlight-cache/ded8352d8232848d/frames/frame_000003.jpg",
+            "change_score": 0.33788105845451355,
+            "semantic_change_score": 0.0
+          },
+          {
+            "timestamp_sec": 3.0,
+            "path": "/data1/video-highlight-cache/ded8352d8232848d/frames/frame_000004.jpg",
+            "change_score": 0.1471536010503769,
+            "semantic_change_score": 1.0
+          },
+          {
+            "timestamp_sec": 5.0,
+            "path": "/data1/video-highlight-cache/ded8352d8232848d/frames/frame_000006.jpg",
+            "change_score": 0.21262255311012268,
+            "semantic_change_score": 1.0
+          },
+          {
+            "timestamp_sec": 6.0,
+            "path": "/data1/video-highlight-cache/ded8352d8232848d/frames/frame_000007.jpg",
+            "change_score": 0.04743029922246933,
+            "semantic_change_score": 0.8818954767825147
+          },
+          {
+            "timestamp_sec": 7.0,
+            "path": "/data1/video-highlight-cache/ded8352d8232848d/frames/frame_000008.jpg",
+            "change_score": 0.1879078596830368,
+            "semantic_change_score": 0.0
+          },
+          {
+            "timestamp_sec": 9.0,
+            "path": "/data1/video-highlight-cache/ded8352d8232848d/frames/frame_000010.jpg",
+            "change_score": 0.22264093160629272,
+            "semantic_change_score": 0.13889403107773116
+          }
+        ],
+        "speakers": [],
+        "face_track_ids": [],
+        "actors": [
+          "年轻女性",
+          "围裙女性",
+          "沙发上的年轻男性"
+        ],
+        "action": "年轻女性下楼走进客厅，围裙女性试图为其提供早餐，年轻女性拒绝并转身离开。",
+        "event_type": [
+          "action",
+          "conflict"
+        ],
+        "claims": [
+          "围裙女性称呼年轻女性为“少夫人”"
+        ],
+        "state_before": "年轻女性表现得冷淡且匆忙，无视客厅沙发上的男性。",
+        "new_evidence": "[4.85s ASR] 围裙女性提供早餐信息；[7.65s ASR] 年轻女性回答“饱了”并拒绝进食。",
+        "state_after": "年轻女性维持其冷淡态度，拒绝了家人的早餐服务。",
+        "relationship_change": "年轻女性对家人的服务表现出明显的疏离和抗拒。",
+        "emotion": [
+          "冷漠",
+          "疏离"
+        ],
+        "salience": 0.6,
+        "uncertainty": 0.1,
+        "evidence": [
+          "[0.00s FRAME] 年轻男性在沙发看平板；[3.00s FRAME] 年轻女性下楼；[4.85s ASR] 围裙女性提到早餐；[7.65s ASR] 年轻女性回答“饱了”"
+        ]
+      },
+      {
+        "scene_id": "scene_0002",
+        "start_sec": 9.36,
+        "end_sec": 28.92,
+        "shot_ids": [
+          "shot_0005",
+          "shot_0006",
+          "shot_0007",
+          "shot_0008",
+          "shot_0009",
+          "shot_0010",
+          "shot_0011"
+        ],
+        "local_score": 0.6320958455844323,
+        "transcript": "[9.05-17.28s ASR] 这小两口 昨天还好好的\n[17.28-20.48s ASR] 今天怎么就跟接了仇人似的\n[19.00-20.50s OCR] 见了仇人似的\n[20.48-25.20s ASR] 这房子都快结冰了\n[21.00-22.50s OCR] 哎\n[25.20-26.92s ASR] 不愧是小书犯\n[26.00-27.50s OCR] 不愧是小说反派\n[26.92-28.82s ASR] 他阴晴不定 动不动就发脾气\n[28.82-31.12s ASR] 这要是原主的话早就离家出走",
+        "audio_context": "happy/bgm",
+        "frame_samples": [
+          {
+            "timestamp_sec": 10.0,
+            "path": "/data1/video-highlight-cache/ded8352d8232848d/frames/frame_000011.jpg",
+            "change_score": 0.08926355838775635,
+            "semantic_change_score": 0.7441912229557471
+          },
+          {
+            "timestamp_sec": 12.0,
+            "path": "/data1/video-highlight-cache/ded8352d8232848d/frames/frame_000013.jpg",
+            "change_score": 0.2822437882423401,
+            "semantic_change_score": 0.0
+          },
+          {
+            "timestamp_sec": 15.0,
+            "path": "/data1/video-highlight-cache/ded8352d8232848d/frames/frame_000016.jpg",
+            "change_score": 0.16546031832695007,
+            "semantic_change_score": 0.0
+          },
+          {
+            "timestamp_sec": 17.0,
+            "path": "/data1/video-highlight-cache/ded8352d8232848d/frames/frame_000018.jpg",
+            "change_score": 0.006628178525716066,
+            "semantic_change_score": 0.0
+          },
+          {
+            "timestamp_sec": 20.0,
+            "path": "/data1/video-highlight-cache/ded8352d8232848d/frames/frame_000021.jpg",
+            "change_score": 0.2627374529838562,
+            "semantic_change_score": 0.0
+          },
+          {
+            "timestamp_sec": 22.0,
+            "path": "/data1/video-highlight-cache/ded8352d8232848d/frames/frame_000023.jpg",
+            "change_score": 0.22268976271152496,
+            "semantic_change_score": 0.016688951837042113
+          },
+          {
+            "timestamp_sec": 25.0,
+            "path": "/data1/video-highlight-cache/ded8352d8232848d/frames/frame_000026.jpg",
+            "change_score": 0.05711263045668602,
+            "semantic_change_score": 0.08657812505457511
+          },
+          {
+            "timestamp_sec": 28.0,
+            "path": "/data1/video-highlight-cache/ded8352d8232848d/frames/frame_000029.jpg",
+            "change_score": 0.004431870300322771,
+            "semantic_change_score": 0.709942657626434
+          }
+        ],
+        "speakers": [],
+        "face_track_ids": [],
+        "actors": [
+          "家政阿姨",
+          "沙发上的男性角色"
+        ],
+        "action": "家政阿姨端着早餐托盘走过走廊，路过坐在沙发上的男性角色，之后镜头切换至另一名女性角色出现在室外广场。",
+        "event_type": [
+          "reveal",
+          "action"
+        ],
+        "claims": [
+          "小两口昨天还好好的，今天像结了仇人似的",
+          "这房子都快结冰了",
+          "男性角色是小说反派，阴晴不定，动不动就发脾气",
+          "原主早就离家出走了"
+        ],
+        "state_before": "家政阿姨认为这对夫妇关系和谐（基于昨天的情况）。",
+        "new_evidence": "男性角色独自坐在室内沙发上，姿态冷漠；女性角色在室外广场独自行走，表情忧虑；阿姨端着食物经过，感受到氛围压抑。",
+        "state_after": "家政阿姨确认该对夫妇关系出现裂痕且室内氛围冷滞；女性角色（疑似原主/书中角色）表现出脱离压抑环境的倾向。",
+        "relationship_change": "由和谐转为冷战/冲突。",
+        "emotion": [
+          "忧虑",
+          "压抑"
+        ],
+        "salience": 0.75,
+        "uncertainty": 0.2,
+        "evidence": [
+          "[10.0s F01] 家政阿姨表情忧虑端着托盘",
+          "[17.0s F03] 男子独自坐在沙发上，字幕：这小两口昨天还好好的",
+          "[25.0s F05] 阿姨经过沙发区，环境安静冷清",
+          "[28.0s F06] 女性角色在室外广场，字幕：他阴晴不定 动不动就发脾气"
+        ]
+      },
+      {
+        "scene_id": "scene_0003",
+        "start_sec": 28.92,
+        "end_sec": 40.0,
+        "shot_ids": [
+          "shot_0012",
+          "shot_0013",
+          "shot_0014",
+          "shot_0015",
+          "shot_0016"
+        ],
+        "local_score": 0.5400977953687849,
+        "transcript": "[28.82-31.12s ASR] 这要是原主的话早就离家出走\n[31.12-32.62s ASR] 该死的傅星期\n[32.00-33.50s OCR] 该死的傅羡祁\n[32.62-34.58s ASR] 我劝你好好珍惜我\n[33.00-35.50s OCR] 我劝你最好好珍惜我\n[34.58-35.08s ASR] 不然\n[35.00-36.50s OCR] 语秋\n[35.08-39.69s ASR] 笑笑\n[36.00-37.50s OCR] smenmu\n[39.00-40.50s OCR] 夏夏\n[39.69-41.93s ASR] 你怎么戴个墨镜啊",
+        "audio_context": "happy/bgm",
+        "frame_samples": [
+          {
+            "timestamp_sec": 29.0,
+            "path": "/data1/video-highlight-cache/ded8352d8232848d/frames/frame_000030.jpg",
+            "change_score": 0.23067554831504822,
+            "semantic_change_score": 0.0
+          },
+          {
+            "timestamp_sec": 30.0,
+            "path": "/data1/video-highlight-cache/ded8352d8232848d/frames/frame_000031.jpg",
+            "change_score": 0.03742532059550285,
+            "semantic_change_score": 0.02193959411671502
+          },
+          {
+            "timestamp_sec": 32.0,
+            "path": "/data1/video-highlight-cache/ded8352d8232848d/frames/frame_000033.jpg",
+            "change_score": 0.11513097584247589,
+            "semantic_change_score": 0.32942001296149115
+          },
+          {
+            "timestamp_sec": 33.0,
+            "path": "/data1/video-highlight-cache/ded8352d8232848d/frames/frame_000034.jpg",
+            "change_score": 0.10691539943218231,
+            "semantic_change_score": 0.7413277558489443
+          },
+          {
+            "timestamp_sec": 35.0,
+            "path": "/data1/video-highlight-cache/ded8352d8232848d/frames/frame_000036.jpg",
+            "change_score": 0.2384851723909378,
+            "semantic_change_score": 0.0
+          },
+          {
+            "timestamp_sec": 36.0,
+            "path": "/data1/video-highlight-cache/ded8352d8232848d/frames/frame_000037.jpg",
+            "change_score": 0.07095492631196976,
+            "semantic_change_score": 0.026529143192089488
+          },
+          {
+            "timestamp_sec": 38.0,
+            "path": "/data1/video-highlight-cache/ded8352d8232848d/frames/frame_000039.jpg",
+            "change_score": 0.2096334993839264,
+            "semantic_change_score": 0.15220924838275074
+          },
+          {
+            "timestamp_sec": 40.0,
+            "path": "/data1/video-highlight-cache/ded8352d8232848d/frames/frame_000041.jpg",
+            "change_score": 0.06835075467824936,
+            "semantic_change_score": 0.6326573057308398
+          }
+        ],
+        "speakers": [],
+        "face_track_ids": [],
+        "actors": [
+          "语秋",
+          "笑笑"
+        ],
+        "action": "语秋独自走上台阶并发表言论，随后与笑笑会面并询问对方为何佩戴墨镜",
+        "event_type": [
+          "action",
+          "reveal"
+        ],
+        "claims": [
+          "原主若在场会离家出走",
+          "劝告某人（傅羡祁）最好珍惜她"
+        ],
+        "state_before": "语秋处于独处且带有个人主张的状态",
+        "new_evidence": "语秋与名为笑笑的人相遇，语秋注意到对方戴着墨镜",
+        "state_after": "语秋的注意力从自我表达转向对笑笑佩戴墨镜的观察",
+        "relationship_change": "unknown",
+        "emotion": [
+          "不满",
+          "困惑"
+        ],
+        "salience": 0.5,
+        "uncertainty": 0.3,
+        "evidence": [
+          "[F01 29.0s] 语秋独自走上台阶",
+          "[31.12s ASR] 语秋提到傅羡祁",
+          "[35.08s ASR] 语秋称呼对方为笑笑",
+          "[39.69s ASR] 语秋问笑笑为何戴墨镜"
+        ]
+      },
+      {
+        "scene_id": "scene_0004",
+        "start_sec": 40.0,
+        "end_sec": 77.48,
+        "shot_ids": [
+          "shot_0016",
+          "shot_0017",
+          "shot_0018",
+          "shot_0019",
+          "shot_0020",
+          "shot_0021",
+          "shot_0022",
+          "shot_0023",
+          "shot_0024",
+          "shot_0025",
+          "shot_0026"
+        ],
+        "local_score": 0.7657778257073772,
+        "transcript": "[39.00-40.50s OCR] 夏夏\n[39.69-41.93s ASR] 你怎么戴个墨镜啊\n[41.93-47.44s ASR] 谁欺负你了\n[47.44-48.74s ASR] 玉琼\n[48.00-49.50s OCR] 语秋\n[48.74-50.72s ASR] 胡子明他出轨了\n[50.72-51.80s ASR] 我要分手他\n[51.00-53.50s OCR] 我要分手他还威胁我\n[51.80-54.90s ASR] 他威胁你什么\n[54.90-56.08s ASR] 他说\n[56.00-58.50s OCR] 他说如果要是分手的话\n[56.08-57.84s ASR] 如果要是分手的话\n[57.84-59.34s ASR] 就让我在恋爱期间\n[59.34-60.98s ASR] 花他的钱全都还给他\n[60.98-62.48s ASR] 他还要告我\n[62.48-64.68s ASR] 要让我在学校严密扫地\n[63.00-65.50s OCR] 要让我在学校颜面扫地\n[64.68-67.32s ASR] 秋秋\n[67.32-68.74s ASR] 你认识的人多\n[68.74-70.62s ASR] 能不能帮我想想办法\n[70.62-72.52s ASR] 好\n[72.52-73.82s ASR] 我帮你想办法\n[73.82-92.78s ASR] 喂 张曼\n[77.00-78.50s OCR] 知来电 话 at s0 m 筛选来电 m O 19141944263 184 1329 6216",
+        "audio_context": "happy/bgm",
+        "frame_samples": [
+          {
+            "timestamp_sec": 40.0,
+            "path": "/data1/video-highlight-cache/ded8352d8232848d/frames/frame_000041.jpg",
+            "change_score": 0.06835075467824936,
+            "semantic_change_score": 0.6326573057308398
+          },
+          {
+            "timestamp_sec": 45.0,
+            "path": "/data1/video-highlight-cache/ded8352d8232848d/frames/frame_000046.jpg",
+            "change_score": 0.09557100385427475,
+            "semantic_change_score": 0.4167335327620582
+          },
+          {
+            "timestamp_sec": 50.0,
+            "path": "/data1/video-highlight-cache/ded8352d8232848d/frames/frame_000051.jpg",
+            "change_score": 0.09890184551477432,
+            "semantic_change_score": 0.2272893686242371
+          },
+          {
+            "timestamp_sec": 55.0,
+            "path": "/data1/video-highlight-cache/ded8352d8232848d/frames/frame_000056.jpg",
+            "change_score": 0.012333409860730171,
+            "semantic_change_score": 0.0
+          },
+          {
+            "timestamp_sec": 61.0,
+            "path": "/data1/video-highlight-cache/ded8352d8232848d/frames/frame_000062.jpg",
+            "change_score": 0.22279123961925507,
+            "semantic_change_score": 0.2552181750461765
+          },
+          {
+            "timestamp_sec": 66.0,
+            "path": "/data1/video-highlight-cache/ded8352d8232848d/frames/frame_000067.jpg",
+            "change_score": 0.03337354585528374,
+            "semantic_change_score": 0.003455656744658942
+          },
+          {
+            "timestamp_sec": 71.0,
+            "path": "/data1/video-highlight-cache/ded8352d8232848d/frames/frame_000072.jpg",
+            "change_score": 0.23894378542900085,
+            "semantic_change_score": 0.364644976755366
+          },
+          {
+            "timestamp_sec": 77.0,
+            "path": "/data1/video-highlight-cache/ded8352d8232848d/frames/frame_000078.jpg",
+            "change_score": 0.15448547899723053,
+            "semantic_change_score": 1.0
+          }
+        ],
+        "speakers": [],
+        "face_track_ids": [],
+        "actors": [
+          "夏夏",
+          "语秋"
+        ],
+        "action": "夏夏询问语秋情况，语秋哭诉被胡子明威胁，夏夏承诺帮助并开始拨打电话求助。",
+        "event_type": [
+          "conflict",
+          "action"
+        ],
+        "claims": [
+          "胡子明出轨",
+          "胡子明威胁语秋分手后归还恋爱期间花的钱",
+          "胡子明威胁要让语秋颜面扫地"
+        ],
+        "state_before": "语秋戴墨镜遮挡，情绪低落；语秋与胡子明处于恋爱关系中",
+        "new_evidence": "语秋哭诉并详细描述了胡子明的威胁行为；夏夏拿起手机准备拨打张曼的电话",
+        "state_after": "语秋寻求夏夏帮助；两人达成共同应对胡子明的共识；夏夏决定介入此事",
+        "relationship_change": "两人由叙旧转为共同应对威胁的盟友关系",
+        "emotion": [
+          "悲伤",
+          "愤怒",
+          "担忧",
+          "坚定"
+        ],
+        "salience": 0.85,
+        "uncertainty": 0.1,
+        "evidence": [
+          "[40.0s F01] 夏夏询问语秋戴墨镜原因",
+          "[45.0s F02] 语秋神情难过",
+          "[55.0s F03] 两人对立站立，语秋处于哭诉状态",
+          "[61.0s F04] 语秋称胡子明还要告她",
+          "[77.0s F06] 夏夏手机通话界面显示拨打张曼"
+        ]
+      },
+      {
+        "scene_id": "scene_0005",
+        "start_sec": 77.48,
+        "end_sec": 95.32,
+        "shot_ids": [
+          "shot_0027",
+          "shot_0028",
+          "shot_0029",
+          "shot_0030",
+          "shot_0031"
+        ],
+        "local_score": 0.5624905905565464,
+        "transcript": "[73.82-92.78s ASR] 喂 张曼\n[77.00-78.50s OCR] 知来电 话 at s0 m 筛选来电 m O 19141944263 184 1329 6216\n[78.00-79.50s OCR] 床电 50 普选来电\n[79.00-80.50s OCR] 来电 50 传表初 待选来电 三 1914194 4263 O 184 1329 62 264104\n[92.00-93.50s OCR] 喂张妈\n[92.78-95.00s ASR] 我想问一下\n[95.00-96.66s ASR] 富家有没有什么\n[95.00-97.50s OCR] 傅家有没有什么交好的",
+        "audio_context": "happy/bgm",
+        "frame_samples": [
+          {
+            "timestamp_sec": 78.0,
+            "path": "/data1/video-highlight-cache/ded8352d8232848d/frames/frame_000079.jpg",
+            "change_score": 0.025420304387807846,
+            "semantic_change_score": 0.9701133162016417
+          },
+          {
+            "timestamp_sec": 80.0,
+            "path": "/data1/video-highlight-cache/ded8352d8232848d/frames/frame_000081.jpg",
+            "change_score": 0.2165536880493164,
+            "semantic_change_score": 0.21392588706991236
+          },
+          {
+            "timestamp_sec": 82.0,
+            "path": "/data1/video-highlight-cache/ded8352d8232848d/frames/frame_000083.jpg",
+            "change_score": 0.04041341319680214,
+            "semantic_change_score": 0.186448922929297
+          },
+          {
+            "timestamp_sec": 85.0,
+            "path": "/data1/video-highlight-cache/ded8352d8232848d/frames/frame_000086.jpg",
+            "change_score": 0.13239507377147675,
+            "semantic_change_score": 0.9076222268299057
+          },
+          {
+            "timestamp_sec": 87.0,
+            "path": "/data1/video-highlight-cache/ded8352d8232848d/frames/frame_000088.jpg",
+            "change_score": 0.36662644147872925,
+            "semantic_change_score": 0.0
+          },
+          {
+            "timestamp_sec": 90.0,
+            "path": "/data1/video-highlight-cache/ded8352d8232848d/frames/frame_000091.jpg",
+            "change_score": 0.10606522113084793,
+            "semantic_change_score": 0.0
+          },
+          {
+            "timestamp_sec": 92.0,
+            "path": "/data1/video-highlight-cache/ded8352d8232848d/frames/frame_000093.jpg",
+            "change_score": 0.29515260457992554,
+            "semantic_change_score": 0.3605602971299601
+          },
+          {
+            "timestamp_sec": 95.0,
+            "path": "/data1/video-highlight-cache/ded8352d8232848d/frames/frame_000096.jpg",
+            "change_score": 0.2345396727323532,
+            "semantic_change_score": 0.24876378428547796
+          }
+        ],
+        "speakers": [],
+        "face_track_ids": [],
+        "actors": [
+          "年轻女子",
+          "张妈"
+        ],
+        "action": "年轻女子查看手机通话记录，随后拨通电话向张妈打听傅家的人际关系。",
+        "event_type": [
+          "action",
+          "reveal"
+        ],
+        "claims": [
+          "傅家有没有什么交好的（人或势力）"
+        ],
+        "state_before": "年轻女子在户外查看手机通话记录，意图不明",
+        "new_evidence": "手机通话记录显示存在近期来电，年轻女子通过电话向张妈询问傅家信息",
+        "state_after": "年轻女子正式开始调查傅家的人际关系网络",
+        "relationship_change": "unknown",
+        "emotion": [
+          "专注",
+          "审慎"
+        ],
+        "salience": 0.65,
+        "uncertainty": 0.2,
+        "evidence": [
+          "[F01 78.0s] 手机通话记录页面",
+          "[F05 92.0s] 女子拨打电话称呼张妈",
+          "[F06 95.0s] 女子询问傅家交好对象"
+        ]
+      },
+      {
+        "scene_id": "scene_0006",
+        "start_sec": 95.32,
+        "end_sec": 116.8,
+        "shot_ids": [
+          "shot_0032",
+          "shot_0033",
+          "shot_0034",
+          "shot_0035",
+          "shot_0036",
+          "shot_0037"
+        ],
+        "local_score": 0.7475684093516322,
+        "transcript": "[95.00-96.66s ASR] 富家有没有什么\n[95.00-97.50s OCR] 傅家有没有什么交好的\n[96.66-98.34s ASR] 交好的擅长处理\n[97.00-100.50s OCR] 擅长处理情感关系的律师\n[98.34-99.56s ASR] 情感关系的律师\n[99.56-101.42s ASR] 情感关系\n[101.42-103.66s ASR] 难怪今天早上\n[103.00-105.50s OCR] 难怪今天早上气压那么低\n[103.66-104.44s ASR] 气氧那么低\n[104.44-106.44s ASR] 邵夫人这是要和少爷离婚\n[105.00-107.50s OCR] 少夫人这是要和少爷离婚\n[106.44-107.68s ASR] 没有\n[107.68-108.72s ASR] 邵夫人\n[108.00-109.50s OCR] 少夫人\n[108.72-110.98s ASR] 富家没有这样的律师\n[110.00-111.50s OCR] 傅家没有这样的律师\n[110.98-123.26s ASR] 没关系\n[112.00-113.50s OCR] 哦\n[113.00-114.50s OCR] 那我再问问其他人",
+        "audio_context": "happy/bgm",
+        "frame_samples": [
+          {
+            "timestamp_sec": 96.0,
+            "path": "/data1/video-highlight-cache/ded8352d8232848d/frames/frame_000097.jpg",
+            "change_score": 0.03750861808657646,
+            "semantic_change_score": 1.0
+          },
+          {
+            "timestamp_sec": 98.0,
+            "path": "/data1/video-highlight-cache/ded8352d8232848d/frames/frame_000099.jpg",
+            "change_score": 0.009835516102612019,
+            "semantic_change_score": 0.40703368876354296
+          },
+          {
+            "timestamp_sec": 101.0,
+            "path": "/data1/video-highlight-cache/ded8352d8232848d/frames/frame_000102.jpg",
+            "change_score": 0.0398763008415699,
+            "semantic_change_score": 0.0
+          },
+          {
+            "timestamp_sec": 104.0,
+            "path": "/data1/video-highlight-cache/ded8352d8232848d/frames/frame_000105.jpg",
+            "change_score": 0.07421395927667618,
+            "semantic_change_score": 0.5187701888243496
+          },
+          {
+            "timestamp_sec": 107.0,
+            "path": "/data1/video-highlight-cache/ded8352d8232848d/frames/frame_000108.jpg",
+            "change_score": 0.2824888825416565,
+            "semantic_change_score": 0.0
+          },
+          {
+            "timestamp_sec": 110.0,
+            "path": "/data1/video-highlight-cache/ded8352d8232848d/frames/frame_000111.jpg",
+            "change_score": 0.022109566256403923,
+            "semantic_change_score": 0.14698400833955425
+          },
+          {
+            "timestamp_sec": 113.0,
+            "path": "/data1/video-highlight-cache/ded8352d8232848d/frames/frame_000114.jpg",
+            "change_score": 0.05546300485730171,
+            "semantic_change_score": 0.0
+          },
+          {
+            "timestamp_sec": 116.0,
+            "path": "/data1/video-highlight-cache/ded8352d8232848d/frames/frame_000117.jpg",
+            "change_score": 0.09331054985523224,
+            "semantic_change_score": 0.0
+          }
+        ],
+        "speakers": [],
+        "face_track_ids": [],
+        "actors": [
+          "年轻女子",
+          "中年女性（仆人/管家）"
+        ],
+        "action": "年轻女子通过电话向管家打听擅长离婚诉讼的律师，管家通过电话回复傅家没有此类律师并表示怀疑。",
+        "event_type": [
+          "reveal",
+          "conflict"
+        ],
+        "claims": [
+          "邵夫人（即年轻女子）要和少爷离婚",
+          "傅家没有擅长处理情感关系的律师"
+        ],
+        "state_before": "年轻女子试图通过外部渠道寻找处理离婚事务的律师，试图解决婚姻矛盾。",
+        "new_evidence": "傅家（或其管家）明确表示没有此类律师，且观察到少夫人疑似有离婚意向。",
+        "state_after": "年轻女子未在傅家处获取到预期资源，仍需寻找他人。",
+        "relationship_change": "由于潜在离婚意图的暴露，少夫人与傅家的关系处于紧张和不透明状态。",
+        "emotion": [
+          "忧虑",
+          "审慎"
+        ],
+        "salience": 0.85,
+        "uncertainty": 0.2,
+        "evidence": [
+          "[F01 96.0s] 字幕：傅家有没有什么交好的",
+          "[F02 98.0s] 字幕：擅长处理情感关系的律师",
+          "[F03 104.0s] 字幕：难怪今天早上气压那么低",
+          "[F04 107.0s] 字幕：少夫人这是要和少爷离婚",
+          "[F05 113.0s] 字幕：傅家没有这样的律师",
+          "[F06 116.0s] 字幕：那我再问问其他人"
+        ]
+      },
+      {
+        "scene_id": "scene_0007",
+        "start_sec": 116.8,
+        "end_sec": 131.76,
+        "shot_ids": [
+          "shot_0038",
+          "shot_0039",
+          "shot_0040",
+          "shot_0041",
+          "shot_0042"
+        ],
+        "local_score": 0.0,
+        "transcript": "[110.98-123.26s ASR] 没关系\n[123.00-125.50s OCR] 没关系我还会继续找的\n[123.26-124.54s ASR] 我还会继续找的\n[124.54-128.43s ASR] 我先带你销售去\n[126.00-127.50s OCR] 哎别难受别难受\n[128.00-129.50s OCR] 我先带你消愁去\n[129.00-130.50s OCR] 走走走走走",
+        "audio_context": "happy/bgm",
+        "frame_samples": [
+          {
+            "timestamp_sec": 117.0,
+            "path": "/data1/video-highlight-cache/ded8352d8232848d/frames/frame_000118.jpg",
+            "change_score": 0.2628379762172699,
+            "semantic_change_score": 0.5919454588580615
+          },
+          {
+            "timestamp_sec": 119.0,
+            "path": "/data1/video-highlight-cache/ded8352d8232848d/frames/frame_000120.jpg",
+            "change_score": 0.2183823585510254,
+            "semantic_change_score": 0.808852615906436
+          },
+          {
+            "timestamp_sec": 121.0,
+            "path": "/data1/video-highlight-cache/ded8352d8232848d/frames/frame_000122.jpg",
+            "change_score": 0.023788871243596077,
+            "semantic_change_score": 0.0
+          },
+          {
+            "timestamp_sec": 123.0,
+            "path": "/data1/video-highlight-cache/ded8352d8232848d/frames/frame_000124.jpg",
+            "change_score": 0.05292107164859772,
+            "semantic_change_score": 0.039741481439379625
+          },
+          {
+            "timestamp_sec": 125.0,
+            "path": "/data1/video-highlight-cache/ded8352d8232848d/frames/frame_000126.jpg",
+            "change_score": 0.24484336376190186,
+            "semantic_change_score": 0.0
+          },
+          {
+            "timestamp_sec": 127.0,
+            "path": "/data1/video-highlight-cache/ded8352d8232848d/frames/frame_000128.jpg",
+            "change_score": 0.11917126178741455,
+            "semantic_change_score": 0.0
+          },
+          {
+            "timestamp_sec": 129.0,
+            "path": "/data1/video-highlight-cache/ded8352d8232848d/frames/frame_000130.jpg",
+            "change_score": 0.20649126172065735,
+            "semantic_change_score": 0.0
+          },
+          {
+            "timestamp_sec": 131.0,
+            "path": "/data1/video-highlight-cache/ded8352d8232848d/frames/frame_000132.jpg",
+            "change_score": 0.15394262969493866,
+            "semantic_change_score": 0.7301895102099527
+          }
+        ],
+        "speakers": [],
+        "face_track_ids": [],
+        "actors": [
+          "穿粗花呢外套的女子",
+          "穿风衣的女子"
+        ],
+        "action": "粗花呢外套女子安慰并强行拉走风衣女子",
+        "event_type": [
+          "action",
+          "emotion"
+        ],
+        "claims": [
+          "我还会继续找的"
+        ],
+        "state_before": "风衣女子处于难受状态，粗花呢外套女子在寻找某物/某人",
+        "new_evidence": "粗花呢外套女子表示要带风衣女子去消愁并拉住其手臂带走",
+        "state_after": "风衣女子停止难受，被粗花呢外套女子带离现场",
+        "relationship_change": "两人表现出亲密的伙伴/闺蜜关系",
+        "emotion": [
+          "失落",
+          "宽慰"
+        ],
+        "salience": 0.6,
+        "uncertainty": 0.1,
+        "evidence": [
+          "[F03 123.0s] 粗花呢外套女子握住风衣女子手掌",
+          "[F03 123.0s OCR] 没关系我还会继续找的",
+          "[F04 125.0s] 风衣女子表情难过",
+          "[F05 129.0s OCR] 走走走走走",
+          "[F05 129.0s] 粗花呢外套女子拉着风衣女子手臂向画面外走去"
+        ]
+      },
+      {
+        "scene_id": "scene_0008",
+        "start_sec": 131.76,
+        "end_sec": 141.36,
+        "shot_ids": [
+          "shot_0043",
+          "shot_0044",
+          "shot_0045",
+          "shot_0046"
+        ],
+        "local_score": 0.65,
+        "transcript": "",
+        "audio_context": "happy/bgm",
+        "frame_samples": [
+          {
+            "timestamp_sec": 132.0,
+            "path": "/data1/video-highlight-cache/ded8352d8232848d/frames/frame_000133.jpg",
+            "change_score": 0.2894952595233917,
+            "semantic_change_score": 1.0
+          },
+          {
+            "timestamp_sec": 133.0,
+            "path": "/data1/video-highlight-cache/ded8352d8232848d/frames/frame_000134.jpg",
+            "change_score": 0.0248104315251112,
+            "semantic_change_score": 1.0
+          },
+          {
+            "timestamp_sec": 134.0,
+            "path": "/data1/video-highlight-cache/ded8352d8232848d/frames/frame_000135.jpg",
+            "change_score": 0.3388844132423401,
+            "semantic_change_score": 1.0
+          },
+          {
+            "timestamp_sec": 135.0,
+            "path": "/data1/video-highlight-cache/ded8352d8232848d/frames/frame_000136.jpg",
+            "change_score": 0.11335401237010956,
+            "semantic_change_score": 0.5829606878163571
+          },
+          {
+            "timestamp_sec": 137.0,
+            "path": "/data1/video-highlight-cache/ded8352d8232848d/frames/frame_000138.jpg",
+            "change_score": 0.10090954601764679,
+            "semantic_change_score": 0.8129988959552972
+          },
+          {
+            "timestamp_sec": 138.0,
+            "path": "/data1/video-highlight-cache/ded8352d8232848d/frames/frame_000139.jpg",
+            "change_score": 0.3090035319328308,
+            "semantic_change_score": 1.0
+          },
+          {
+            "timestamp_sec": 139.0,
+            "path": "/data1/video-highlight-cache/ded8352d8232848d/frames/frame_000140.jpg",
+            "change_score": 0.020611213520169258,
+            "semantic_change_score": 0.0
+          },
+          {
+            "timestamp_sec": 141.0,
+            "path": "/data1/video-highlight-cache/ded8352d8232848d/frames/frame_000142.jpg",
+            "change_score": 0.26827606558799744,
+            "semantic_change_score": 0.0
+          }
+        ],
+        "speakers": [],
+        "face_track_ids": [],
+        "actors": [
+          "穿围裙的女性",
+          "穿西装的男性"
+        ],
+        "action": "女性在室内查看手机并接听电话，神情严肃；男性在办公室独自查阅文件",
+        "event_type": [
+          "action"
+        ],
+        "claims": [],
+        "state_before": "unknown",
+        "new_evidence": "[F03 135.0s] 女性拨打/接听手机且表情凝重；[F04 137.0s] 男性在办公桌前阅读文件",
+        "state_after": "双方分别处于各自的活动中",
+        "relationship_change": "unknown",
+        "emotion": [
+          "严肃",
+          "专注"
+        ],
+        "salience": 0.3,
+        "uncertainty": 0.5,
+        "evidence": [
+          "F01 132.0s 穿围裙女性在室内看手机",
+          "F03 135.0s 穿围裙女性在接听电话",
+          "F04 137.0s 穿西装男性在办公室内查阅文件"
+        ]
+      },
+      {
+        "scene_id": "scene_0009",
+        "start_sec": 141.36,
+        "end_sec": 153.8322,
+        "shot_ids": [
+          "shot_0047",
+          "shot_0048",
+          "shot_0049",
+          "shot_0050",
+          "shot_0051",
+          "shot_0052",
+          "shot_0053"
+        ],
+        "local_score": 0.65,
+        "transcript": "[145.00-146.50s OCR] 喂\n[148.00-149.50s OCR] 少夫人要跟您离婚\n[149.00-150.50s OCR] A\n[152.00-154.50s OCR] 良辰入清欢",
+        "audio_context": "happy/bgm",
+        "frame_samples": [
+          {
+            "timestamp_sec": 142.0,
+            "path": "/data1/video-highlight-cache/ded8352d8232848d/frames/frame_000143.jpg",
+            "change_score": 0.243608295917511,
+            "semantic_change_score": 0.0
+          },
+          {
+            "timestamp_sec": 143.0,
+            "path": "/data1/video-highlight-cache/ded8352d8232848d/frames/frame_000144.jpg",
+            "change_score": 0.23904813826084137,
+            "semantic_change_score": 0.0
+          },
+          {
+            "timestamp_sec": 145.0,
+            "path": "/data1/video-highlight-cache/ded8352d8232848d/frames/frame_000146.jpg",
+            "change_score": 0.09801527857780457,
+            "semantic_change_score": 0.5635327398312466
+          },
+          {
+            "timestamp_sec": 146.0,
+            "path": "/data1/video-highlight-cache/ded8352d8232848d/frames/frame_000147.jpg",
+            "change_score": 0.09326363354921341,
+            "semantic_change_score": 1.0
+          },
+          {
+            "timestamp_sec": 148.0,
+            "path": "/data1/video-highlight-cache/ded8352d8232848d/frames/frame_000149.jpg",
+            "change_score": 0.009625842794775963,
+            "semantic_change_score": 0.6837805767514287
+          },
+          {
+            "timestamp_sec": 149.0,
+            "path": "/data1/video-highlight-cache/ded8352d8232848d/frames/frame_000150.jpg",
+            "change_score": 0.3920525014400482,
+            "semantic_change_score": 1.0
+          },
+          {
+            "timestamp_sec": 151.0,
+            "path": "/data1/video-highlight-cache/ded8352d8232848d/frames/frame_000152.jpg",
+            "change_score": 0.17377929389476776,
+            "semantic_change_score": 0.0
+          },
+          {
+            "timestamp_sec": 153.0,
+            "path": "/data1/video-highlight-cache/ded8352d8232848d/frames/frame_000154.jpg",
+            "change_score": 0.06646465510129929,
+            "semantic_change_score": 1.0
+          }
+        ],
+        "speakers": [],
+        "face_track_ids": [],
+        "actors": [
+          "年轻男士"
+        ],
+        "action": "年轻男士在办公桌前接听电话，神情从平静转为惊讶并紧锁眉头。",
+        "event_type": [
+          "reveal",
+          "conflict"
+        ],
+        "claims": [
+          "少夫人要跟您离婚"
+        ],
+        "state_before": "年轻男士在办公桌前处理事务，状态平稳。",
+        "new_evidence": "通话中另一方告知“少夫人要跟您离婚”。",
+        "state_after": "年轻男士得知离婚消息后表现出明显的震惊与凝重。",
+        "relationship_change": "夫妻关系面临瓦解的危机。",
+        "emotion": [
+          "平静",
+          "震惊",
+          "困惑"
+        ],
+        "salience": 0.85,
+        "uncertainty": 0.1,
+        "evidence": [
+          "[F01-F02 142.0-143.0s] 男士正在处理事务",
+          "[F03-F04 146.0-148.0s] 电话接通，传来“少夫人要跟您离婚”的信息",
+          "[F05-F06 151.0-153.0s] 男士面露惊讶与困惑"
+        ]
+      }
+    ],
+    "decisions": [
+      {
+        "scene": {
+          "scene_id": "scene_0001",
+          "start_sec": 0.0,
+          "end_sec": 9.36,
+          "shot_ids": [
+            "shot_0001",
+            "shot_0002",
+            "shot_0003",
+            "shot_0004"
+          ],
+          "local_score": 0.6320958455844323,
+          "transcript": "[4.85-7.65s ASR] 少夫人 早餐在那边\n[7.65-9.05s ASR] 饱了\n[9.05-17.28s ASR] 这小两口 昨天还好好的",
+          "audio_context": "happy/bgm",
+          "frame_samples": [
+            {
+              "timestamp_sec": 0.0,
+              "path": "/data1/video-highlight-cache/ded8352d8232848d/frames/frame_000001.jpg",
+              "change_score": 0.0,
+              "semantic_change_score": 0.0
+            },
+            {
+              "timestamp_sec": 1.0,
+              "path": "/data1/video-highlight-cache/ded8352d8232848d/frames/frame_000002.jpg",
+              "change_score": 0.003180529922246933,
+              "semantic_change_score": 0.0
+            },
+            {
+              "timestamp_sec": 2.0,
+              "path": "/data1/video-highlight-cache/ded8352d8232848d/frames/frame_000003.jpg",
+              "change_score": 0.33788105845451355,
+              "semantic_change_score": 0.0
+            },
+            {
+              "timestamp_sec": 3.0,
+              "path": "/data1/video-highlight-cache/ded8352d8232848d/frames/frame_000004.jpg",
+              "change_score": 0.1471536010503769,
+              "semantic_change_score": 1.0
+            },
+            {
+              "timestamp_sec": 5.0,
+              "path": "/data1/video-highlight-cache/ded8352d8232848d/frames/frame_000006.jpg",
+              "change_score": 0.21262255311012268,
+              "semantic_change_score": 1.0
+            },
+            {
+              "timestamp_sec": 6.0,
+              "path": "/data1/video-highlight-cache/ded8352d8232848d/frames/frame_000007.jpg",
+              "change_score": 0.04743029922246933,
+              "semantic_change_score": 0.8818954767825147
+            },
+            {
+              "timestamp_sec": 7.0,
+              "path": "/data1/video-highlight-cache/ded8352d8232848d/frames/frame_000008.jpg",
+              "change_score": 0.1879078596830368,
+              "semantic_change_score": 0.0
+            },
+            {
+              "timestamp_sec": 9.0,
+              "path": "/data1/video-highlight-cache/ded8352d8232848d/frames/frame_000010.jpg",
+              "change_score": 0.22264093160629272,
+              "semantic_change_score": 0.13889403107773116
+            }
+          ],
+          "speakers": [],
+          "face_track_ids": [],
+          "actors": [
+            "年轻女性",
+            "围裙女性",
+            "沙发上的年轻男性"
+          ],
+          "action": "年轻女性下楼走进客厅，围裙女性试图为其提供早餐，年轻女性拒绝并转身离开。",
+          "event_type": [
+            "action",
+            "conflict"
+          ],
+          "claims": [
+            "围裙女性称呼年轻女性为“少夫人”"
+          ],
+          "state_before": "年轻女性表现得冷淡且匆忙，无视客厅沙发上的男性。",
+          "new_evidence": "[4.85s ASR] 围裙女性提供早餐信息；[7.65s ASR] 年轻女性回答“饱了”并拒绝进食。",
+          "state_after": "年轻女性维持其冷淡态度，拒绝了家人的早餐服务。",
+          "relationship_change": "年轻女性对家人的服务表现出明显的疏离和抗拒。",
+          "emotion": [
+            "冷漠",
+            "疏离"
+          ],
+          "salience": 0.6,
+          "uncertainty": 0.1,
+          "evidence": [
+            "[0.00s FRAME] 年轻男性在沙发看平板；[3.00s FRAME] 年轻女性下楼；[4.85s ASR] 围裙女性提到早餐；[7.65s ASR] 年轻女性回答“饱了”"
+          ]
+        },
+        "decision": {
+          "map_supported": true,
+          "is_highlight": false,
+          "score": 0.548,
+          "highlight_type": "conflict",
+          "description": "年轻女性下楼径直走过客厅无视男性，并冷淡拒绝佣人提供的早餐",
+          "reason": "虽包含佣人提供早餐与女性回绝‘饱了’的日常冷淡互动，但仅为开篇背景铺垫，缺乏对抗升级、实质后果或高风险悬念",
+          "confidence": 0.9835,
+          "evidence_grounding": 0.92,
+          "narrative_impact": 0.28,
+          "standalone_clarity": 0.52,
+          "clipability": 0.42,
+          "start_sec": null,
+          "end_sec": null,
+          "evidence": [
+            "[0.00s F01] 年轻男性坐在客厅沙发看平板",
+            "[3.00s F04] 年轻女性下楼走入客厅",
+            "[6.00s F06 ASR] 佣人端早餐称‘少夫人 早餐在那边’",
+            "[7.00s F07 ASR] 年轻女性神情冷淡回复‘饱了’"
+          ],
+          "setup_evidence_times_sec": [
+            0.0,
+            3.0
+          ],
+          "decisive_evidence_times_sec": [
+            6.0
+          ],
+          "reaction_evidence_times_sec": [
+            7.0
+          ],
+          "counter_evidence": [
+            "互动仅为简单的日常对话回绝，缺乏实质性冲突兑现或情节高潮"
+          ],
+          "continue_previous_scene": false
+        },
+        "votes": [
+          {
+            "map_supported": true,
+            "is_highlight": false,
+            "score": 0.548,
+            "highlight_type": "conflict",
+            "description": "年轻女性下楼径直走过客厅无视男性，并冷淡拒绝佣人提供的早餐",
+            "reason": "虽包含佣人提供早餐与女性回绝‘饱了’的日常冷淡互动，但仅为开篇背景铺垫，缺乏对抗升级、实质后果或高风险悬念",
+            "confidence": 0.0,
+            "evidence_grounding": 0.92,
+            "narrative_impact": 0.28,
+            "standalone_clarity": 0.52,
+            "clipability": 0.42,
+            "start_sec": null,
+            "end_sec": null,
+            "evidence": [
+              "[0.00s F01] 年轻男性坐在客厅沙发看平板",
+              "[3.00s F04] 年轻女性下楼走入客厅",
+              "[6.00s F06 ASR] 佣人端早餐称‘少夫人 早餐在那边’",
+              "[7.00s F07 ASR] 年轻女性神情冷淡回复‘饱了’"
+            ],
+            "setup_evidence_times_sec": [
+              0.0,
+              3.0
+            ],
+            "decisive_evidence_times_sec": [
+              6.0
+            ],
+            "reaction_evidence_times_sec": [
+              7.0
+            ],
+            "counter_evidence": [
+              "互动仅为简单的日常对话回绝，缺乏实质性冲突兑现或情节高潮"
+            ],
+            "continue_previous_scene": false
+          },
+          {
+            "map_supported": true,
+            "is_highlight": false,
+            "score": 0.482,
+            "highlight_type": "other",
+            "description": "年轻女性下楼并冷漠拒绝保姆准备的早餐",
+            "reason": "仅为开篇日常起居的生活交代与冷淡氛围铺垫，拒绝吃早餐不构成具有实质后果的冲突兑现，亦无状态反转或高风险悬念，未形成五种通用高光结构中的任一种",
+            "confidence": 0.0,
+            "evidence_grounding": 0.92,
+            "narrative_impact": 0.22,
+            "standalone_clarity": 0.4,
+            "clipability": 0.3,
+            "start_sec": null,
+            "end_sec": null,
+            "evidence": [
+              "[2.00s FRAME] 年轻女性神情冷漠从楼梯走下",
+              "[4.85s ASR] 保姆提醒：少夫人 早餐在那边",
+              "[7.65s ASR] 年轻女性简短拒绝：饱了"
+            ],
+            "setup_evidence_times_sec": [],
+            "decisive_evidence_times_sec": [],
+            "reaction_evidence_times_sec": [],
+            "counter_evidence": [
+              "拒绝早餐仅为角色单方面的冷淡日常反应，缺乏利益博弈、对抗后果或关系实质变化，脱离全片无独立看点"
+            ],
+            "continue_previous_scene": false
+          }
+        ]
+      },
+      {
+        "scene": {
+          "scene_id": "scene_0002",
+          "start_sec": 9.36,
+          "end_sec": 28.92,
+          "shot_ids": [
+            "shot_0005",
+            "shot_0006",
+            "shot_0007",
+            "shot_0008",
+            "shot_0009",
+            "shot_0010",
+            "shot_0011"
+          ],
+          "local_score": 0.6320958455844323,
+          "transcript": "[9.05-17.28s ASR] 这小两口 昨天还好好的\n[17.28-20.48s ASR] 今天怎么就跟接了仇人似的\n[19.00-20.50s OCR] 见了仇人似的\n[20.48-25.20s ASR] 这房子都快结冰了\n[21.00-22.50s OCR] 哎\n[25.20-26.92s ASR] 不愧是小书犯\n[26.00-27.50s OCR] 不愧是小说反派\n[26.92-28.82s ASR] 他阴晴不定 动不动就发脾气\n[28.82-31.12s ASR] 这要是原主的话早就离家出走",
+          "audio_context": "happy/bgm",
+          "frame_samples": [
+            {
+              "timestamp_sec": 10.0,
+              "path": "/data1/video-highlight-cache/ded8352d8232848d/frames/frame_000011.jpg",
+              "change_score": 0.08926355838775635,
+              "semantic_change_score": 0.7441912229557471
+            },
+            {
+              "timestamp_sec": 12.0,
+              "path": "/data1/video-highlight-cache/ded8352d8232848d/frames/frame_000013.jpg",
+              "change_score": 0.2822437882423401,
+              "semantic_change_score": 0.0
+            },
+            {
+              "timestamp_sec": 15.0,
+              "path": "/data1/video-highlight-cache/ded8352d8232848d/frames/frame_000016.jpg",
+              "change_score": 0.16546031832695007,
+              "semantic_change_score": 0.0
+            },
+            {
+              "timestamp_sec": 17.0,
+              "path": "/data1/video-highlight-cache/ded8352d8232848d/frames/frame_000018.jpg",
+              "change_score": 0.006628178525716066,
+              "semantic_change_score": 0.0
+            },
+            {
+              "timestamp_sec": 20.0,
+              "path": "/data1/video-highlight-cache/ded8352d8232848d/frames/frame_000021.jpg",
+              "change_score": 0.2627374529838562,
+              "semantic_change_score": 0.0
+            },
+            {
+              "timestamp_sec": 22.0,
+              "path": "/data1/video-highlight-cache/ded8352d8232848d/frames/frame_000023.jpg",
+              "change_score": 0.22268976271152496,
+              "semantic_change_score": 0.016688951837042113
+            },
+            {
+              "timestamp_sec": 25.0,
+              "path": "/data1/video-highlight-cache/ded8352d8232848d/frames/frame_000026.jpg",
+              "change_score": 0.05711263045668602,
+              "semantic_change_score": 0.08657812505457511
+            },
+            {
+              "timestamp_sec": 28.0,
+              "path": "/data1/video-highlight-cache/ded8352d8232848d/frames/frame_000029.jpg",
+              "change_score": 0.004431870300322771,
+              "semantic_change_score": 0.709942657626434
+            }
+          ],
+          "speakers": [],
+          "face_track_ids": [],
+          "actors": [
+            "家政阿姨",
+            "沙发上的男性角色"
+          ],
+          "action": "家政阿姨端着早餐托盘走过走廊，路过坐在沙发上的男性角色，之后镜头切换至另一名女性角色出现在室外广场。",
+          "event_type": [
+            "reveal",
+            "action"
+          ],
+          "claims": [
+            "小两口昨天还好好的，今天像结了仇人似的",
+            "这房子都快结冰了",
+            "男性角色是小说反派，阴晴不定，动不动就发脾气",
+            "原主早就离家出走了"
+          ],
+          "state_before": "家政阿姨认为这对夫妇关系和谐（基于昨天的情况）。",
+          "new_evidence": "男性角色独自坐在室内沙发上，姿态冷漠；女性角色在室外广场独自行走，表情忧虑；阿姨端着食物经过，感受到氛围压抑。",
+          "state_after": "家政阿姨确认该对夫妇关系出现裂痕且室内氛围冷滞；女性角色（疑似原主/书中角色）表现出脱离压抑环境的倾向。",
+          "relationship_change": "由和谐转为冷战/冲突。",
+          "emotion": [
+            "忧虑",
+            "压抑"
+          ],
+          "salience": 0.75,
+          "uncertainty": 0.2,
+          "evidence": [
+            "[10.0s F01] 家政阿姨表情忧虑端着托盘",
+            "[17.0s F03] 男子独自坐在沙发上，字幕：这小两口昨天还好好的",
+            "[25.0s F05] 阿姨经过沙发区，环境安静冷清",
+            "[28.0s F06] 女性角色在室外广场，字幕：他阴晴不定 动不动就发脾气"
+          ]
+        },
+        "decision": {
+          "map_supported": true,
+          "is_highlight": false,
+          "score": 0.496,
+          "highlight_type": "other",
+          "description": "家政阿姨端着早餐走过并旁白吐槽男女主角关系冷淡及男主性格",
+          "reason": "本场主要为过渡性过场与旁白交代穿书/人物设定，缺少实质性的对抗、叙事逆转、情绪爆发或高风险悬念，未构成完整的高光结构",
+          "confidence": 0.9992,
+          "evidence_grounding": 0.92,
+          "narrative_impact": 0.22,
+          "standalone_clarity": 0.45,
+          "clipability": 0.32,
+          "start_sec": null,
+          "end_sec": null,
+          "evidence": [
+            "[15.0s F03] 家政阿姨端托盘自语，字幕：这小两口昨天还好好的",
+            "[28.0s F08] 女性角色在室外行走，字幕：阴晴不定动不动就发脾气"
+          ],
+          "setup_evidence_times_sec": [],
+          "decisive_evidence_times_sec": [],
+          "reaction_evidence_times_sec": [],
+          "counter_evidence": [
+            "全场仅有配角碎碎念与背景人物静态交代，无角色间直接互动与可见后果"
+          ],
+          "continue_previous_scene": false
+        },
+        "votes": [
+          {
+            "map_supported": true,
+            "is_highlight": false,
+            "score": 0.493,
+            "highlight_type": "other",
+            "description": "家政阿姨端餐吐槽两人氛围冷淡，画面切至女主室外独白交代男主性格与穿书设定",
+            "reason": "当前场主要为过渡镜头与旁白/心声交代背景设定，无面对面对抗、决定性情节逆转或高风险悬念，未形成五种通用高光结构中的任一种",
+            "confidence": 0.0,
+            "evidence_grounding": 0.88,
+            "narrative_impact": 0.25,
+            "standalone_clarity": 0.42,
+            "clipability": 0.35,
+            "start_sec": null,
+            "end_sec": null,
+            "evidence": [
+              "[15.0s F03] 家政阿姨端托盘自语，字幕：这小两口昨天还好好的",
+              "[20.48s ASR] 这房子都快结冰了",
+              "[28.0s F08] 女性角色在室外行走，字幕：阴晴不定动不动就发脾气"
+            ],
+            "setup_evidence_times_sec": [],
+            "decisive_evidence_times_sec": [],
+            "reaction_evidence_times_sec": [],
+            "counter_evidence": [
+              "主要为旁白吐槽与穿书设定交代，缺乏实质动作对抗或关系实质变化",
+              "镜头为走廊端盘与室外行走的过场画面，无独立高光成片闭环"
+            ],
+            "continue_previous_scene": false
+          },
+          {
+            "map_supported": true,
+            "is_highlight": false,
+            "score": 0.496,
+            "highlight_type": "other",
+            "description": "家政阿姨端着早餐走过并旁白吐槽男女主角关系冷淡及男主性格",
+            "reason": "本场主要为过渡性过场与旁白交代穿书/人物设定，缺少实质性的对抗、叙事逆转、情绪爆发或高风险悬念，未构成完整的高光结构",
+            "confidence": 0.0,
+            "evidence_grounding": 0.92,
+            "narrative_impact": 0.22,
+            "standalone_clarity": 0.45,
+            "clipability": 0.32,
+            "start_sec": null,
+            "end_sec": null,
+            "evidence": [
+              "[15.0s F03] 家政阿姨端托盘自语，字幕：这小两口昨天还好好的",
+              "[28.0s F08] 女性角色在室外行走，字幕：阴晴不定动不动就发脾气"
+            ],
+            "setup_evidence_times_sec": [],
+            "decisive_evidence_times_sec": [],
+            "reaction_evidence_times_sec": [],
+            "counter_evidence": [
+              "全场仅有配角碎碎念与背景人物静态交代，无角色间直接互动与可见后果"
+            ],
+            "continue_previous_scene": false
+          }
+        ]
+      },
+      {
+        "scene": {
+          "scene_id": "scene_0003",
+          "start_sec": 28.92,
+          "end_sec": 40.0,
+          "shot_ids": [
+            "shot_0012",
+            "shot_0013",
+            "shot_0014",
+            "shot_0015",
+            "shot_0016"
+          ],
+          "local_score": 0.5400977953687849,
+          "transcript": "[28.82-31.12s ASR] 这要是原主的话早就离家出走\n[31.12-32.62s ASR] 该死的傅星期\n[32.00-33.50s OCR] 该死的傅羡祁\n[32.62-34.58s ASR] 我劝你好好珍惜我\n[33.00-35.50s OCR] 我劝你最好好珍惜我\n[34.58-35.08s ASR] 不然\n[35.00-36.50s OCR] 语秋\n[35.08-39.69s ASR] 笑笑\n[36.00-37.50s OCR] smenmu\n[39.00-40.50s OCR] 夏夏\n[39.69-41.93s ASR] 你怎么戴个墨镜啊",
+          "audio_context": "happy/bgm",
+          "frame_samples": [
+            {
+              "timestamp_sec": 29.0,
+              "path": "/data1/video-highlight-cache/ded8352d8232848d/frames/frame_000030.jpg",
+              "change_score": 0.23067554831504822,
+              "semantic_change_score": 0.0
+            },
+            {
+              "timestamp_sec": 30.0,
+              "path": "/data1/video-highlight-cache/ded8352d8232848d/frames/frame_000031.jpg",
+              "change_score": 0.03742532059550285,
+              "semantic_change_score": 0.02193959411671502
+            },
+            {
+              "timestamp_sec": 32.0,
+              "path": "/data1/video-highlight-cache/ded8352d8232848d/frames/frame_000033.jpg",
+              "change_score": 0.11513097584247589,
+              "semantic_change_score": 0.32942001296149115
+            },
+            {
+              "timestamp_sec": 33.0,
+              "path": "/data1/video-highlight-cache/ded8352d8232848d/frames/frame_000034.jpg",
+              "change_score": 0.10691539943218231,
+              "semantic_change_score": 0.7413277558489443
+            },
+            {
+              "timestamp_sec": 35.0,
+              "path": "/data1/video-highlight-cache/ded8352d8232848d/frames/frame_000036.jpg",
+              "change_score": 0.2384851723909378,
+              "semantic_change_score": 0.0
+            },
+            {
+              "timestamp_sec": 36.0,
+              "path": "/data1/video-highlight-cache/ded8352d8232848d/frames/frame_000037.jpg",
+              "change_score": 0.07095492631196976,
+              "semantic_change_score": 0.026529143192089488
+            },
+            {
+              "timestamp_sec": 38.0,
+              "path": "/data1/video-highlight-cache/ded8352d8232848d/frames/frame_000039.jpg",
+              "change_score": 0.2096334993839264,
+              "semantic_change_score": 0.15220924838275074
+            },
+            {
+              "timestamp_sec": 40.0,
+              "path": "/data1/video-highlight-cache/ded8352d8232848d/frames/frame_000041.jpg",
+              "change_score": 0.06835075467824936,
+              "semantic_change_score": 0.6326573057308398
+            }
+          ],
+          "speakers": [],
+          "face_track_ids": [],
+          "actors": [
+            "语秋",
+            "笑笑"
+          ],
+          "action": "语秋独自走上台阶并发表言论，随后与笑笑会面并询问对方为何佩戴墨镜",
+          "event_type": [
+            "action",
+            "reveal"
+          ],
+          "claims": [
+            "原主若在场会离家出走",
+            "劝告某人（傅羡祁）最好珍惜她"
+          ],
+          "state_before": "语秋处于独处且带有个人主张的状态",
+          "new_evidence": "语秋与名为笑笑的人相遇，语秋注意到对方戴着墨镜",
+          "state_after": "语秋的注意力从自我表达转向对笑笑佩戴墨镜的观察",
+          "relationship_change": "unknown",
+          "emotion": [
+            "不满",
+            "困惑"
+          ],
+          "salience": 0.5,
+          "uncertainty": 0.3,
+          "evidence": [
+            "[F01 29.0s] 语秋独自走上台阶",
+            "[31.12s ASR] 语秋提到傅羡祁",
+            "[35.08s ASR] 语秋称呼对方为笑笑",
+            "[39.69s ASR] 语秋问笑笑为何戴墨镜"
+          ]
+        },
+        "decision": {
+          "map_supported": true,
+          "is_highlight": false,
+          "score": 0.456,
+          "highlight_type": "other",
+          "description": "语秋自语抱怨傅羡祁并走上台阶，随后偶遇笑笑并询问其为何佩戴墨镜",
+          "reason": "片段仅包含角色的独白吐槽与朋友间的日常偶遇搭话，未形成叙事变化、冲突兑现、情绪关系兑现、动作峰值或高风险悬念钩子等有效高光结构",
+          "confidence": 0.999,
+          "evidence_grounding": 0.92,
+          "narrative_impact": 0.2,
+          "standalone_clarity": 0.35,
+          "clipability": 0.25,
+          "start_sec": null,
+          "end_sec": null,
+          "evidence": [
+            "[F01 29.0s] 语秋走上台阶，台词：这要是原主的话",
+            "[F03 32.0s] 语秋自言自语：该死的傅羡祁",
+            "[F06 36.0s] 语秋停步回头",
+            "[F08 40.0s] 语秋询问对方：你怎么戴个墨镜啊"
+          ],
+          "setup_evidence_times_sec": [],
+          "decisive_evidence_times_sec": [],
+          "reaction_evidence_times_sec": [],
+          "counter_evidence": [
+            "台词内容为自言自语与背景交代，缺乏可见的戏剧冲突或状态逆转",
+            "偶遇搭话属于过场过渡，未产生实质性戏剧后果"
+          ],
+          "continue_previous_scene": false
+        },
+        "votes": [
+          {
+            "map_supported": true,
+            "is_highlight": false,
+            "score": 0.456,
+            "highlight_type": "other",
+            "description": "语秋自语抱怨傅羡祁并走上台阶，随后偶遇笑笑并询问其为何佩戴墨镜",
+            "reason": "片段仅包含角色的独白吐槽与朋友间的日常偶遇搭话，未形成叙事变化、冲突兑现、情绪关系兑现、动作峰值或高风险悬念钩子等有效高光结构",
+            "confidence": 0.0,
+            "evidence_grounding": 0.92,
+            "narrative_impact": 0.2,
+            "standalone_clarity": 0.35,
+            "clipability": 0.25,
+            "start_sec": null,
+            "end_sec": null,
+            "evidence": [
+              "[F01 29.0s] 语秋走上台阶，台词：这要是原主的话",
+              "[F03 32.0s] 语秋自言自语：该死的傅羡祁",
+              "[F06 36.0s] 语秋停步回头",
+              "[F08 40.0s] 语秋询问对方：你怎么戴个墨镜啊"
+            ],
+            "setup_evidence_times_sec": [],
+            "decisive_evidence_times_sec": [],
+            "reaction_evidence_times_sec": [],
+            "counter_evidence": [
+              "台词内容为自言自语与背景交代，缺乏可见的戏剧冲突或状态逆转",
+              "偶遇搭话属于过场过渡，未产生实质性戏剧后果"
+            ],
+            "continue_previous_scene": false
+          },
+          {
+            "map_supported": true,
+            "is_highlight": false,
+            "score": 0.46,
+            "highlight_type": "other",
+            "description": "语秋独自走上台阶自语抱怨，随后遇到朋友并询问其戴墨镜的原因",
+            "reason": "仅为角色独白吐槽与日常碰面过渡，未形成五种通用高光结构中的有效变化或冲突兑现",
+            "confidence": 0.0,
+            "evidence_grounding": 0.68,
+            "narrative_impact": 0.32,
+            "standalone_clarity": 0.42,
+            "clipability": 0.38,
+            "start_sec": null,
+            "end_sec": null,
+            "evidence": [
+              "[F01 29.0s] 语秋走上台阶",
+              "[32.00s OCR] 该死的傅羡祁",
+              "[33.00s OCR] 我劝你最好好珍惜我",
+              "[F08 40.0s] 你怎么戴个墨镜啊"
+            ],
+            "setup_evidence_times_sec": [],
+            "decisive_evidence_times_sec": [],
+            "reaction_evidence_times_sec": [],
+            "counter_evidence": [
+              "台词仅为主观宣泄与常规打招呼，缺乏实质剧情推进或可见后果"
+            ],
+            "continue_previous_scene": false
+          }
+        ]
+      },
+      {
+        "scene": {
+          "scene_id": "scene_0004",
+          "start_sec": 40.0,
+          "end_sec": 77.48,
+          "shot_ids": [
+            "shot_0016",
+            "shot_0017",
+            "shot_0018",
+            "shot_0019",
+            "shot_0020",
+            "shot_0021",
+            "shot_0022",
+            "shot_0023",
+            "shot_0024",
+            "shot_0025",
+            "shot_0026"
+          ],
+          "local_score": 0.7657778257073772,
+          "transcript": "[39.00-40.50s OCR] 夏夏\n[39.69-41.93s ASR] 你怎么戴个墨镜啊\n[41.93-47.44s ASR] 谁欺负你了\n[47.44-48.74s ASR] 玉琼\n[48.00-49.50s OCR] 语秋\n[48.74-50.72s ASR] 胡子明他出轨了\n[50.72-51.80s ASR] 我要分手他\n[51.00-53.50s OCR] 我要分手他还威胁我\n[51.80-54.90s ASR] 他威胁你什么\n[54.90-56.08s ASR] 他说\n[56.00-58.50s OCR] 他说如果要是分手的话\n[56.08-57.84s ASR] 如果要是分手的话\n[57.84-59.34s ASR] 就让我在恋爱期间\n[59.34-60.98s ASR] 花他的钱全都还给他\n[60.98-62.48s ASR] 他还要告我\n[62.48-64.68s ASR] 要让我在学校严密扫地\n[63.00-65.50s OCR] 要让我在学校颜面扫地\n[64.68-67.32s ASR] 秋秋\n[67.32-68.74s ASR] 你认识的人多\n[68.74-70.62s ASR] 能不能帮我想想办法\n[70.62-72.52s ASR] 好\n[72.52-73.82s ASR] 我帮你想办法\n[73.82-92.78s ASR] 喂 张曼\n[77.00-78.50s OCR] 知来电 话 at s0 m 筛选来电 m O 19141944263 184 1329 6216",
+          "audio_context": "happy/bgm",
+          "frame_samples": [
+            {
+              "timestamp_sec": 40.0,
+              "path": "/data1/video-highlight-cache/ded8352d8232848d/frames/frame_000041.jpg",
+              "change_score": 0.06835075467824936,
+              "semantic_change_score": 0.6326573057308398
+            },
+            {
+              "timestamp_sec": 45.0,
+              "path": "/data1/video-highlight-cache/ded8352d8232848d/frames/frame_000046.jpg",
+              "change_score": 0.09557100385427475,
+              "semantic_change_score": 0.4167335327620582
+            },
+            {
+              "timestamp_sec": 50.0,
+              "path": "/data1/video-highlight-cache/ded8352d8232848d/frames/frame_000051.jpg",
+              "change_score": 0.09890184551477432,
+              "semantic_change_score": 0.2272893686242371
+            },
+            {
+              "timestamp_sec": 55.0,
+              "path": "/data1/video-highlight-cache/ded8352d8232848d/frames/frame_000056.jpg",
+              "change_score": 0.012333409860730171,
+              "semantic_change_score": 0.0
+            },
+            {
+              "timestamp_sec": 61.0,
+              "path": "/data1/video-highlight-cache/ded8352d8232848d/frames/frame_000062.jpg",
+              "change_score": 0.22279123961925507,
+              "semantic_change_score": 0.2552181750461765
+            },
+            {
+              "timestamp_sec": 66.0,
+              "path": "/data1/video-highlight-cache/ded8352d8232848d/frames/frame_000067.jpg",
+              "change_score": 0.03337354585528374,
+              "semantic_change_score": 0.003455656744658942
+            },
+            {
+              "timestamp_sec": 71.0,
+              "path": "/data1/video-highlight-cache/ded8352d8232848d/frames/frame_000072.jpg",
+              "change_score": 0.23894378542900085,
+              "semantic_change_score": 0.364644976755366
+            },
+            {
+              "timestamp_sec": 77.0,
+              "path": "/data1/video-highlight-cache/ded8352d8232848d/frames/frame_000078.jpg",
+              "change_score": 0.15448547899723053,
+              "semantic_change_score": 1.0
+            }
+          ],
+          "speakers": [],
+          "face_track_ids": [],
+          "actors": [
+            "夏夏",
+            "语秋"
+          ],
+          "action": "夏夏询问语秋情况，语秋哭诉被胡子明威胁，夏夏承诺帮助并开始拨打电话求助。",
+          "event_type": [
+            "conflict",
+            "action"
+          ],
+          "claims": [
+            "胡子明出轨",
+            "胡子明威胁语秋分手后归还恋爱期间花的钱",
+            "胡子明威胁要让语秋颜面扫地"
+          ],
+          "state_before": "语秋戴墨镜遮挡，情绪低落；语秋与胡子明处于恋爱关系中",
+          "new_evidence": "语秋哭诉并详细描述了胡子明的威胁行为；夏夏拿起手机准备拨打张曼的电话",
+          "state_after": "语秋寻求夏夏帮助；两人达成共同应对胡子明的共识；夏夏决定介入此事",
+          "relationship_change": "两人由叙旧转为共同应对威胁的盟友关系",
+          "emotion": [
+            "悲伤",
+            "愤怒",
+            "担忧",
+            "坚定"
+          ],
+          "salience": 0.85,
+          "uncertainty": 0.1,
+          "evidence": [
+            "[40.0s F01] 夏夏询问语秋戴墨镜原因",
+            "[45.0s F02] 语秋神情难过",
+            "[55.0s F03] 两人对立站立，语秋处于哭诉状态",
+            "[61.0s F04] 语秋称胡子明还要告她",
+            "[77.0s F06] 夏夏手机通话界面显示拨打张曼"
+          ]
+        },
+        "decision": {
+          "map_supported": true,
+          "is_highlight": false,
+          "score": 0.86,
+          "highlight_type": "emotion",
+          "description": "语秋摘下墨镜哭诉遭遇男友出轨及索赔起诉威胁，夏夏握手承诺相助并当即拨打电话求援",
+          "reason": "符合情绪宣泄与危机揭示的高光结构：通过询问墨镜引出情绪异常，随后展现语秋痛哭倾诉男友出轨背叛及名誉/经济索赔的危机，最终兑现为夏夏坚定握手安慰并立即打电话介入相助的情感同盟。",
+          "confidence": 0.6707,
+          "evidence_grounding": 0.92,
+          "narrative_impact": 0.82,
+          "standalone_clarity": 0.85,
+          "clipability": 0.84,
+          "start_sec": 45.0,
+          "end_sec": 77.0,
+          "evidence": [
+            "[40.0s F01] 夏夏询问语秋为何戴墨镜及谁欺负了她",
+            "[50.0s F03] 语秋拥抱痛哭并揭露胡子明出轨",
+            "[61.0s F05] 语秋哭诉胡子明以恋爱花费和起诉威胁要让她在学校颜面扫地",
+            "[71.0s F07] 夏夏握住语秋的手承诺帮其想办法",
+            "[77.0s F08] 夏夏拿出手机拨打通话准备采取行动"
+          ],
+          "setup_evidence_times_sec": [
+            40.0,
+            45.0
+          ],
+          "decisive_evidence_times_sec": [
+            50.0,
+            61.0
+          ],
+          "reaction_evidence_times_sec": [
+            71.0,
+            77.0
+          ],
+          "counter_evidence": [
+            "矛盾主角胡子明未在场，其出轨及威胁行为为语秋单方口头陈述"
+          ],
+          "continue_previous_scene": false
+        },
+        "votes": [
+          {
+            "map_supported": true,
+            "is_highlight": true,
+            "score": 0.886,
+            "highlight_type": "emotion",
+            "description": "女性角色摘下墨镜哭诉遭遇男友出轨及索赔威胁，好友明确承诺相助并立即拨打电话求援",
+            "reason": "符合情绪与关系兑现结构：由询问戴墨镜发现异常铺垫，随后揭露遭遇出轨与名誉/经济威胁的危机，最终兑现为好友坚定承诺相助并立即行动的明确关系变化",
+            "confidence": 0.0,
+            "evidence_grounding": 0.95,
+            "narrative_impact": 0.85,
+            "standalone_clarity": 0.88,
+            "clipability": 0.85,
+            "start_sec": 45.0,
+            "end_sec": 77.0,
+            "evidence": [
+              "[40.0s F01] 询问对方为何佩戴墨镜",
+              "[50.0s F03] 抱头痛哭并揭露胡子明出轨",
+              "[61.0s F05] 哭诉对方以恋爱花费和起诉威胁颜面扫地",
+              "[71.0s F07] 握住对方手承诺帮忙想办法",
+              "[77.0s F08] 拿出手机拨打通话求助"
+            ],
+            "setup_evidence_times_sec": [
+              40.0,
+              45.0
+            ],
+            "decisive_evidence_times_sec": [
+              50.0,
+              61.0
+            ],
+            "reaction_evidence_times_sec": [
+              71.0,
+              77.0
+            ],
+            "counter_evidence": [],
+            "continue_previous_scene": false
+          },
+          {
+            "map_supported": true,
+            "is_highlight": false,
+            "score": 0.569,
+            "highlight_type": "other",
+            "description": "语秋向夏夏哭诉男友胡子明出轨及威胁，夏夏承诺帮忙并打电话",
+            "reason": "事件全靠台词口头陈述第三方矛盾，缺乏直接冲突兑现、事实证据或戏剧闭环，属于情节过渡与铺垫",
+            "confidence": 0.0,
+            "evidence_grounding": 0.85,
+            "narrative_impact": 0.38,
+            "standalone_clarity": 0.58,
+            "clipability": 0.42,
+            "start_sec": null,
+            "end_sec": null,
+            "evidence": [
+              "[40.0s F01] 夏夏询问语秋为何戴墨镜",
+              "[48.74-50.72s ASR] 语秋称胡子明出轨",
+              "[50.0s F03] 语秋哭泣拥抱夏夏诉苦",
+              "[60.98-64.68s ASR] 语秋陈述胡子明威胁要告她并索要钱财",
+              "[77.0s F08] 夏夏拿出手机准备拨打电话"
+            ],
+            "setup_evidence_times_sec": [],
+            "decisive_evidence_times_sec": [],
+            "reaction_evidence_times_sec": [],
+            "counter_evidence": [
+              "矛盾主角胡子明未在场，出轨与威胁仅为单方口头陈述",
+              "拨打电话后事件尚未展开，未形成独立完整的情节闭环"
+            ],
+            "continue_previous_scene": false
+          },
+          {
+            "map_supported": true,
+            "is_highlight": true,
+            "score": 0.86,
+            "highlight_type": "emotion",
+            "description": "语秋摘下墨镜哭诉遭遇男友出轨及索赔起诉威胁，夏夏握手承诺相助并当即拨打电话求援",
+            "reason": "符合情绪宣泄与危机揭示的高光结构：通过询问墨镜引出情绪异常，随后展现语秋痛哭倾诉男友出轨背叛及名誉/经济索赔的危机，最终兑现为夏夏坚定握手安慰并立即打电话介入相助的情感同盟。",
+            "confidence": 0.0,
+            "evidence_grounding": 0.92,
+            "narrative_impact": 0.82,
+            "standalone_clarity": 0.85,
+            "clipability": 0.84,
+            "start_sec": 45.0,
+            "end_sec": 77.0,
+            "evidence": [
+              "[40.0s F01] 夏夏询问语秋为何戴墨镜及谁欺负了她",
+              "[50.0s F03] 语秋拥抱痛哭并揭露胡子明出轨",
+              "[61.0s F05] 语秋哭诉胡子明以恋爱花费和起诉威胁要让她在学校颜面扫地",
+              "[71.0s F07] 夏夏握住语秋的手承诺帮其想办法",
+              "[77.0s F08] 夏夏拿出手机拨打通话准备采取行动"
+            ],
+            "setup_evidence_times_sec": [
+              40.0,
+              45.0
+            ],
+            "decisive_evidence_times_sec": [
+              50.0,
+              61.0
+            ],
+            "reaction_evidence_times_sec": [
+              71.0,
+              77.0
+            ],
+            "counter_evidence": [
+              "矛盾主角胡子明未在场，其出轨及威胁行为为语秋单方口头陈述"
+            ],
+            "continue_previous_scene": false
+          }
+        ]
+      },
+      {
+        "scene": {
+          "scene_id": "scene_0005",
+          "start_sec": 77.48,
+          "end_sec": 95.32,
+          "shot_ids": [
+            "shot_0027",
+            "shot_0028",
+            "shot_0029",
+            "shot_0030",
+            "shot_0031"
+          ],
+          "local_score": 0.5624905905565464,
+          "transcript": "[73.82-92.78s ASR] 喂 张曼\n[77.00-78.50s OCR] 知来电 话 at s0 m 筛选来电 m O 19141944263 184 1329 6216\n[78.00-79.50s OCR] 床电 50 普选来电\n[79.00-80.50s OCR] 来电 50 传表初 待选来电 三 1914194 4263 O 184 1329 62 264104\n[92.00-93.50s OCR] 喂张妈\n[92.78-95.00s ASR] 我想问一下\n[95.00-96.66s ASR] 富家有没有什么\n[95.00-97.50s OCR] 傅家有没有什么交好的",
+          "audio_context": "happy/bgm",
+          "frame_samples": [
+            {
+              "timestamp_sec": 78.0,
+              "path": "/data1/video-highlight-cache/ded8352d8232848d/frames/frame_000079.jpg",
+              "change_score": 0.025420304387807846,
+              "semantic_change_score": 0.9701133162016417
+            },
+            {
+              "timestamp_sec": 80.0,
+              "path": "/data1/video-highlight-cache/ded8352d8232848d/frames/frame_000081.jpg",
+              "change_score": 0.2165536880493164,
+              "semantic_change_score": 0.21392588706991236
+            },
+            {
+              "timestamp_sec": 82.0,
+              "path": "/data1/video-highlight-cache/ded8352d8232848d/frames/frame_000083.jpg",
+              "change_score": 0.04041341319680214,
+              "semantic_change_score": 0.186448922929297
+            },
+            {
+              "timestamp_sec": 85.0,
+              "path": "/data1/video-highlight-cache/ded8352d8232848d/frames/frame_000086.jpg",
+              "change_score": 0.13239507377147675,
+              "semantic_change_score": 0.9076222268299057
+            },
+            {
+              "timestamp_sec": 87.0,
+              "path": "/data1/video-highlight-cache/ded8352d8232848d/frames/frame_000088.jpg",
+              "change_score": 0.36662644147872925,
+              "semantic_change_score": 0.0
+            },
+            {
+              "timestamp_sec": 90.0,
+              "path": "/data1/video-highlight-cache/ded8352d8232848d/frames/frame_000091.jpg",
+              "change_score": 0.10606522113084793,
+              "semantic_change_score": 0.0
+            },
+            {
+              "timestamp_sec": 92.0,
+              "path": "/data1/video-highlight-cache/ded8352d8232848d/frames/frame_000093.jpg",
+              "change_score": 0.29515260457992554,
+              "semantic_change_score": 0.3605602971299601
+            },
+            {
+              "timestamp_sec": 95.0,
+              "path": "/data1/video-highlight-cache/ded8352d8232848d/frames/frame_000096.jpg",
+              "change_score": 0.2345396727323532,
+              "semantic_change_score": 0.24876378428547796
+            }
+          ],
+          "speakers": [],
+          "face_track_ids": [],
+          "actors": [
+            "年轻女子",
+            "张妈"
+          ],
+          "action": "年轻女子查看手机通话记录，随后拨通电话向张妈打听傅家的人际关系。",
+          "event_type": [
+            "action",
+            "reveal"
+          ],
+          "claims": [
+            "傅家有没有什么交好的（人或势力）"
+          ],
+          "state_before": "年轻女子在户外查看手机通话记录，意图不明",
+          "new_evidence": "手机通话记录显示存在近期来电，年轻女子通过电话向张妈询问傅家信息",
+          "state_after": "年轻女子正式开始调查傅家的人际关系网络",
+          "relationship_change": "unknown",
+          "emotion": [
+            "专注",
+            "审慎"
+          ],
+          "salience": 0.65,
+          "uncertainty": 0.2,
+          "evidence": [
+            "[F01 78.0s] 手机通话记录页面",
+            "[F05 92.0s] 女子拨打电话称呼张妈",
+            "[F06 95.0s] 女子询问傅家交好对象"
+          ]
+        },
+        "decision": {
+          "map_supported": true,
+          "is_highlight": false,
+          "score": 0.49,
+          "highlight_type": "other",
+          "description": "女子拨通张妈电话打听傅家人际关系",
+          "reason": "仅展示拨通电话并提出询问的过场动作，未给出实质性答复、信息揭示或可见后果，未构成任一高光结构",
+          "confidence": 0.994,
+          "evidence_grounding": 0.95,
+          "narrative_impact": 0.25,
+          "standalone_clarity": 0.35,
+          "clipability": 0.3,
+          "start_sec": null,
+          "end_sec": null,
+          "evidence": [
+            "[F01 78.0s] 手机通话记录页面",
+            "[F06 90.0s] 张妈接通电话",
+            "[F07 92.0s] 女子称呼张妈",
+            "[F08 95.0s] 女子询问傅家有没有交好对象"
+          ],
+          "setup_evidence_times_sec": [],
+          "decisive_evidence_times_sec": [],
+          "reaction_evidence_times_sec": [],
+          "counter_evidence": [
+            "当前场仅为提出问题的过渡桥段，张妈尚未回答，没有形成信息兑现或戏剧后果"
+          ],
+          "continue_previous_scene": false
+        },
+        "votes": [
+          {
+            "map_supported": true,
+            "is_highlight": false,
+            "score": 0.49,
+            "highlight_type": "other",
+            "description": "女子拨通张妈电话打听傅家人际关系",
+            "reason": "仅展示拨通电话并提出询问的过场动作，未给出实质性答复、信息揭示或可见后果，未构成任一高光结构",
+            "confidence": 0.0,
+            "evidence_grounding": 0.95,
+            "narrative_impact": 0.25,
+            "standalone_clarity": 0.35,
+            "clipability": 0.3,
+            "start_sec": null,
+            "end_sec": null,
+            "evidence": [
+              "[F01 78.0s] 手机通话记录页面",
+              "[F06 90.0s] 张妈接通电话",
+              "[F07 92.0s] 女子称呼张妈",
+              "[F08 95.0s] 女子询问傅家有没有交好对象"
+            ],
+            "setup_evidence_times_sec": [],
+            "decisive_evidence_times_sec": [],
+            "reaction_evidence_times_sec": [],
+            "counter_evidence": [
+              "当前场仅为提出问题的过渡桥段，张妈尚未回答，没有形成信息兑现或戏剧后果"
+            ],
+            "continue_previous_scene": false
+          },
+          {
+            "map_supported": true,
+            "is_highlight": false,
+            "score": 0.466,
+            "highlight_type": "other",
+            "description": "女子拨通电话向张妈询问傅家的人际关系",
+            "reason": "当前场仅为过渡性的拨打电话与发问，未出现回答、决定性信息揭示、冲突升级或可见后果，未形成五种通用高光结构中的任一种",
+            "confidence": 0.0,
+            "evidence_grounding": 0.92,
+            "narrative_impact": 0.2,
+            "standalone_clarity": 0.35,
+            "clipability": 0.3,
+            "start_sec": null,
+            "end_sec": null,
+            "evidence": [
+              "[F01 78.0s] 手机通话记录页面",
+              "[F06 90.0s] 张妈接通电话",
+              "[F07 92.0s OCR] 喂张妈",
+              "[F08 95.0s OCR] 傅家有没有什么交好的"
+            ],
+            "setup_evidence_times_sec": [],
+            "decisive_evidence_times_sec": [],
+            "reaction_evidence_times_sec": [],
+            "counter_evidence": [
+              "对话在刚提出问题处中断，缺乏实质信息揭示或事件进展，属于典型过渡镜头"
+            ],
+            "continue_previous_scene": false
+          }
+        ]
+      },
+      {
+        "scene": {
+          "scene_id": "scene_0006",
+          "start_sec": 95.32,
+          "end_sec": 116.8,
+          "shot_ids": [
+            "shot_0032",
+            "shot_0033",
+            "shot_0034",
+            "shot_0035",
+            "shot_0036",
+            "shot_0037"
+          ],
+          "local_score": 0.7475684093516322,
+          "transcript": "[95.00-96.66s ASR] 富家有没有什么\n[95.00-97.50s OCR] 傅家有没有什么交好的\n[96.66-98.34s ASR] 交好的擅长处理\n[97.00-100.50s OCR] 擅长处理情感关系的律师\n[98.34-99.56s ASR] 情感关系的律师\n[99.56-101.42s ASR] 情感关系\n[101.42-103.66s ASR] 难怪今天早上\n[103.00-105.50s OCR] 难怪今天早上气压那么低\n[103.66-104.44s ASR] 气氧那么低\n[104.44-106.44s ASR] 邵夫人这是要和少爷离婚\n[105.00-107.50s OCR] 少夫人这是要和少爷离婚\n[106.44-107.68s ASR] 没有\n[107.68-108.72s ASR] 邵夫人\n[108.00-109.50s OCR] 少夫人\n[108.72-110.98s ASR] 富家没有这样的律师\n[110.00-111.50s OCR] 傅家没有这样的律师\n[110.98-123.26s ASR] 没关系\n[112.00-113.50s OCR] 哦\n[113.00-114.50s OCR] 那我再问问其他人",
+          "audio_context": "happy/bgm",
+          "frame_samples": [
+            {
+              "timestamp_sec": 96.0,
+              "path": "/data1/video-highlight-cache/ded8352d8232848d/frames/frame_000097.jpg",
+              "change_score": 0.03750861808657646,
+              "semantic_change_score": 1.0
+            },
+            {
+              "timestamp_sec": 98.0,
+              "path": "/data1/video-highlight-cache/ded8352d8232848d/frames/frame_000099.jpg",
+              "change_score": 0.009835516102612019,
+              "semantic_change_score": 0.40703368876354296
+            },
+            {
+              "timestamp_sec": 101.0,
+              "path": "/data1/video-highlight-cache/ded8352d8232848d/frames/frame_000102.jpg",
+              "change_score": 0.0398763008415699,
+              "semantic_change_score": 0.0
+            },
+            {
+              "timestamp_sec": 104.0,
+              "path": "/data1/video-highlight-cache/ded8352d8232848d/frames/frame_000105.jpg",
+              "change_score": 0.07421395927667618,
+              "semantic_change_score": 0.5187701888243496
+            },
+            {
+              "timestamp_sec": 107.0,
+              "path": "/data1/video-highlight-cache/ded8352d8232848d/frames/frame_000108.jpg",
+              "change_score": 0.2824888825416565,
+              "semantic_change_score": 0.0
+            },
+            {
+              "timestamp_sec": 110.0,
+              "path": "/data1/video-highlight-cache/ded8352d8232848d/frames/frame_000111.jpg",
+              "change_score": 0.022109566256403923,
+              "semantic_change_score": 0.14698400833955425
+            },
+            {
+              "timestamp_sec": 113.0,
+              "path": "/data1/video-highlight-cache/ded8352d8232848d/frames/frame_000114.jpg",
+              "change_score": 0.05546300485730171,
+              "semantic_change_score": 0.0
+            },
+            {
+              "timestamp_sec": 116.0,
+              "path": "/data1/video-highlight-cache/ded8352d8232848d/frames/frame_000117.jpg",
+              "change_score": 0.09331054985523224,
+              "semantic_change_score": 0.0
+            }
+          ],
+          "speakers": [],
+          "face_track_ids": [],
+          "actors": [
+            "年轻女子",
+            "中年女性（仆人/管家）"
+          ],
+          "action": "年轻女子通过电话向管家打听擅长离婚诉讼的律师，管家通过电话回复傅家没有此类律师并表示怀疑。",
+          "event_type": [
+            "reveal",
+            "conflict"
+          ],
+          "claims": [
+            "邵夫人（即年轻女子）要和少爷离婚",
+            "傅家没有擅长处理情感关系的律师"
+          ],
+          "state_before": "年轻女子试图通过外部渠道寻找处理离婚事务的律师，试图解决婚姻矛盾。",
+          "new_evidence": "傅家（或其管家）明确表示没有此类律师，且观察到少夫人疑似有离婚意向。",
+          "state_after": "年轻女子未在傅家处获取到预期资源，仍需寻找他人。",
+          "relationship_change": "由于潜在离婚意图的暴露，少夫人与傅家的关系处于紧张和不透明状态。",
+          "emotion": [
+            "忧虑",
+            "审慎"
+          ],
+          "salience": 0.85,
+          "uncertainty": 0.2,
+          "evidence": [
+            "[F01 96.0s] 字幕：傅家有没有什么交好的",
+            "[F02 98.0s] 字幕：擅长处理情感关系的律师",
+            "[F03 104.0s] 字幕：难怪今天早上气压那么低",
+            "[F04 107.0s] 字幕：少夫人这是要和少爷离婚",
+            "[F05 113.0s] 字幕：傅家没有这样的律师",
+            "[F06 116.0s] 字幕：那我再问问其他人"
+          ]
+        },
+        "decision": {
+          "map_supported": true,
+          "is_highlight": false,
+          "score": 0.54,
+          "highlight_type": "other",
+          "description": "少夫人向张妈打听处理情感关系的律师引发离婚猜测，得知傅家无此类律师后挂断电话",
+          "reason": "本段为过渡性质的信息打听对话，虽有张妈猜测少夫人要离婚的插曲，但随后被否认且通话迅速结束，未形成实质性的对抗冲突、关系逆转或高风险悬念兑现",
+          "confidence": 0.9905,
+          "evidence_grounding": 0.95,
+          "narrative_impact": 0.25,
+          "standalone_clarity": 0.52,
+          "clipability": 0.38,
+          "start_sec": null,
+          "end_sec": null,
+          "evidence": [
+            "[F01 96.0s] 字幕：傅家有没有什么交好的",
+            "[F02 98.0s] 字幕：擅长处理情感关系的律师",
+            "[F04 104.0s] 字幕：难怪今天早上气压那么低",
+            "[105.00s OCR] 字幕：少夫人这是要和少爷离婚",
+            "[F05 107.0s] 女子回应：没有",
+            "[F06 110.0s] 字幕：傅家没有这样的律师",
+            "[F07 113.0s] 字幕：那我再问问其他人"
+          ],
+          "setup_evidence_times_sec": [],
+          "decisive_evidence_times_sec": [],
+          "reaction_evidence_times_sec": [],
+          "counter_evidence": [
+            "属于寻找外部资源的过渡性通话，缺乏独立闭环的戏剧冲突与后果兑现"
+          ],
+          "continue_previous_scene": false
+        },
+        "votes": [
+          {
+            "map_supported": true,
+            "is_highlight": false,
+            "score": 0.54,
+            "highlight_type": "other",
+            "description": "少夫人向张妈打听处理情感关系的律师引发离婚猜测，得知傅家无此类律师后挂断电话",
+            "reason": "本段为过渡性质的信息打听对话，虽有张妈猜测少夫人要离婚的插曲，但随后被否认且通话迅速结束，未形成实质性的对抗冲突、关系逆转或高风险悬念兑现",
+            "confidence": 0.0,
+            "evidence_grounding": 0.95,
+            "narrative_impact": 0.25,
+            "standalone_clarity": 0.52,
+            "clipability": 0.38,
+            "start_sec": null,
+            "end_sec": null,
+            "evidence": [
+              "[F01 96.0s] 字幕：傅家有没有什么交好的",
+              "[F02 98.0s] 字幕：擅长处理情感关系的律师",
+              "[F04 104.0s] 字幕：难怪今天早上气压那么低",
+              "[105.00s OCR] 字幕：少夫人这是要和少爷离婚",
+              "[F05 107.0s] 女子回应：没有",
+              "[F06 110.0s] 字幕：傅家没有这样的律师",
+              "[F07 113.0s] 字幕：那我再问问其他人"
+            ],
+            "setup_evidence_times_sec": [],
+            "decisive_evidence_times_sec": [],
+            "reaction_evidence_times_sec": [],
+            "counter_evidence": [
+              "属于寻找外部资源的过渡性通话，缺乏独立闭环的戏剧冲突与后果兑现"
+            ],
+            "continue_previous_scene": false
+          },
+          {
+            "map_supported": true,
+            "is_highlight": false,
+            "score": 0.502,
+            "highlight_type": "other",
+            "description": "年轻女子致电管家询问情感关系律师，管家误会其欲离婚并回复傅家无此类律师",
+            "reason": "本场仅为打听律师资源的过渡性通话，管家关于离婚的揣测未经证实且未引发实质对抗或决定性事件，未构成五种通用高光结构中的任一种，缺乏独立成片价值",
+            "confidence": 0.0,
+            "evidence_grounding": 0.9,
+            "narrative_impact": 0.26,
+            "standalone_clarity": 0.42,
+            "clipability": 0.35,
+            "start_sec": null,
+            "end_sec": null,
+            "evidence": [
+              "[F01 96.0s] 字幕：傅家有没有什么交好的",
+              "[F02 98.0s] 字幕：擅长处理情感关系的律师",
+              "[F04 104.0s] 字幕：难怪今天早上气压那么低",
+              "[F06 110.0s] 字幕：傅家没有这样的律师",
+              "[F07 113.0s] 字幕：那我再问问其他人"
+            ],
+            "setup_evidence_times_sec": [],
+            "decisive_evidence_times_sec": [],
+            "reaction_evidence_times_sec": [],
+            "counter_evidence": [
+              "询问律师仅为承接前场朋友纠纷的过渡动作，通话以未找到律师并另寻他人告终",
+              "管家单方面猜测少夫人要离婚属于未经证实的主张，并未带来可见关系或状态变化"
+            ],
+            "continue_previous_scene": false
+          }
+        ]
+      },
+      {
+        "scene": {
+          "scene_id": "scene_0007",
+          "start_sec": 116.8,
+          "end_sec": 131.76,
+          "shot_ids": [
+            "shot_0038",
+            "shot_0039",
+            "shot_0040",
+            "shot_0041",
+            "shot_0042"
+          ],
+          "local_score": 0.0,
+          "transcript": "[110.98-123.26s ASR] 没关系\n[123.00-125.50s OCR] 没关系我还会继续找的\n[123.26-124.54s ASR] 我还会继续找的\n[124.54-128.43s ASR] 我先带你销售去\n[126.00-127.50s OCR] 哎别难受别难受\n[128.00-129.50s OCR] 我先带你消愁去\n[129.00-130.50s OCR] 走走走走走",
+          "audio_context": "happy/bgm",
+          "frame_samples": [
+            {
+              "timestamp_sec": 117.0,
+              "path": "/data1/video-highlight-cache/ded8352d8232848d/frames/frame_000118.jpg",
+              "change_score": 0.2628379762172699,
+              "semantic_change_score": 0.5919454588580615
+            },
+            {
+              "timestamp_sec": 119.0,
+              "path": "/data1/video-highlight-cache/ded8352d8232848d/frames/frame_000120.jpg",
+              "change_score": 0.2183823585510254,
+              "semantic_change_score": 0.808852615906436
+            },
+            {
+              "timestamp_sec": 121.0,
+              "path": "/data1/video-highlight-cache/ded8352d8232848d/frames/frame_000122.jpg",
+              "change_score": 0.023788871243596077,
+              "semantic_change_score": 0.0
+            },
+            {
+              "timestamp_sec": 123.0,
+              "path": "/data1/video-highlight-cache/ded8352d8232848d/frames/frame_000124.jpg",
+              "change_score": 0.05292107164859772,
+              "semantic_change_score": 0.039741481439379625
+            },
+            {
+              "timestamp_sec": 125.0,
+              "path": "/data1/video-highlight-cache/ded8352d8232848d/frames/frame_000126.jpg",
+              "change_score": 0.24484336376190186,
+              "semantic_change_score": 0.0
+            },
+            {
+              "timestamp_sec": 127.0,
+              "path": "/data1/video-highlight-cache/ded8352d8232848d/frames/frame_000128.jpg",
+              "change_score": 0.11917126178741455,
+              "semantic_change_score": 0.0
+            },
+            {
+              "timestamp_sec": 129.0,
+              "path": "/data1/video-highlight-cache/ded8352d8232848d/frames/frame_000130.jpg",
+              "change_score": 0.20649126172065735,
+              "semantic_change_score": 0.0
+            },
+            {
+              "timestamp_sec": 131.0,
+              "path": "/data1/video-highlight-cache/ded8352d8232848d/frames/frame_000132.jpg",
+              "change_score": 0.15394262969493866,
+              "semantic_change_score": 0.7301895102099527
+            }
+          ],
+          "speakers": [],
+          "face_track_ids": [],
+          "actors": [
+            "穿粗花呢外套的女子",
+            "穿风衣的女子"
+          ],
+          "action": "粗花呢外套女子安慰并强行拉走风衣女子",
+          "event_type": [
+            "action",
+            "emotion"
+          ],
+          "claims": [
+            "我还会继续找的"
+          ],
+          "state_before": "风衣女子处于难受状态，粗花呢外套女子在寻找某物/某人",
+          "new_evidence": "粗花呢外套女子表示要带风衣女子去消愁并拉住其手臂带走",
+          "state_after": "风衣女子停止难受，被粗花呢外套女子带离现场",
+          "relationship_change": "两人表现出亲密的伙伴/闺蜜关系",
+          "emotion": [
+            "失落",
+            "宽慰"
+          ],
+          "salience": 0.6,
+          "uncertainty": 0.1,
+          "evidence": [
+            "[F03 123.0s] 粗花呢外套女子握住风衣女子手掌",
+            "[F03 123.0s OCR] 没关系我还会继续找的",
+            "[F04 125.0s] 风衣女子表情难过",
+            "[F05 129.0s OCR] 走走走走走",
+            "[F05 129.0s] 粗花呢外套女子拉着风衣女子手臂向画面外走去"
+          ]
+        },
+        "decision": {
+          "map_supported": true,
+          "is_highlight": false,
+          "score": 0.58,
+          "highlight_type": "emotion",
+          "description": "粗花呢外套女子在寻找律师未果后安慰神情难过的风衣女子并拉其去消愁",
+          "reason": "具备情绪安抚的互动，但属于过场过渡，缺乏强烈的冲突兑现、关键信息揭示或高风险悬念",
+          "confidence": 0.9852,
+          "evidence_grounding": 0.95,
+          "narrative_impact": 0.35,
+          "standalone_clarity": 0.45,
+          "clipability": 0.5,
+          "start_sec": 122.5,
+          "end_sec": 130.5,
+          "evidence": [
+            "[F04 123.0s OCR] 没关系我还会继续找的",
+            "[F05 125.0s] 风衣女子神情难过委屈",
+            "[126.00-129.50s OCR] 哎别难受别难受 我先带你消愁去",
+            "[F07 129.0s OCR] 走走走走走",
+            "[F07 129.0s] 粗花呢女子拉着风衣女子手臂离开"
+          ],
+          "setup_evidence_times_sec": [
+            117.0,
+            119.0
+          ],
+          "decisive_evidence_times_sec": [
+            123.0,
+            127.0
+          ],
+          "reaction_evidence_times_sec": [
+            129.0
+          ],
+          "counter_evidence": [
+            "情节仅为日常安慰与离场过渡，戏剧张力和独立成片价值较弱"
+          ],
+          "continue_previous_scene": true
+        },
+        "votes": [
+          {
+            "map_supported": true,
+            "is_highlight": false,
+            "score": 0.58,
+            "highlight_type": "emotion",
+            "description": "粗花呢外套女子在寻找律师未果后安慰神情难过的风衣女子并拉其去消愁",
+            "reason": "具备情绪安抚的互动，但属于过场过渡，缺乏强烈的冲突兑现、关键信息揭示或高风险悬念",
+            "confidence": 0.0,
+            "evidence_grounding": 0.95,
+            "narrative_impact": 0.35,
+            "standalone_clarity": 0.45,
+            "clipability": 0.5,
+            "start_sec": 122.5,
+            "end_sec": 130.5,
+            "evidence": [
+              "[F04 123.0s OCR] 没关系我还会继续找的",
+              "[F05 125.0s] 风衣女子神情难过委屈",
+              "[126.00-129.50s OCR] 哎别难受别难受 我先带你消愁去",
+              "[F07 129.0s OCR] 走走走走走",
+              "[F07 129.0s] 粗花呢女子拉着风衣女子手臂离开"
+            ],
+            "setup_evidence_times_sec": [
+              117.0,
+              119.0
+            ],
+            "decisive_evidence_times_sec": [
+              123.0,
+              127.0
+            ],
+            "reaction_evidence_times_sec": [
+              129.0
+            ],
+            "counter_evidence": [
+              "情节仅为日常安慰与离场过渡，戏剧张力和独立成片价值较弱"
+            ],
+            "continue_previous_scene": true
+          },
+          {
+            "map_supported": true,
+            "is_highlight": false,
+            "score": 0.521,
+            "highlight_type": "other",
+            "description": "粗花呢外套女子安慰情绪低落的同伴并拉其一同离开去消愁",
+            "reason": "仅为前场通话未果后的日常情绪安慰与转场动作，缺乏决定性转折、对抗对抗或重大事实揭露，不构成独立高光结构",
+            "confidence": 0.0,
+            "evidence_grounding": 0.95,
+            "narrative_impact": 0.22,
+            "standalone_clarity": 0.4,
+            "clipability": 0.45,
+            "start_sec": null,
+            "end_sec": null,
+            "evidence": [
+              "[F04 123.0s OCR] 没关系我还会继续找的",
+              "[F05 125.0s] 风衣女子表情委屈难过",
+              "[F07 129.0s OCR] 走走走走走",
+              "[128.00-129.50s OCR] 我先带你消愁去"
+            ],
+            "setup_evidence_times_sec": [],
+            "decisive_evidence_times_sec": [],
+            "reaction_evidence_times_sec": [],
+            "counter_evidence": [
+              "情节仅为过渡性的安慰与离场，无实质性剧情推进或戏剧高潮"
+            ],
+            "continue_previous_scene": false
+          }
+        ]
+      },
+      {
+        "scene": {
+          "scene_id": "scene_0008",
+          "start_sec": 131.76,
+          "end_sec": 141.36,
+          "shot_ids": [
+            "shot_0043",
+            "shot_0044",
+            "shot_0045",
+            "shot_0046"
+          ],
+          "local_score": 0.65,
+          "transcript": "",
+          "audio_context": "happy/bgm",
+          "frame_samples": [
+            {
+              "timestamp_sec": 132.0,
+              "path": "/data1/video-highlight-cache/ded8352d8232848d/frames/frame_000133.jpg",
+              "change_score": 0.2894952595233917,
+              "semantic_change_score": 1.0
+            },
+            {
+              "timestamp_sec": 133.0,
+              "path": "/data1/video-highlight-cache/ded8352d8232848d/frames/frame_000134.jpg",
+              "change_score": 0.0248104315251112,
+              "semantic_change_score": 1.0
+            },
+            {
+              "timestamp_sec": 134.0,
+              "path": "/data1/video-highlight-cache/ded8352d8232848d/frames/frame_000135.jpg",
+              "change_score": 0.3388844132423401,
+              "semantic_change_score": 1.0
+            },
+            {
+              "timestamp_sec": 135.0,
+              "path": "/data1/video-highlight-cache/ded8352d8232848d/frames/frame_000136.jpg",
+              "change_score": 0.11335401237010956,
+              "semantic_change_score": 0.5829606878163571
+            },
+            {
+              "timestamp_sec": 137.0,
+              "path": "/data1/video-highlight-cache/ded8352d8232848d/frames/frame_000138.jpg",
+              "change_score": 0.10090954601764679,
+              "semantic_change_score": 0.8129988959552972
+            },
+            {
+              "timestamp_sec": 138.0,
+              "path": "/data1/video-highlight-cache/ded8352d8232848d/frames/frame_000139.jpg",
+              "change_score": 0.3090035319328308,
+              "semantic_change_score": 1.0
+            },
+            {
+              "timestamp_sec": 139.0,
+              "path": "/data1/video-highlight-cache/ded8352d8232848d/frames/frame_000140.jpg",
+              "change_score": 0.020611213520169258,
+              "semantic_change_score": 0.0
+            },
+            {
+              "timestamp_sec": 141.0,
+              "path": "/data1/video-highlight-cache/ded8352d8232848d/frames/frame_000142.jpg",
+              "change_score": 0.26827606558799744,
+              "semantic_change_score": 0.0
+            }
+          ],
+          "speakers": [],
+          "face_track_ids": [],
+          "actors": [
+            "穿围裙的女性",
+            "穿西装的男性"
+          ],
+          "action": "女性在室内查看手机并接听电话，神情严肃；男性在办公室独自查阅文件",
+          "event_type": [
+            "action"
+          ],
+          "claims": [],
+          "state_before": "unknown",
+          "new_evidence": "[F03 135.0s] 女性拨打/接听手机且表情凝重；[F04 137.0s] 男性在办公桌前阅读文件",
+          "state_after": "双方分别处于各自的活动中",
+          "relationship_change": "unknown",
+          "emotion": [
+            "严肃",
+            "专注"
+          ],
+          "salience": 0.3,
+          "uncertainty": 0.5,
+          "evidence": [
+            "F01 132.0s 穿围裙女性在室内看手机",
+            "F03 135.0s 穿围裙女性在接听电话",
+            "F04 137.0s 穿西装男性在办公室内查阅文件"
+          ]
+        },
+        "decision": {
+          "map_supported": true,
+          "is_highlight": false,
+          "score": 0.43,
+          "highlight_type": "other",
+          "description": "围裙女性接打电话，西装男性在办公室翻阅文件",
+          "reason": "仅展示两人分别打电话与看文件的日常过渡画面，缺乏台词交代、冲突对抗、决定性反转或可见后果，未形成五种通用高光结构中的任一种",
+          "confidence": 1.0,
+          "evidence_grounding": 0.95,
+          "narrative_impact": 0.15,
+          "standalone_clarity": 0.3,
+          "clipability": 0.2,
+          "start_sec": null,
+          "end_sec": null,
+          "evidence": [
+            "[F01 132.0s] 穿围裙女性在室内看手机",
+            "[F04 135.0s] 穿围裙女性拨打或接听电话",
+            "[F05 137.0s] 穿西装男性在办公室翻阅文件",
+            "[F08 141.0s] 穿西装男性坐在办公桌前"
+          ],
+          "setup_evidence_times_sec": [],
+          "decisive_evidence_times_sec": [],
+          "reaction_evidence_times_sec": [],
+          "counter_evidence": [
+            "本场无对白，纯属多场景过场衔接，脱离上下文无法独立理解"
+          ],
+          "continue_previous_scene": false
+        },
+        "votes": [
+          {
+            "map_supported": true,
+            "is_highlight": false,
+            "score": 0.43,
+            "highlight_type": "other",
+            "description": "围裙女性接打电话，西装男性在办公室翻阅文件",
+            "reason": "仅展示两人分别打电话与看文件的日常过渡画面，缺乏台词交代、冲突对抗、决定性反转或可见后果，未形成五种通用高光结构中的任一种",
+            "confidence": 0.0,
+            "evidence_grounding": 0.95,
+            "narrative_impact": 0.15,
+            "standalone_clarity": 0.3,
+            "clipability": 0.2,
+            "start_sec": null,
+            "end_sec": null,
+            "evidence": [
+              "[F01 132.0s] 穿围裙女性在室内看手机",
+              "[F04 135.0s] 穿围裙女性拨打或接听电话",
+              "[F05 137.0s] 穿西装男性在办公室翻阅文件",
+              "[F08 141.0s] 穿西装男性坐在办公桌前"
+            ],
+            "setup_evidence_times_sec": [],
+            "decisive_evidence_times_sec": [],
+            "reaction_evidence_times_sec": [],
+            "counter_evidence": [
+              "本场无对白，纯属多场景过场衔接，脱离上下文无法独立理解"
+            ],
+            "continue_previous_scene": false
+          },
+          {
+            "map_supported": true,
+            "is_highlight": false,
+            "score": 0.43,
+            "highlight_type": "other",
+            "description": "围裙女性拨打电话，镜头切换至办公室内查阅文件的西装男性",
+            "reason": "当前场为纯过场衔接镜头，仅展示家政阿姨打电话与男子看文件的日常动作，缺乏实质冲突、信息反转、情感兑现或明确悬念钩子，不构成五种高光结构中的任一种",
+            "confidence": 0.0,
+            "evidence_grounding": 0.95,
+            "narrative_impact": 0.15,
+            "standalone_clarity": 0.25,
+            "clipability": 0.25,
+            "start_sec": null,
+            "end_sec": null,
+            "evidence": [
+              "[F01 132.0s] 围裙女性低头查看手机",
+              "[F04 135.0s] 围裙女性举起手机贴耳通话",
+              "[F05 137.0s] 西装男性在办公桌前翻看文件"
+            ],
+            "setup_evidence_times_sec": [],
+            "decisive_evidence_times_sec": [],
+            "reaction_evidence_times_sec": [],
+            "counter_evidence": [
+              "场内无对白及字幕信息，动作仅为过渡性铺垫，无独立成片的叙事完整性与看点"
+            ],
+            "continue_previous_scene": false
+          }
+        ]
+      },
+      {
+        "scene": {
+          "scene_id": "scene_0009",
+          "start_sec": 141.36,
+          "end_sec": 153.8322,
+          "shot_ids": [
+            "shot_0047",
+            "shot_0048",
+            "shot_0049",
+            "shot_0050",
+            "shot_0051",
+            "shot_0052",
+            "shot_0053"
+          ],
+          "local_score": 0.65,
+          "transcript": "[145.00-146.50s OCR] 喂\n[148.00-149.50s OCR] 少夫人要跟您离婚\n[149.00-150.50s OCR] A\n[152.00-154.50s OCR] 良辰入清欢",
+          "audio_context": "happy/bgm",
+          "frame_samples": [
+            {
+              "timestamp_sec": 142.0,
+              "path": "/data1/video-highlight-cache/ded8352d8232848d/frames/frame_000143.jpg",
+              "change_score": 0.243608295917511,
+              "semantic_change_score": 0.0
+            },
+            {
+              "timestamp_sec": 143.0,
+              "path": "/data1/video-highlight-cache/ded8352d8232848d/frames/frame_000144.jpg",
+              "change_score": 0.23904813826084137,
+              "semantic_change_score": 0.0
+            },
+            {
+              "timestamp_sec": 145.0,
+              "path": "/data1/video-highlight-cache/ded8352d8232848d/frames/frame_000146.jpg",
+              "change_score": 0.09801527857780457,
+              "semantic_change_score": 0.5635327398312466
+            },
+            {
+              "timestamp_sec": 146.0,
+              "path": "/data1/video-highlight-cache/ded8352d8232848d/frames/frame_000147.jpg",
+              "change_score": 0.09326363354921341,
+              "semantic_change_score": 1.0
+            },
+            {
+              "timestamp_sec": 148.0,
+              "path": "/data1/video-highlight-cache/ded8352d8232848d/frames/frame_000149.jpg",
+              "change_score": 0.009625842794775963,
+              "semantic_change_score": 0.6837805767514287
+            },
+            {
+              "timestamp_sec": 149.0,
+              "path": "/data1/video-highlight-cache/ded8352d8232848d/frames/frame_000150.jpg",
+              "change_score": 0.3920525014400482,
+              "semantic_change_score": 1.0
+            },
+            {
+              "timestamp_sec": 151.0,
+              "path": "/data1/video-highlight-cache/ded8352d8232848d/frames/frame_000152.jpg",
+              "change_score": 0.17377929389476776,
+              "semantic_change_score": 0.0
+            },
+            {
+              "timestamp_sec": 153.0,
+              "path": "/data1/video-highlight-cache/ded8352d8232848d/frames/frame_000154.jpg",
+              "change_score": 0.06646465510129929,
+              "semantic_change_score": 1.0
+            }
+          ],
+          "speakers": [],
+          "face_track_ids": [],
+          "actors": [
+            "年轻男士"
+          ],
+          "action": "年轻男士在办公桌前接听电话，神情从平静转为惊讶并紧锁眉头。",
+          "event_type": [
+            "reveal",
+            "conflict"
+          ],
+          "claims": [
+            "少夫人要跟您离婚"
+          ],
+          "state_before": "年轻男士在办公桌前处理事务，状态平稳。",
+          "new_evidence": "通话中另一方告知“少夫人要跟您离婚”。",
+          "state_after": "年轻男士得知离婚消息后表现出明显的震惊与凝重。",
+          "relationship_change": "夫妻关系面临瓦解的危机。",
+          "emotion": [
+            "平静",
+            "震惊",
+            "困惑"
+          ],
+          "salience": 0.85,
+          "uncertainty": 0.1,
+          "evidence": [
+            "[F01-F02 142.0-143.0s] 男士正在处理事务",
+            "[F03-F04 146.0-148.0s] 电话接通，传来“少夫人要跟您离婚”的信息",
+            "[F05-F06 151.0-153.0s] 男士面露惊讶与困惑"
+          ]
+        },
+        "decision": {
+          "map_supported": true,
+          "is_highlight": true,
+          "score": 0.929,
+          "highlight_type": "cliffhanger",
+          "description": "年轻男士在办公室接听电话，得知“少夫人要跟您离婚”后震惊站起",
+          "reason": "符合悬念钩子与叙事变化结构：男士在办公室平静接听电话（铺垫/旧状态）→ 通话中告知“少夫人要跟您离婚”（决定性突发信息）→ 男士拍桌站起且神情震惊凝重，在剧集片尾处形成强悬念钩子（可见反应与高风险悬念）",
+          "confidence": 0.9928,
+          "evidence_grounding": 0.95,
+          "narrative_impact": 0.9,
+          "standalone_clarity": 0.92,
+          "clipability": 0.95,
+          "start_sec": 142.0,
+          "end_sec": 153.83,
+          "evidence": [
+            "[F01 142.0s] 男士在办公桌前看手机",
+            "[F03 145.0s OCR] 男士接通电话并说“喂”",
+            "[F05 148.0s OCR] 电话传来“少夫人要跟您离婚”",
+            "[F06 149.0s] 男士拍桌站起",
+            "[F07-F08 151.0-153.0s] 男士手持电话神情震惊错愕"
+          ],
+          "setup_evidence_times_sec": [
+            142.0,
+            145.0
+          ],
+          "decisive_evidence_times_sec": [
+            148.0
+          ],
+          "reaction_evidence_times_sec": [
+            149.0,
+            151.0,
+            153.0
+          ],
+          "counter_evidence": [],
+          "continue_previous_scene": false
+        },
+        "votes": [
+          {
+            "map_supported": true,
+            "is_highlight": true,
+            "score": 0.929,
+            "highlight_type": "cliffhanger",
+            "description": "年轻男士在办公室接听电话，得知“少夫人要跟您离婚”后震惊站起",
+            "reason": "符合悬念钩子与叙事变化结构：男士在办公室平静接听电话（铺垫/旧状态）→ 通话中告知“少夫人要跟您离婚”（决定性突发信息）→ 男士拍桌站起且神情震惊凝重，在剧集片尾处形成强悬念钩子（可见反应与高风险悬念）",
+            "confidence": 0.0,
+            "evidence_grounding": 0.95,
+            "narrative_impact": 0.9,
+            "standalone_clarity": 0.92,
+            "clipability": 0.95,
+            "start_sec": 142.0,
+            "end_sec": 153.83,
+            "evidence": [
+              "[F01 142.0s] 男士在办公桌前看手机",
+              "[F03 145.0s OCR] 男士接通电话并说“喂”",
+              "[F05 148.0s OCR] 电话传来“少夫人要跟您离婚”",
+              "[F06 149.0s] 男士拍桌站起",
+              "[F07-F08 151.0-153.0s] 男士手持电话神情震惊错愕"
+            ],
+            "setup_evidence_times_sec": [
+              142.0,
+              145.0
+            ],
+            "decisive_evidence_times_sec": [
+              148.0
+            ],
+            "reaction_evidence_times_sec": [
+              149.0,
+              151.0,
+              153.0
+            ],
+            "counter_evidence": [],
+            "continue_previous_scene": false
+          },
+          {
+            "map_supported": true,
+            "is_highlight": true,
+            "score": 0.9,
+            "highlight_type": "cliffhanger",
+            "description": "男士在办公室接听电话，突闻“少夫人要跟您离婚”的消息后神情震惊",
+            "reason": "符合悬念钩子与叙事变化结构：男士平静接听电话铺垫常态，通话中突发揭示‘少夫人要跟您离婚’的关键信息，男士随即呈现震惊反应并留下高风险关系悬念",
+            "confidence": 0.0,
+            "evidence_grounding": 0.95,
+            "narrative_impact": 0.85,
+            "standalone_clarity": 0.88,
+            "clipability": 0.92,
+            "start_sec": 142.0,
+            "end_sec": 153.83,
+            "evidence": [
+              "[F01 142.0s] 男士在办公桌前查看手机处理事务",
+              "[F03 145.0s OCR] 喂",
+              "[F05 148.0s OCR] 少夫人要跟您离婚",
+              "[F07 151.0s] 男士接听后神情震惊与困惑",
+              "[F08 153.0s] 男士神情凝重"
+            ],
+            "setup_evidence_times_sec": [
+              142.0,
+              145.0
+            ],
+            "decisive_evidence_times_sec": [
+              148.0
+            ],
+            "reaction_evidence_times_sec": [
+              151.0,
+              153.0
+            ],
+            "counter_evidence": [],
+            "continue_previous_scene": false
+          }
+        ]
+      }
+    ],
+    "ranking": {
+      "ranked_highlight_ids": [
+        "hl_1d480ce0974c"
+      ],
+      "selected_highlight_ids": [
+        "hl_1d480ce0974c"
+      ],
+      "rationale": "verified highlights within output budget"
+    }
+  },
+  "stats": {
+    "sampled_frames": 154,
+    "detected_scenes": 53,
+    "transcript_segments": 76,
+    "ocr_segments": 32,
+    "audio_events": 12,
+    "local_candidate_windows": 8,
+    "scene_map_calls": 9,
+    "judge_calls": 19,
+    "listwise_calls": 0
+  },
+  "notes": []
+}

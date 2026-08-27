@@ -1,0 +1,5066 @@
+{
+  "pipeline_version": "0.21.0",
+  "preprocess": {
+    "video": {
+      "path": "/data1/my_short_drama/zh/盛夏来信/(洋洋放映官)P20_第20集_#盛夏来信【火爆新剧重磅来袭，免费观看全集，评论区链接自取】_480P.mp4",
+      "duration_sec": 122.12,
+      "width": 480,
+      "height": 852,
+      "fps": 25.0,
+      "has_audio": true,
+      "title": "盛夏来信",
+      "language": "zh"
+    },
+    "scenes": [
+      {
+        "start_sec": 0.0,
+        "end_sec": 1.72
+      },
+      {
+        "start_sec": 1.72,
+        "end_sec": 3.72
+      },
+      {
+        "start_sec": 3.72,
+        "end_sec": 5.0
+      },
+      {
+        "start_sec": 5.0,
+        "end_sec": 6.44
+      },
+      {
+        "start_sec": 6.44,
+        "end_sec": 8.28
+      },
+      {
+        "start_sec": 8.28,
+        "end_sec": 11.44
+      },
+      {
+        "start_sec": 11.44,
+        "end_sec": 12.68
+      },
+      {
+        "start_sec": 12.68,
+        "end_sec": 14.16
+      },
+      {
+        "start_sec": 14.16,
+        "end_sec": 15.36
+      },
+      {
+        "start_sec": 15.36,
+        "end_sec": 17.48
+      },
+      {
+        "start_sec": 17.48,
+        "end_sec": 18.84
+      },
+      {
+        "start_sec": 18.84,
+        "end_sec": 21.52
+      },
+      {
+        "start_sec": 21.52,
+        "end_sec": 23.0
+      },
+      {
+        "start_sec": 23.0,
+        "end_sec": 24.64
+      },
+      {
+        "start_sec": 24.64,
+        "end_sec": 26.0
+      },
+      {
+        "start_sec": 26.0,
+        "end_sec": 27.52
+      },
+      {
+        "start_sec": 27.52,
+        "end_sec": 30.72
+      },
+      {
+        "start_sec": 30.72,
+        "end_sec": 33.4
+      },
+      {
+        "start_sec": 33.4,
+        "end_sec": 36.36
+      },
+      {
+        "start_sec": 36.36,
+        "end_sec": 37.64
+      },
+      {
+        "start_sec": 37.64,
+        "end_sec": 39.08
+      },
+      {
+        "start_sec": 39.08,
+        "end_sec": 39.8
+      },
+      {
+        "start_sec": 39.8,
+        "end_sec": 41.68
+      },
+      {
+        "start_sec": 41.68,
+        "end_sec": 43.44
+      },
+      {
+        "start_sec": 43.44,
+        "end_sec": 45.44
+      },
+      {
+        "start_sec": 45.44,
+        "end_sec": 46.92
+      },
+      {
+        "start_sec": 46.92,
+        "end_sec": 47.48
+      },
+      {
+        "start_sec": 47.48,
+        "end_sec": 50.64
+      },
+      {
+        "start_sec": 50.64,
+        "end_sec": 53.32
+      },
+      {
+        "start_sec": 53.32,
+        "end_sec": 55.6
+      },
+      {
+        "start_sec": 55.6,
+        "end_sec": 59.52
+      },
+      {
+        "start_sec": 59.52,
+        "end_sec": 61.72
+      },
+      {
+        "start_sec": 61.72,
+        "end_sec": 63.4
+      },
+      {
+        "start_sec": 63.4,
+        "end_sec": 65.0
+      },
+      {
+        "start_sec": 65.0,
+        "end_sec": 65.6
+      },
+      {
+        "start_sec": 65.6,
+        "end_sec": 68.52
+      },
+      {
+        "start_sec": 68.52,
+        "end_sec": 70.4
+      },
+      {
+        "start_sec": 70.4,
+        "end_sec": 72.88
+      },
+      {
+        "start_sec": 72.88,
+        "end_sec": 74.16
+      },
+      {
+        "start_sec": 74.16,
+        "end_sec": 75.12
+      },
+      {
+        "start_sec": 75.12,
+        "end_sec": 76.16
+      },
+      {
+        "start_sec": 76.16,
+        "end_sec": 77.48
+      },
+      {
+        "start_sec": 77.48,
+        "end_sec": 80.24
+      },
+      {
+        "start_sec": 80.24,
+        "end_sec": 83.36
+      },
+      {
+        "start_sec": 83.36,
+        "end_sec": 86.16
+      },
+      {
+        "start_sec": 86.16,
+        "end_sec": 88.64
+      },
+      {
+        "start_sec": 88.64,
+        "end_sec": 92.04
+      },
+      {
+        "start_sec": 92.04,
+        "end_sec": 93.4
+      },
+      {
+        "start_sec": 93.4,
+        "end_sec": 95.2
+      },
+      {
+        "start_sec": 95.2,
+        "end_sec": 96.48
+      },
+      {
+        "start_sec": 96.48,
+        "end_sec": 98.16
+      },
+      {
+        "start_sec": 98.16,
+        "end_sec": 99.16
+      },
+      {
+        "start_sec": 99.16,
+        "end_sec": 100.4
+      },
+      {
+        "start_sec": 100.4,
+        "end_sec": 101.92
+      },
+      {
+        "start_sec": 101.92,
+        "end_sec": 103.52
+      },
+      {
+        "start_sec": 103.52,
+        "end_sec": 105.72
+      },
+      {
+        "start_sec": 105.72,
+        "end_sec": 106.72
+      },
+      {
+        "start_sec": 106.72,
+        "end_sec": 107.84
+      },
+      {
+        "start_sec": 107.84,
+        "end_sec": 109.32
+      },
+      {
+        "start_sec": 109.32,
+        "end_sec": 110.76
+      },
+      {
+        "start_sec": 110.76,
+        "end_sec": 111.72
+      },
+      {
+        "start_sec": 111.72,
+        "end_sec": 114.08
+      },
+      {
+        "start_sec": 114.08,
+        "end_sec": 115.72
+      },
+      {
+        "start_sec": 115.72,
+        "end_sec": 122.12
+      }
+    ],
+    "transcript": [
+      {
+        "start_sec": 0.0,
+        "end_sec": 1.64,
+        "text": "林志夏 我告你",
+        "source": "asr",
+        "confidence": 0.8048006839648406
+      },
+      {
+        "start_sec": 0.0,
+        "end_sec": 1.5,
+        "text": "林知夏",
+        "source": "ocr",
+        "confidence": 0.9999092221260071
+      },
+      {
+        "start_sec": 1.64,
+        "end_sec": 3.6,
+        "text": "赶紧把欠我儿子钱还回来",
+        "source": "asr",
+        "confidence": 0.8048006839648406
+      },
+      {
+        "start_sec": 3.6,
+        "end_sec": 5.12,
+        "text": "今天这事就算了",
+        "source": "asr",
+        "confidence": 0.8048006839648406
+      },
+      {
+        "start_sec": 5.12,
+        "end_sec": 6.36,
+        "text": "否则我跟你没完",
+        "source": "asr",
+        "confidence": 0.8048006839648406
+      },
+      {
+        "start_sec": 6.36,
+        "end_sec": 7.08,
+        "text": "没完",
+        "source": "asr",
+        "confidence": 0.8048006839648406
+      },
+      {
+        "start_sec": 7.08,
+        "end_sec": 8.24,
+        "text": "你们不敢报警",
+        "source": "asr",
+        "confidence": 0.8048006839648406
+      },
+      {
+        "start_sec": 8.24,
+        "end_sec": 10.16,
+        "text": "那是因为你们两个心里清楚",
+        "source": "asr",
+        "confidence": 0.8048006839648406
+      },
+      {
+        "start_sec": 10.0,
+        "end_sec": 11.5,
+        "text": "这卡里的两百万",
+        "source": "ocr",
+        "confidence": 0.9999508857727051
+      },
+      {
+        "start_sec": 10.16,
+        "end_sec": 12.72,
+        "text": "这卡的两百万没有一分是他存的",
+        "source": "asr",
+        "confidence": 0.8048006839648406
+      },
+      {
+        "start_sec": 12.72,
+        "end_sec": 15.12,
+        "text": "我这里有每一笔款的汇款记录",
+        "source": "asr",
+        "confidence": 0.8048006839648406
+      },
+      {
+        "start_sec": 16.08,
+        "end_sec": 17.56,
+        "text": "他 他是谁",
+        "source": "asr",
+        "confidence": 0.8048006839648406
+      },
+      {
+        "start_sec": 17.56,
+        "end_sec": 19.2,
+        "text": "你跟他什么关系啊",
+        "source": "asr",
+        "confidence": 0.8048006839648406
+      },
+      {
+        "start_sec": 19.2,
+        "end_sec": 20.76,
+        "text": "对 和他没关系",
+        "source": "asr",
+        "confidence": 0.8048006839648406
+      },
+      {
+        "start_sec": 20.76,
+        "end_sec": 21.44,
+        "text": "夫妻啊",
+        "source": "asr",
+        "confidence": 0.8048006839648406
+      },
+      {
+        "start_sec": 23.0,
+        "end_sec": 24.5,
+        "text": "7310377-2025-00878063 1012422001/6/58",
+        "source": "ocr",
+        "confidence": 0.8813542723655701
+      },
+      {
+        "start_sec": 24.0,
+        "end_sec": 25.5,
+        "text": "202503月20 J110377-2025-008780631 电午2001年06月1 林知夏 大夏 101242200106158575 110101199907090560",
+        "source": "ocr",
+        "confidence": 0.8594009791101728
+      },
+      {
+        "start_sec": 28.0,
+        "end_sec": 30.5,
+        "text": "他随身带着结婚证",
+        "source": "ocr",
+        "confidence": 0.9998699426651001
+      },
+      {
+        "start_sec": 31.02,
+        "end_sec": 35.2,
+        "text": "那天 那天在民政局",
+        "source": "asr",
+        "confidence": 0.8048006839648406
+      },
+      {
+        "start_sec": 35.0,
+        "end_sec": 36.5,
+        "text": "林知夏",
+        "source": "ocr",
+        "confidence": 0.9999282956123352
+      },
+      {
+        "start_sec": 35.2,
+        "end_sec": 37.96,
+        "text": "林志夏 你出轨啊你",
+        "source": "asr",
+        "confidence": 0.8048006839648406
+      },
+      {
+        "start_sec": 36.0,
+        "end_sec": 37.5,
+        "text": "你出轨啊你啊",
+        "source": "ocr",
+        "confidence": 0.9999222755432129
+      },
+      {
+        "start_sec": 37.96,
+        "end_sec": 40.2,
+        "text": "说你个头骨一样出轨出轨的",
+        "source": "asr",
+        "confidence": 0.7859509353602856
+      },
+      {
+        "start_sec": 38.0,
+        "end_sec": 39.5,
+        "text": "出你个头鬼呀",
+        "source": "ocr",
+        "confidence": 0.9999328255653381
+      },
+      {
+        "start_sec": 40.2,
+        "end_sec": 41.2,
+        "text": "自己出轨你",
+        "source": "asr",
+        "confidence": 0.7859509353602856
+      },
+      {
+        "start_sec": 41.2,
+        "end_sec": 42.72,
+        "text": "还倒打一耙你",
+        "source": "asr",
+        "confidence": 0.7859509353602856
+      },
+      {
+        "start_sec": 42.72,
+        "end_sec": 49.93,
+        "text": "好好",
+        "source": "asr",
+        "confidence": 0.7859509353602856
+      },
+      {
+        "start_sec": 49.0,
+        "end_sec": 50.5,
+        "text": "好好好",
+        "source": "ocr",
+        "confidence": 0.999993085861206
+      },
+      {
+        "start_sec": 49.93,
+        "end_sec": 51.37,
+        "text": "你不认",
+        "source": "asr",
+        "confidence": 0.7859509353602856
+      },
+      {
+        "start_sec": 51.37,
+        "end_sec": 52.33,
+        "text": "别怪我不义",
+        "source": "asr",
+        "confidence": 0.7859509353602856
+      },
+      {
+        "start_sec": 52.33,
+        "end_sec": 53.67,
+        "text": "你们",
+        "source": "asr",
+        "confidence": 0.7859509353602856
+      },
+      {
+        "start_sec": 53.67,
+        "end_sec": 55.49,
+        "text": "冒充深河集团总裁",
+        "source": "asr",
+        "confidence": 0.7859509353602856
+      },
+      {
+        "start_sec": 54.0,
+        "end_sec": 55.5,
+        "text": "冒充申和集团总裁",
+        "source": "ocr",
+        "confidence": 0.9998108148574829
+      },
+      {
+        "start_sec": 55.49,
+        "end_sec": 56.53,
+        "text": "骗我签合同",
+        "source": "asr",
+        "confidence": 0.7859509353602856
+      },
+      {
+        "start_sec": 56.53,
+        "end_sec": 59.47,
+        "text": "知道深河集团总裁是什么人吗",
+        "source": "asr",
+        "confidence": 0.7859509353602856
+      },
+      {
+        "start_sec": 58.0,
+        "end_sec": 59.5,
+        "text": "申和集团总裁",
+        "source": "ocr",
+        "confidence": 0.9999651908874512
+      },
+      {
+        "start_sec": 59.47,
+        "end_sec": 60.17,
+        "text": "他最烦",
+        "source": "asr",
+        "confidence": 0.7859509353602856
+      },
+      {
+        "start_sec": 60.17,
+        "end_sec": 61.53,
+        "text": "有人打着他的名义",
+        "source": "asr",
+        "confidence": 0.7859509353602856
+      },
+      {
+        "start_sec": 61.53,
+        "end_sec": 62.73,
+        "text": "在这招摇撞骗了",
+        "source": "asr",
+        "confidence": 0.7859509353602856
+      },
+      {
+        "start_sec": 62.73,
+        "end_sec": 64.37,
+        "text": "一旦让他知道",
+        "source": "asr",
+        "confidence": 0.7859509353602856
+      },
+      {
+        "start_sec": 64.37,
+        "end_sec": 65.45,
+        "text": "他杀伐果断",
+        "source": "asr",
+        "confidence": 0.7859509353602856
+      },
+      {
+        "start_sec": 65.45,
+        "end_sec": 66.21,
+        "text": "绝不留情",
+        "source": "asr",
+        "confidence": 0.7859509353602856
+      },
+      {
+        "start_sec": 66.21,
+        "end_sec": 67.71,
+        "text": "你说",
+        "source": "asr",
+        "confidence": 0.7859509353602856
+      },
+      {
+        "start_sec": 67.71,
+        "end_sec": 70.03,
+        "text": "如果我告诉他了",
+        "source": "asr",
+        "confidence": 0.7859509353602856
+      },
+      {
+        "start_sec": 70.03,
+        "end_sec": 70.77,
+        "text": "你们",
+        "source": "asr",
+        "confidence": 0.7859509353602856
+      },
+      {
+        "start_sec": 70.77,
+        "end_sec": 72.25,
+        "text": "会有什么下场",
+        "source": "asr",
+        "confidence": 0.7859509353602856
+      },
+      {
+        "start_sec": 71.0,
+        "end_sec": 72.5,
+        "text": "会有什么下场啊",
+        "source": "ocr",
+        "confidence": 0.9999595284461975
+      },
+      {
+        "start_sec": 72.25,
+        "end_sec": 72.75,
+        "text": "啊",
+        "source": "asr",
+        "confidence": 0.56157162157672
+      },
+      {
+        "start_sec": 72.75,
+        "end_sec": 74.09,
+        "text": "你用不要脸",
+        "source": "asr",
+        "confidence": 0.56157162157672
+      },
+      {
+        "start_sec": 73.0,
+        "end_sec": 74.5,
+        "text": "你要不要脸",
+        "source": "ocr",
+        "confidence": 0.9999566078186035
+      },
+      {
+        "start_sec": 74.0,
+        "end_sec": 75.5,
+        "text": "要不要脸",
+        "source": "ocr",
+        "confidence": 0.999862015247345
+      },
+      {
+        "start_sec": 74.09,
+        "end_sec": 74.61,
+        "text": "用不要脸",
+        "source": "asr",
+        "confidence": 0.56157162157672
+      },
+      {
+        "start_sec": 74.61,
+        "end_sec": 75.39,
+        "text": "用不要脸",
+        "source": "asr",
+        "confidence": 0.56157162157672
+      },
+      {
+        "start_sec": 75.0,
+        "end_sec": 76.5,
+        "text": "要不要脸啊你",
+        "source": "ocr",
+        "confidence": 0.9998903870582581
+      },
+      {
+        "start_sec": 75.39,
+        "end_sec": 79.19,
+        "text": "你都别踹他",
+        "source": "asr",
+        "confidence": 0.56157162157672
+      },
+      {
+        "start_sec": 79.19,
+        "end_sec": 81.84,
+        "text": "怎么不出来了",
+        "source": "asr",
+        "confidence": 0.56157162157672
+      },
+      {
+        "start_sec": 80.0,
+        "end_sec": 81.5,
+        "text": "哎呀",
+        "source": "ocr",
+        "confidence": 0.9991869926452637
+      },
+      {
+        "start_sec": 81.0,
+        "end_sec": 82.5,
+        "text": "你怎么出来了",
+        "source": "ocr",
+        "confidence": 0.999973714351654
+      },
+      {
+        "start_sec": 81.84,
+        "end_sec": 82.52,
+        "text": "老公",
+        "source": "asr",
+        "confidence": 0.56157162157672
+      },
+      {
+        "start_sec": 82.0,
+        "end_sec": 83.5,
+        "text": "外公",
+        "source": "ocr",
+        "confidence": 0.9999765157699585
+      },
+      {
+        "start_sec": 82.52,
+        "end_sec": 89.73,
+        "text": "你想干嘛",
+        "source": "asr",
+        "confidence": 0.56157162157672
+      },
+      {
+        "start_sec": 83.0,
+        "end_sec": 84.5,
+        "text": "m",
+        "source": "ocr",
+        "confidence": 0.8108213543891907
+      },
+      {
+        "start_sec": 89.73,
+        "end_sec": 108.83,
+        "text": "我要报警",
+        "source": "asr",
+        "confidence": 0.56157162157672
+      },
+      {
+        "start_sec": 102.0,
+        "end_sec": 103.5,
+        "text": "你要干什么",
+        "source": "ocr",
+        "confidence": 0.9995201230049133
+      },
+      {
+        "start_sec": 106.0,
+        "end_sec": 107.5,
+        "text": "夏夏",
+        "source": "ocr",
+        "confidence": 0.9999873638153076
+      },
+      {
+        "start_sec": 108.0,
+        "end_sec": 109.5,
+        "text": "打电话报警",
+        "source": "ocr",
+        "confidence": 0.9999815225601196
+      },
+      {
+        "start_sec": 108.83,
+        "end_sec": 110.01,
+        "text": "我外公",
+        "source": "asr",
+        "confidence": 0.56157162157672
+      },
+      {
+        "start_sec": 109.0,
+        "end_sec": 112.5,
+        "text": "外公被徐嘉明给打了",
+        "source": "ocr",
+        "confidence": 0.9999305009841919
+      },
+      {
+        "start_sec": 110.01,
+        "end_sec": 110.61,
+        "text": "分心",
+        "source": "asr",
+        "confidence": 0.56157162157672
+      },
+      {
+        "start_sec": 110.61,
+        "end_sec": 115.29,
+        "text": "他没有给你打一句",
+        "source": "asr",
+        "confidence": 0.56157162157672
+      },
+      {
+        "start_sec": 112.0,
+        "end_sec": 113.5,
+        "text": "哎呦",
+        "source": "ocr",
+        "confidence": 0.9990241527557373
+      },
+      {
+        "start_sec": 113.0,
+        "end_sec": 114.5,
+        "text": "1",
+        "source": "ocr",
+        "confidence": 0.8703323602676392
+      },
+      {
+        "start_sec": 115.29,
+        "end_sec": 115.45,
+        "text": "报警了",
+        "source": "asr",
+        "confidence": 0.56157162157672
+      },
+      {
+        "start_sec": 116.0,
+        "end_sec": 117.5,
+        "text": "果然",
+        "source": "ocr",
+        "confidence": 0.9999672770500183
+      },
+      {
+        "start_sec": 117.0,
+        "end_sec": 118.5,
+        "text": "姜",
+        "source": "ocr",
+        "confidence": 0.9999126195907593
+      },
+      {
+        "start_sec": 118.0,
+        "end_sec": 119.5,
+        "text": "还是老的辣",
+        "source": "ocr",
+        "confidence": 0.9998576045036316
+      }
+    ],
+    "audio_events": [
+      {
+        "start_sec": 0.0,
+        "end_sec": 23.41,
+        "emotion": "happy",
+        "event": "bgm",
+        "confidence": null
+      },
+      {
+        "start_sec": 23.41,
+        "end_sec": 27.28,
+        "emotion": "happy",
+        "event": "bgm",
+        "confidence": null
+      },
+      {
+        "start_sec": 27.28,
+        "end_sec": 43.09,
+        "emotion": "happy",
+        "event": "bgm",
+        "confidence": null
+      },
+      {
+        "start_sec": 43.09,
+        "end_sec": 49.09,
+        "emotion": "happy",
+        "event": "bgm",
+        "confidence": null
+      },
+      {
+        "start_sec": 49.09,
+        "end_sec": 62.97,
+        "emotion": "happy",
+        "event": "bgm",
+        "confidence": null
+      },
+      {
+        "start_sec": 62.97,
+        "end_sec": 74.22,
+        "emotion": "happy",
+        "event": "bgm",
+        "confidence": null
+      },
+      {
+        "start_sec": 74.22,
+        "end_sec": 88.99,
+        "emotion": "happy",
+        "event": "bgm",
+        "confidence": null
+      },
+      {
+        "start_sec": 88.99,
+        "end_sec": 103.89,
+        "emotion": "happy",
+        "event": "bgm",
+        "confidence": null
+      },
+      {
+        "start_sec": 103.89,
+        "end_sec": 118.21,
+        "emotion": "happy",
+        "event": "bgm",
+        "confidence": null
+      },
+      {
+        "start_sec": 118.21,
+        "end_sec": 118.96,
+        "emotion": "happy",
+        "event": "bgm",
+        "confidence": null
+      }
+    ],
+    "frame_samples": [
+      {
+        "timestamp_sec": 0.0,
+        "path": "/data1/video-highlight-cache/dc6156d7dbc42d90/frames/frame_000001.jpg",
+        "change_score": 0.0,
+        "semantic_change_score": 0.0
+      },
+      {
+        "timestamp_sec": 1.0,
+        "path": "/data1/video-highlight-cache/dc6156d7dbc42d90/frames/frame_000002.jpg",
+        "change_score": 0.10420017689466476,
+        "semantic_change_score": 0.0
+      },
+      {
+        "timestamp_sec": 2.0,
+        "path": "/data1/video-highlight-cache/dc6156d7dbc42d90/frames/frame_000003.jpg",
+        "change_score": 0.4203526973724365,
+        "semantic_change_score": 0.0
+      },
+      {
+        "timestamp_sec": 3.0,
+        "path": "/data1/video-highlight-cache/dc6156d7dbc42d90/frames/frame_000004.jpg",
+        "change_score": 0.06998123228549957,
+        "semantic_change_score": 0.36869827544629746
+      },
+      {
+        "timestamp_sec": 4.0,
+        "path": "/data1/video-highlight-cache/dc6156d7dbc42d90/frames/frame_000005.jpg",
+        "change_score": 0.27115023136138916,
+        "semantic_change_score": 0.42857141576487384
+      },
+      {
+        "timestamp_sec": 5.0,
+        "path": "/data1/video-highlight-cache/dc6156d7dbc42d90/frames/frame_000006.jpg",
+        "change_score": 0.2931114137172699,
+        "semantic_change_score": 0.21890448787010522
+      },
+      {
+        "timestamp_sec": 6.0,
+        "path": "/data1/video-highlight-cache/dc6156d7dbc42d90/frames/frame_000007.jpg",
+        "change_score": 0.23749329149723053,
+        "semantic_change_score": 0.5846964438016236
+      },
+      {
+        "timestamp_sec": 7.0,
+        "path": "/data1/video-highlight-cache/dc6156d7dbc42d90/frames/frame_000008.jpg",
+        "change_score": 0.13253293931484222,
+        "semantic_change_score": 0.9055094745836888
+      },
+      {
+        "timestamp_sec": 8.0,
+        "path": "/data1/video-highlight-cache/dc6156d7dbc42d90/frames/frame_000009.jpg",
+        "change_score": 0.3150409758090973,
+        "semantic_change_score": 1.0
+      },
+      {
+        "timestamp_sec": 9.0,
+        "path": "/data1/video-highlight-cache/dc6156d7dbc42d90/frames/frame_000010.jpg",
+        "change_score": 0.11874042451381683,
+        "semantic_change_score": 0.5302276055172378
+      },
+      {
+        "timestamp_sec": 10.0,
+        "path": "/data1/video-highlight-cache/dc6156d7dbc42d90/frames/frame_000011.jpg",
+        "change_score": 0.14430435001850128,
+        "semantic_change_score": 0.5273293541318952
+      },
+      {
+        "timestamp_sec": 11.0,
+        "path": "/data1/video-highlight-cache/dc6156d7dbc42d90/frames/frame_000012.jpg",
+        "change_score": 0.34799709916114807,
+        "semantic_change_score": 0.9884552239434827
+      },
+      {
+        "timestamp_sec": 12.0,
+        "path": "/data1/video-highlight-cache/dc6156d7dbc42d90/frames/frame_000013.jpg",
+        "change_score": 0.09765337407588959,
+        "semantic_change_score": 0.0
+      },
+      {
+        "timestamp_sec": 13.0,
+        "path": "/data1/video-highlight-cache/dc6156d7dbc42d90/frames/frame_000014.jpg",
+        "change_score": 0.3403684198856354,
+        "semantic_change_score": 0.0
+      },
+      {
+        "timestamp_sec": 14.0,
+        "path": "/data1/video-highlight-cache/dc6156d7dbc42d90/frames/frame_000015.jpg",
+        "change_score": 0.1589767187833786,
+        "semantic_change_score": 0.0
+      },
+      {
+        "timestamp_sec": 15.0,
+        "path": "/data1/video-highlight-cache/dc6156d7dbc42d90/frames/frame_000016.jpg",
+        "change_score": 0.26518553495407104,
+        "semantic_change_score": 0.0
+      },
+      {
+        "timestamp_sec": 16.0,
+        "path": "/data1/video-highlight-cache/dc6156d7dbc42d90/frames/frame_000017.jpg",
+        "change_score": 0.15651138126850128,
+        "semantic_change_score": 0.05887851925082576
+      },
+      {
+        "timestamp_sec": 17.0,
+        "path": "/data1/video-highlight-cache/dc6156d7dbc42d90/frames/frame_000018.jpg",
+        "change_score": 0.3216356337070465,
+        "semantic_change_score": 1.0
+      },
+      {
+        "timestamp_sec": 18.0,
+        "path": "/data1/video-highlight-cache/dc6156d7dbc42d90/frames/frame_000019.jpg",
+        "change_score": 0.07816234230995178,
+        "semantic_change_score": 0.0
+      },
+      {
+        "timestamp_sec": 19.0,
+        "path": "/data1/video-highlight-cache/dc6156d7dbc42d90/frames/frame_000020.jpg",
+        "change_score": 0.27774778008461,
+        "semantic_change_score": 0.3021846163720992
+      },
+      {
+        "timestamp_sec": 20.0,
+        "path": "/data1/video-highlight-cache/dc6156d7dbc42d90/frames/frame_000021.jpg",
+        "change_score": 0.18351620435714722,
+        "semantic_change_score": 0.5575095369772232
+      },
+      {
+        "timestamp_sec": 21.0,
+        "path": "/data1/video-highlight-cache/dc6156d7dbc42d90/frames/frame_000022.jpg",
+        "change_score": 0.09718137234449387,
+        "semantic_change_score": 0.9754579156507546
+      },
+      {
+        "timestamp_sec": 22.0,
+        "path": "/data1/video-highlight-cache/dc6156d7dbc42d90/frames/frame_000023.jpg",
+        "change_score": 0.32065334916114807,
+        "semantic_change_score": 0.36906537533565653
+      },
+      {
+        "timestamp_sec": 23.0,
+        "path": "/data1/video-highlight-cache/dc6156d7dbc42d90/frames/frame_000024.jpg",
+        "change_score": 0.39995309710502625,
+        "semantic_change_score": 1.0
+      },
+      {
+        "timestamp_sec": 24.0,
+        "path": "/data1/video-highlight-cache/dc6156d7dbc42d90/frames/frame_000025.jpg",
+        "change_score": 0.07671664655208588,
+        "semantic_change_score": 1.0
+      },
+      {
+        "timestamp_sec": 25.0,
+        "path": "/data1/video-highlight-cache/dc6156d7dbc42d90/frames/frame_000026.jpg",
+        "change_score": 0.36298635601997375,
+        "semantic_change_score": 0.7109828398058556
+      },
+      {
+        "timestamp_sec": 26.0,
+        "path": "/data1/video-highlight-cache/dc6156d7dbc42d90/frames/frame_000027.jpg",
+        "change_score": 0.3049555718898773,
+        "semantic_change_score": 1.0
+      },
+      {
+        "timestamp_sec": 27.0,
+        "path": "/data1/video-highlight-cache/dc6156d7dbc42d90/frames/frame_000028.jpg",
+        "change_score": 0.03895910084247589,
+        "semantic_change_score": 1.0
+      },
+      {
+        "timestamp_sec": 28.0,
+        "path": "/data1/video-highlight-cache/dc6156d7dbc42d90/frames/frame_000029.jpg",
+        "change_score": 0.20532897114753723,
+        "semantic_change_score": 1.0
+      },
+      {
+        "timestamp_sec": 29.0,
+        "path": "/data1/video-highlight-cache/dc6156d7dbc42d90/frames/frame_000030.jpg",
+        "change_score": 0.12383674085140228,
+        "semantic_change_score": 1.0
+      },
+      {
+        "timestamp_sec": 30.0,
+        "path": "/data1/video-highlight-cache/dc6156d7dbc42d90/frames/frame_000031.jpg",
+        "change_score": 0.10238204896450043,
+        "semantic_change_score": 0.244972165849903
+      },
+      {
+        "timestamp_sec": 31.0,
+        "path": "/data1/video-highlight-cache/dc6156d7dbc42d90/frames/frame_000032.jpg",
+        "change_score": 0.21843597292900085,
+        "semantic_change_score": 0.0
+      },
+      {
+        "timestamp_sec": 32.0,
+        "path": "/data1/video-highlight-cache/dc6156d7dbc42d90/frames/frame_000033.jpg",
+        "change_score": 0.018667662516236305,
+        "semantic_change_score": 0.0
+      },
+      {
+        "timestamp_sec": 33.0,
+        "path": "/data1/video-highlight-cache/dc6156d7dbc42d90/frames/frame_000034.jpg",
+        "change_score": 0.3854788839817047,
+        "semantic_change_score": 0.0
+      },
+      {
+        "timestamp_sec": 34.0,
+        "path": "/data1/video-highlight-cache/dc6156d7dbc42d90/frames/frame_000035.jpg",
+        "change_score": 0.05089518055319786,
+        "semantic_change_score": 0.44128813244497844
+      },
+      {
+        "timestamp_sec": 35.0,
+        "path": "/data1/video-highlight-cache/dc6156d7dbc42d90/frames/frame_000036.jpg",
+        "change_score": 0.11335305869579315,
+        "semantic_change_score": 0.418366576715988
+      },
+      {
+        "timestamp_sec": 36.0,
+        "path": "/data1/video-highlight-cache/dc6156d7dbc42d90/frames/frame_000037.jpg",
+        "change_score": 0.22006261348724365,
+        "semantic_change_score": 0.0
+      },
+      {
+        "timestamp_sec": 37.0,
+        "path": "/data1/video-highlight-cache/dc6156d7dbc42d90/frames/frame_000038.jpg",
+        "change_score": 0.08173349499702454,
+        "semantic_change_score": 0.0
+      },
+      {
+        "timestamp_sec": 38.0,
+        "path": "/data1/video-highlight-cache/dc6156d7dbc42d90/frames/frame_000039.jpg",
+        "change_score": 0.34647002816200256,
+        "semantic_change_score": 0.0
+      },
+      {
+        "timestamp_sec": 39.0,
+        "path": "/data1/video-highlight-cache/dc6156d7dbc42d90/frames/frame_000040.jpg",
+        "change_score": 0.3064520061016083,
+        "semantic_change_score": 0.0
+      },
+      {
+        "timestamp_sec": 40.0,
+        "path": "/data1/video-highlight-cache/dc6156d7dbc42d90/frames/frame_000041.jpg",
+        "change_score": 0.27696654200553894,
+        "semantic_change_score": 0.6421334572598014
+      },
+      {
+        "timestamp_sec": 41.0,
+        "path": "/data1/video-highlight-cache/dc6156d7dbc42d90/frames/frame_000042.jpg",
+        "change_score": 0.006962316110730171,
+        "semantic_change_score": 0.49336252920438733
+      },
+      {
+        "timestamp_sec": 42.0,
+        "path": "/data1/video-highlight-cache/dc6156d7dbc42d90/frames/frame_000043.jpg",
+        "change_score": 0.2389514446258545,
+        "semantic_change_score": 0.4313127868556186
+      },
+      {
+        "timestamp_sec": 43.0,
+        "path": "/data1/video-highlight-cache/dc6156d7dbc42d90/frames/frame_000044.jpg",
+        "change_score": 0.32139819860458374,
+        "semantic_change_score": 0.7878098094469188
+      },
+      {
+        "timestamp_sec": 44.0,
+        "path": "/data1/video-highlight-cache/dc6156d7dbc42d90/frames/frame_000045.jpg",
+        "change_score": 0.2345195710659027,
+        "semantic_change_score": 0.5153723863070575
+      },
+      {
+        "timestamp_sec": 45.0,
+        "path": "/data1/video-highlight-cache/dc6156d7dbc42d90/frames/frame_000046.jpg",
+        "change_score": 0.32868507504463196,
+        "semantic_change_score": 0.9960648146903065
+      },
+      {
+        "timestamp_sec": 46.0,
+        "path": "/data1/video-highlight-cache/dc6156d7dbc42d90/frames/frame_000047.jpg",
+        "change_score": 0.05526481941342354,
+        "semantic_change_score": 1.0
+      },
+      {
+        "timestamp_sec": 47.0,
+        "path": "/data1/video-highlight-cache/dc6156d7dbc42d90/frames/frame_000048.jpg",
+        "change_score": 0.3411716818809509,
+        "semantic_change_score": 0.5694539543784931
+      },
+      {
+        "timestamp_sec": 48.0,
+        "path": "/data1/video-highlight-cache/dc6156d7dbc42d90/frames/frame_000049.jpg",
+        "change_score": 0.12315889447927475,
+        "semantic_change_score": 0.40987890454882925
+      },
+      {
+        "timestamp_sec": 49.0,
+        "path": "/data1/video-highlight-cache/dc6156d7dbc42d90/frames/frame_000050.jpg",
+        "change_score": 0.17929495871067047,
+        "semantic_change_score": 0.7494951592119838
+      },
+      {
+        "timestamp_sec": 50.0,
+        "path": "/data1/video-highlight-cache/dc6156d7dbc42d90/frames/frame_000051.jpg",
+        "change_score": 0.08494944870471954,
+        "semantic_change_score": 0.0
+      },
+      {
+        "timestamp_sec": 51.0,
+        "path": "/data1/video-highlight-cache/dc6156d7dbc42d90/frames/frame_000052.jpg",
+        "change_score": 0.3294883668422699,
+        "semantic_change_score": 0.7680209290863416
+      },
+      {
+        "timestamp_sec": 52.0,
+        "path": "/data1/video-highlight-cache/dc6156d7dbc42d90/frames/frame_000053.jpg",
+        "change_score": 0.055288754403591156,
+        "semantic_change_score": 0.30019044371305353
+      },
+      {
+        "timestamp_sec": 53.0,
+        "path": "/data1/video-highlight-cache/dc6156d7dbc42d90/frames/frame_000054.jpg",
+        "change_score": 0.454833984375,
+        "semantic_change_score": 1.0
+      },
+      {
+        "timestamp_sec": 54.0,
+        "path": "/data1/video-highlight-cache/dc6156d7dbc42d90/frames/frame_000055.jpg",
+        "change_score": 0.03431564196944237,
+        "semantic_change_score": 0.8716502247153338
+      },
+      {
+        "timestamp_sec": 55.0,
+        "path": "/data1/video-highlight-cache/dc6156d7dbc42d90/frames/frame_000056.jpg",
+        "change_score": 0.05967945605516434,
+        "semantic_change_score": 1.0
+      },
+      {
+        "timestamp_sec": 56.0,
+        "path": "/data1/video-highlight-cache/dc6156d7dbc42d90/frames/frame_000057.jpg",
+        "change_score": 0.36178097128868103,
+        "semantic_change_score": 0.0
+      },
+      {
+        "timestamp_sec": 57.0,
+        "path": "/data1/video-highlight-cache/dc6156d7dbc42d90/frames/frame_000058.jpg",
+        "change_score": 0.11487055569887161,
+        "semantic_change_score": 0.0
+      },
+      {
+        "timestamp_sec": 58.0,
+        "path": "/data1/video-highlight-cache/dc6156d7dbc42d90/frames/frame_000059.jpg",
+        "change_score": 0.06436887383460999,
+        "semantic_change_score": 0.0
+      },
+      {
+        "timestamp_sec": 59.0,
+        "path": "/data1/video-highlight-cache/dc6156d7dbc42d90/frames/frame_000060.jpg",
+        "change_score": 0.07766544073820114,
+        "semantic_change_score": 0.0
+      },
+      {
+        "timestamp_sec": 60.0,
+        "path": "/data1/video-highlight-cache/dc6156d7dbc42d90/frames/frame_000061.jpg",
+        "change_score": 0.277675986289978,
+        "semantic_change_score": 0.0
+      },
+      {
+        "timestamp_sec": 61.0,
+        "path": "/data1/video-highlight-cache/dc6156d7dbc42d90/frames/frame_000062.jpg",
+        "change_score": 0.08907973021268845,
+        "semantic_change_score": 0.0
+      },
+      {
+        "timestamp_sec": 62.0,
+        "path": "/data1/video-highlight-cache/dc6156d7dbc42d90/frames/frame_000063.jpg",
+        "change_score": 0.28729990124702454,
+        "semantic_change_score": 0.35646788767944637
+      },
+      {
+        "timestamp_sec": 63.0,
+        "path": "/data1/video-highlight-cache/dc6156d7dbc42d90/frames/frame_000064.jpg",
+        "change_score": 0.33214038610458374,
+        "semantic_change_score": 0.3469214976384585
+      },
+      {
+        "timestamp_sec": 64.0,
+        "path": "/data1/video-highlight-cache/dc6156d7dbc42d90/frames/frame_000065.jpg",
+        "change_score": 0.04953852668404579,
+        "semantic_change_score": 0.7264023798471752
+      },
+      {
+        "timestamp_sec": 65.0,
+        "path": "/data1/video-highlight-cache/dc6156d7dbc42d90/frames/frame_000066.jpg",
+        "change_score": 0.0413823164999485,
+        "semantic_change_score": 0.3240465577684342
+      },
+      {
+        "timestamp_sec": 66.0,
+        "path": "/data1/video-highlight-cache/dc6156d7dbc42d90/frames/frame_000067.jpg",
+        "change_score": 0.44371744990348816,
+        "semantic_change_score": 0.2946687055726211
+      },
+      {
+        "timestamp_sec": 67.0,
+        "path": "/data1/video-highlight-cache/dc6156d7dbc42d90/frames/frame_000068.jpg",
+        "change_score": 0.05397135391831398,
+        "semantic_change_score": 0.08253875705266568
+      },
+      {
+        "timestamp_sec": 68.0,
+        "path": "/data1/video-highlight-cache/dc6156d7dbc42d90/frames/frame_000069.jpg",
+        "change_score": 0.15440985560417175,
+        "semantic_change_score": 0.19965751687001038
+      },
+      {
+        "timestamp_sec": 69.0,
+        "path": "/data1/video-highlight-cache/dc6156d7dbc42d90/frames/frame_000070.jpg",
+        "change_score": 0.27607038617134094,
+        "semantic_change_score": 0.997514388612391
+      },
+      {
+        "timestamp_sec": 70.0,
+        "path": "/data1/video-highlight-cache/dc6156d7dbc42d90/frames/frame_000071.jpg",
+        "change_score": 0.33985620737075806,
+        "semantic_change_score": 0.046950686337841975
+      },
+      {
+        "timestamp_sec": 71.0,
+        "path": "/data1/video-highlight-cache/dc6156d7dbc42d90/frames/frame_000072.jpg",
+        "change_score": 0.08999023586511612,
+        "semantic_change_score": 0.0
+      },
+      {
+        "timestamp_sec": 72.0,
+        "path": "/data1/video-highlight-cache/dc6156d7dbc42d90/frames/frame_000073.jpg",
+        "change_score": 0.09674766659736633,
+        "semantic_change_score": 0.5654423011309185
+      },
+      {
+        "timestamp_sec": 73.0,
+        "path": "/data1/video-highlight-cache/dc6156d7dbc42d90/frames/frame_000074.jpg",
+        "change_score": 0.300252765417099,
+        "semantic_change_score": 0.30304700976297444
+      },
+      {
+        "timestamp_sec": 74.0,
+        "path": "/data1/video-highlight-cache/dc6156d7dbc42d90/frames/frame_000075.jpg",
+        "change_score": 0.2253820151090622,
+        "semantic_change_score": 0.5991921830224682
+      },
+      {
+        "timestamp_sec": 75.0,
+        "path": "/data1/video-highlight-cache/dc6156d7dbc42d90/frames/frame_000076.jpg",
+        "change_score": 0.3249052166938782,
+        "semantic_change_score": 0.0
+      },
+      {
+        "timestamp_sec": 76.0,
+        "path": "/data1/video-highlight-cache/dc6156d7dbc42d90/frames/frame_000077.jpg",
+        "change_score": 0.28801605105400085,
+        "semantic_change_score": 0.0
+      },
+      {
+        "timestamp_sec": 77.0,
+        "path": "/data1/video-highlight-cache/dc6156d7dbc42d90/frames/frame_000078.jpg",
+        "change_score": 0.256635844707489,
+        "semantic_change_score": 0.1419936993287854
+      },
+      {
+        "timestamp_sec": 78.0,
+        "path": "/data1/video-highlight-cache/dc6156d7dbc42d90/frames/frame_000079.jpg",
+        "change_score": 0.2433249056339264,
+        "semantic_change_score": 0.0021398472183151553
+      },
+      {
+        "timestamp_sec": 79.0,
+        "path": "/data1/video-highlight-cache/dc6156d7dbc42d90/frames/frame_000080.jpg",
+        "change_score": 0.17186063528060913,
+        "semantic_change_score": 0.7751204347610156
+      },
+      {
+        "timestamp_sec": 80.0,
+        "path": "/data1/video-highlight-cache/dc6156d7dbc42d90/frames/frame_000081.jpg",
+        "change_score": 0.21525734663009644,
+        "semantic_change_score": 0.45495823308682504
+      },
+      {
+        "timestamp_sec": 81.0,
+        "path": "/data1/video-highlight-cache/dc6156d7dbc42d90/frames/frame_000082.jpg",
+        "change_score": 0.10218290239572525,
+        "semantic_change_score": 0.0
+      },
+      {
+        "timestamp_sec": 82.0,
+        "path": "/data1/video-highlight-cache/dc6156d7dbc42d90/frames/frame_000083.jpg",
+        "change_score": 0.13394224643707275,
+        "semantic_change_score": 0.0
+      },
+      {
+        "timestamp_sec": 83.0,
+        "path": "/data1/video-highlight-cache/dc6156d7dbc42d90/frames/frame_000084.jpg",
+        "change_score": 0.228759765625,
+        "semantic_change_score": 0.0
+      },
+      {
+        "timestamp_sec": 84.0,
+        "path": "/data1/video-highlight-cache/dc6156d7dbc42d90/frames/frame_000085.jpg",
+        "change_score": 0.0956217423081398,
+        "semantic_change_score": 0.0
+      },
+      {
+        "timestamp_sec": 85.0,
+        "path": "/data1/video-highlight-cache/dc6156d7dbc42d90/frames/frame_000086.jpg",
+        "change_score": 0.1806439608335495,
+        "semantic_change_score": 0.7072952564239791
+      },
+      {
+        "timestamp_sec": 86.0,
+        "path": "/data1/video-highlight-cache/dc6156d7dbc42d90/frames/frame_000087.jpg",
+        "change_score": 0.3006826341152191,
+        "semantic_change_score": 0.3817426478274051
+      },
+      {
+        "timestamp_sec": 87.0,
+        "path": "/data1/video-highlight-cache/dc6156d7dbc42d90/frames/frame_000088.jpg",
+        "change_score": 0.20193971693515778,
+        "semantic_change_score": 0.4310729841195904
+      },
+      {
+        "timestamp_sec": 88.0,
+        "path": "/data1/video-highlight-cache/dc6156d7dbc42d90/frames/frame_000089.jpg",
+        "change_score": 0.15141984820365906,
+        "semantic_change_score": 0.33827066996491795
+      },
+      {
+        "timestamp_sec": 89.0,
+        "path": "/data1/video-highlight-cache/dc6156d7dbc42d90/frames/frame_000090.jpg",
+        "change_score": 0.2932732105255127,
+        "semantic_change_score": 0.39385380657036184
+      },
+      {
+        "timestamp_sec": 90.0,
+        "path": "/data1/video-highlight-cache/dc6156d7dbc42d90/frames/frame_000091.jpg",
+        "change_score": 0.10889820754528046,
+        "semantic_change_score": 0.13523171040220341
+      },
+      {
+        "timestamp_sec": 91.0,
+        "path": "/data1/video-highlight-cache/dc6156d7dbc42d90/frames/frame_000092.jpg",
+        "change_score": 0.09504920989274979,
+        "semantic_change_score": 0.23372205580958205
+      },
+      {
+        "timestamp_sec": 92.0,
+        "path": "/data1/video-highlight-cache/dc6156d7dbc42d90/frames/frame_000093.jpg",
+        "change_score": 0.2976323068141937,
+        "semantic_change_score": 0.08564677980335636
+      },
+      {
+        "timestamp_sec": 93.0,
+        "path": "/data1/video-highlight-cache/dc6156d7dbc42d90/frames/frame_000094.jpg",
+        "change_score": 0.2819048762321472,
+        "semantic_change_score": 0.0
+      },
+      {
+        "timestamp_sec": 94.0,
+        "path": "/data1/video-highlight-cache/dc6156d7dbc42d90/frames/frame_000095.jpg",
+        "change_score": 0.11101696640253067,
+        "semantic_change_score": 0.0
+      },
+      {
+        "timestamp_sec": 95.0,
+        "path": "/data1/video-highlight-cache/dc6156d7dbc42d90/frames/frame_000096.jpg",
+        "change_score": 0.17353132367134094,
+        "semantic_change_score": 0.0
+      },
+      {
+        "timestamp_sec": 96.0,
+        "path": "/data1/video-highlight-cache/dc6156d7dbc42d90/frames/frame_000097.jpg",
+        "change_score": 0.21420899033546448,
+        "semantic_change_score": 0.0
+      },
+      {
+        "timestamp_sec": 97.0,
+        "path": "/data1/video-highlight-cache/dc6156d7dbc42d90/frames/frame_000098.jpg",
+        "change_score": 0.12484681606292725,
+        "semantic_change_score": 0.0
+      },
+      {
+        "timestamp_sec": 98.0,
+        "path": "/data1/video-highlight-cache/dc6156d7dbc42d90/frames/frame_000099.jpg",
+        "change_score": 0.3036285936832428,
+        "semantic_change_score": 0.0
+      },
+      {
+        "timestamp_sec": 99.0,
+        "path": "/data1/video-highlight-cache/dc6156d7dbc42d90/frames/frame_000100.jpg",
+        "change_score": 0.39370211958885193,
+        "semantic_change_score": 0.1924450573832259
+      },
+      {
+        "timestamp_sec": 100.0,
+        "path": "/data1/video-highlight-cache/dc6156d7dbc42d90/frames/frame_000101.jpg",
+        "change_score": 0.3129116892814636,
+        "semantic_change_score": 0.0
+      },
+      {
+        "timestamp_sec": 101.0,
+        "path": "/data1/video-highlight-cache/dc6156d7dbc42d90/frames/frame_000102.jpg",
+        "change_score": 0.002512254985049367,
+        "semantic_change_score": 0.20480901751519182
+      },
+      {
+        "timestamp_sec": 102.0,
+        "path": "/data1/video-highlight-cache/dc6156d7dbc42d90/frames/frame_000103.jpg",
+        "change_score": 0.2255476415157318,
+        "semantic_change_score": 0.166566980445185
+      },
+      {
+        "timestamp_sec": 103.0,
+        "path": "/data1/video-highlight-cache/dc6156d7dbc42d90/frames/frame_000104.jpg",
+        "change_score": 0.03799211233854294,
+        "semantic_change_score": 0.5188676792706984
+      },
+      {
+        "timestamp_sec": 104.0,
+        "path": "/data1/video-highlight-cache/dc6156d7dbc42d90/frames/frame_000105.jpg",
+        "change_score": 0.2723230719566345,
+        "semantic_change_score": 0.0
+      },
+      {
+        "timestamp_sec": 105.0,
+        "path": "/data1/video-highlight-cache/dc6156d7dbc42d90/frames/frame_000106.jpg",
+        "change_score": 0.07042834907770157,
+        "semantic_change_score": 0.0
+      },
+      {
+        "timestamp_sec": 106.0,
+        "path": "/data1/video-highlight-cache/dc6156d7dbc42d90/frames/frame_000107.jpg",
+        "change_score": 0.3120385408401489,
+        "semantic_change_score": 0.4824391784062431
+      },
+      {
+        "timestamp_sec": 107.0,
+        "path": "/data1/video-highlight-cache/dc6156d7dbc42d90/frames/frame_000108.jpg",
+        "change_score": 0.21539618074893951,
+        "semantic_change_score": 1.0
+      },
+      {
+        "timestamp_sec": 108.0,
+        "path": "/data1/video-highlight-cache/dc6156d7dbc42d90/frames/frame_000109.jpg",
+        "change_score": 0.33778244256973267,
+        "semantic_change_score": 0.0
+      },
+      {
+        "timestamp_sec": 109.0,
+        "path": "/data1/video-highlight-cache/dc6156d7dbc42d90/frames/frame_000110.jpg",
+        "change_score": 0.24241536855697632,
+        "semantic_change_score": 0.17957683916148107
+      },
+      {
+        "timestamp_sec": 110.0,
+        "path": "/data1/video-highlight-cache/dc6156d7dbc42d90/frames/frame_000111.jpg",
+        "change_score": 0.049624692648649216,
+        "semantic_change_score": 0.4728927883652553
+      },
+      {
+        "timestamp_sec": 111.0,
+        "path": "/data1/video-highlight-cache/dc6156d7dbc42d90/frames/frame_000112.jpg",
+        "change_score": 0.28742915391921997,
+        "semantic_change_score": 0.0
+      },
+      {
+        "timestamp_sec": 112.0,
+        "path": "/data1/video-highlight-cache/dc6156d7dbc42d90/frames/frame_000113.jpg",
+        "change_score": 0.33948472142219543,
+        "semantic_change_score": 0.0
+      },
+      {
+        "timestamp_sec": 113.0,
+        "path": "/data1/video-highlight-cache/dc6156d7dbc42d90/frames/frame_000114.jpg",
+        "change_score": 0.0869753360748291,
+        "semantic_change_score": 0.0
+      },
+      {
+        "timestamp_sec": 114.0,
+        "path": "/data1/video-highlight-cache/dc6156d7dbc42d90/frames/frame_000115.jpg",
+        "change_score": 0.3342227637767792,
+        "semantic_change_score": 0.0
+      },
+      {
+        "timestamp_sec": 115.0,
+        "path": "/data1/video-highlight-cache/dc6156d7dbc42d90/frames/frame_000116.jpg",
+        "change_score": 0.12354090064764023,
+        "semantic_change_score": 0.15625904863127768
+      },
+      {
+        "timestamp_sec": 116.0,
+        "path": "/data1/video-highlight-cache/dc6156d7dbc42d90/frames/frame_000117.jpg",
+        "change_score": 0.2208476960659027,
+        "semantic_change_score": 0.5341505093410113
+      },
+      {
+        "timestamp_sec": 117.0,
+        "path": "/data1/video-highlight-cache/dc6156d7dbc42d90/frames/frame_000118.jpg",
+        "change_score": 0.07461990416049957,
+        "semantic_change_score": 0.926372760847555
+      },
+      {
+        "timestamp_sec": 118.0,
+        "path": "/data1/video-highlight-cache/dc6156d7dbc42d90/frames/frame_000119.jpg",
+        "change_score": 0.10023265331983566,
+        "semantic_change_score": 0.8436287147236727
+      },
+      {
+        "timestamp_sec": 119.0,
+        "path": "/data1/video-highlight-cache/dc6156d7dbc42d90/frames/frame_000120.jpg",
+        "change_score": 0.06513863056898117,
+        "semantic_change_score": 0.4799864670575585
+      },
+      {
+        "timestamp_sec": 120.0,
+        "path": "/data1/video-highlight-cache/dc6156d7dbc42d90/frames/frame_000121.jpg",
+        "change_score": 0.26589882373809814,
+        "semantic_change_score": 0.0
+      },
+      {
+        "timestamp_sec": 121.0,
+        "path": "/data1/video-highlight-cache/dc6156d7dbc42d90/frames/frame_000122.jpg",
+        "change_score": 0.1097196713089943,
+        "semantic_change_score": 0.0
+      }
+    ],
+    "saliency_per_second": [
+      0.3135,
+      0.516,
+      0.6306,
+      0.7208,
+      0.7977,
+      0.8815,
+      0.997,
+      0.956,
+      0.9328,
+      0.8037,
+      0.7922,
+      0.8773,
+      0.7416,
+      0.7106,
+      0.6689,
+      0.668,
+      0.6802,
+      0.7663,
+      0.6908,
+      0.7001,
+      0.7331,
+      0.801,
+      0.766,
+      0.8654,
+      0.8549,
+      0.8454,
+      0.852,
+      0.8343,
+      0.8468,
+      0.78,
+      0.6658,
+      0.5397,
+      0.5013,
+      0.5552,
+      0.6099,
+      0.7275,
+      0.7755,
+      0.7675,
+      0.8165,
+      0.8509,
+      0.8589,
+      0.7936,
+      0.7596,
+      0.8754,
+      0.8294,
+      0.9181,
+      0.8427,
+      0.7966,
+      0.6555,
+      0.6928,
+      0.6724,
+      0.8025,
+      0.7346,
+      0.9095,
+      0.9084,
+      0.9379,
+      0.7095,
+      0.5554,
+      0.4758,
+      0.5136,
+      0.5601,
+      0.6313,
+      0.7311,
+      0.8024,
+      0.7939,
+      0.735,
+      0.633,
+      0.616,
+      0.6799,
+      0.754,
+      0.723,
+      0.6473,
+      0.7947,
+      0.8711,
+      1.0,
+      0.9754,
+      0.9386,
+      0.8912,
+      0.8043,
+      0.7518,
+      0.6287,
+      0.4783,
+      0.4303,
+      0.4681,
+      0.5228,
+      0.6212,
+      0.6869,
+      0.6546,
+      0.6291,
+      0.5787,
+      0.5102,
+      0.5066,
+      0.5283,
+      0.5212,
+      0.5036,
+      0.5792,
+      0.7141,
+      0.7649,
+      0.8444,
+      0.8145,
+      0.759,
+      0.6881,
+      0.686,
+      0.6688,
+      0.6086,
+      0.69,
+      0.8195,
+      0.9224,
+      0.8936,
+      0.9034,
+      0.9019,
+      0.8415,
+      0.7953,
+      0.7329,
+      0.7819,
+      0.7286,
+      0.6973,
+      0.6547,
+      0.5918,
+      0.4422,
+      0.3002,
+      0.135,
+      0.0477
+    ]
+  },
+  "local_candidates": [
+    {
+      "start_sec": 0.0,
+      "end_sec": 20.0,
+      "local_score": 0.30679018242315775,
+      "audio_score": 0.1198524002250065,
+      "visual_score": 0.23680717319260292,
+      "semantic_score": 0.4365559402355847,
+      "scene_score": 1.0,
+      "cue_score": 0.0,
+      "filter_penalty": 0.0,
+      "filter_reasons": [],
+      "transcript": "林志夏 我告你 林知夏 赶紧把欠我儿子钱还回来 今天这事就算了 否则我跟你没完 没完 你们不敢报警 那是因为你们两个心里清楚 这卡里的两百万 这卡的两百万没有一分是他存的 我这里有每一笔款的汇款记录 他 他是谁 你跟他什么关系啊 对 和他没关系"
+    },
+    {
+      "start_sec": 8.0,
+      "end_sec": 28.0,
+      "local_score": 0.7407425053269343,
+      "audio_score": 0.0,
+      "visual_score": 0.40742505326934264,
+      "semantic_score": 1.0,
+      "scene_score": 1.0,
+      "cue_score": 1.0,
+      "filter_penalty": 0.0,
+      "filter_reasons": [],
+      "transcript": "你们不敢报警 那是因为你们两个心里清楚 这卡里的两百万 这卡的两百万没有一分是他存的 我这里有每一笔款的汇款记录 他 他是谁 你跟他什么关系啊 对 和他没关系 夫妻啊 7310377-2025-00878063 1012422001/6/58 202503月20 J110377-2025-008780631 电午2001年06月1 林知夏 大夏 101242200106158575 110101199907090560 他随身带着结婚证"
+    },
+    {
+      "start_sec": 20.0,
+      "end_sec": 40.0,
+      "local_score": 0.9330164102365204,
+      "audio_score": 0.8414918952187366,
+      "visual_score": 0.6712945110286874,
+      "semantic_score": 0.9903543203596173,
+      "scene_score": 1.0,
+      "cue_score": 1.0,
+      "filter_penalty": 0.0,
+      "filter_reasons": [],
+      "transcript": "对 和他没关系 夫妻啊 7310377-2025-00878063 1012422001/6/58 202503月20 J110377-2025-008780631 电午2001年06月1 林知夏 大夏 101242200106158575 110101199907090560 他随身带着结婚证 那天 那天在民政局 林知夏 林志夏 你出轨啊你 你出轨啊你啊 说你个头骨一样出轨出轨的 出你个头鬼呀"
+    },
+    {
+      "start_sec": 27.479999999999997,
+      "end_sec": 47.48,
+      "local_score": 0.8430560115357162,
+      "audio_score": 0.9046158101323938,
+      "visual_score": 0.27931189096522724,
+      "semantic_score": 0.7368066416508584,
+      "scene_score": 1.0,
+      "cue_score": 1.0,
+      "filter_penalty": 0.0,
+      "filter_reasons": [],
+      "transcript": "他随身带着结婚证 那天 那天在民政局 林知夏 林志夏 你出轨啊你 你出轨啊你啊 说你个头骨一样出轨出轨的 出你个头鬼呀 自己出轨你 还倒打一耙你 好好"
+    },
+    {
+      "start_sec": 49.32,
+      "end_sec": 57.32,
+      "local_score": 0.6530845640346243,
+      "audio_score": 0.8339252918660461,
+      "visual_score": 0.4083074778318405,
+      "semantic_score": 0.9572167415717779,
+      "scene_score": 1.0,
+      "cue_score": 0.0,
+      "filter_penalty": 0.0,
+      "filter_reasons": [],
+      "transcript": "好好 好好好 你不认 别怪我不义 你们 冒充深河集团总裁 冒充申和集团总裁 骗我签合同 知道深河集团总裁是什么人吗"
+    },
+    {
+      "start_sec": 68.88,
+      "end_sec": 76.88,
+      "local_score": 0.598608846144411,
+      "audio_score": 0.9943725844306769,
+      "visual_score": 0.3323807120323181,
+      "semantic_score": 0.7207162909219259,
+      "scene_score": 1.0,
+      "cue_score": 0.0,
+      "filter_penalty": 0.0,
+      "filter_reasons": [],
+      "transcript": "如果我告诉他了 你们 会有什么下场 会有什么下场啊 啊 你用不要脸 你要不要脸 要不要脸 用不要脸 要不要脸啊你 你都别踹他"
+    },
+    {
+      "start_sec": 73.48,
+      "end_sec": 81.48,
+      "local_score": 0.5635731484744249,
+      "audio_score": 1.0,
+      "visual_score": 0.3064606338739395,
+      "semantic_score": 0.6097569502901029,
+      "scene_score": 1.0,
+      "cue_score": 0.0,
+      "filter_penalty": 0.0,
+      "filter_reasons": [],
+      "transcript": "你用不要脸 你要不要脸 要不要脸 用不要脸 要不要脸啊你 你都别踹他 怎么不出来了 哎呀 你怎么出来了"
+    },
+    {
+      "start_sec": 103.52,
+      "end_sec": 122.12,
+      "local_score": 0.41482765362177587,
+      "audio_score": 0.6729674559324924,
+      "visual_score": 0.1500765376047426,
+      "semantic_score": 0.8359060346992127,
+      "scene_score": 0.375,
+      "cue_score": 0.0,
+      "filter_penalty": 0.0,
+      "filter_reasons": [],
+      "transcript": "我要报警 夏夏 打电话报警 我外公 外公被徐嘉明给打了 分心 他没有给你打一句 哎呦 1 报警了 果然 姜 还是老的辣"
+    }
+  ],
+  "reasoning": {
+    "scenes": [
+      {
+        "scene_id": "scene_0001",
+        "start_sec": 0.0,
+        "end_sec": 8.28,
+        "shot_ids": [
+          "shot_0001",
+          "shot_0002",
+          "shot_0003",
+          "shot_0004",
+          "shot_0005"
+        ],
+        "local_score": 0.7407425053269343,
+        "transcript": "[0.00-1.64s ASR] 林志夏 我告你\n[0.00-1.50s OCR] 林知夏\n[1.64-3.60s ASR] 赶紧把欠我儿子钱还回来\n[3.60-5.12s ASR] 今天这事就算了\n[5.12-6.36s ASR] 否则我跟你没完\n[6.36-7.08s ASR] 没完\n[7.08-8.24s ASR] 你们不敢报警\n[8.24-10.16s ASR] 那是因为你们两个心里清楚",
+        "audio_context": "happy/bgm",
+        "frame_samples": [
+          {
+            "timestamp_sec": 0.0,
+            "path": "/data1/video-highlight-cache/dc6156d7dbc42d90/frames/frame_000001.jpg",
+            "change_score": 0.0,
+            "semantic_change_score": 0.0
+          },
+          {
+            "timestamp_sec": 1.0,
+            "path": "/data1/video-highlight-cache/dc6156d7dbc42d90/frames/frame_000002.jpg",
+            "change_score": 0.10420017689466476,
+            "semantic_change_score": 0.0
+          },
+          {
+            "timestamp_sec": 2.0,
+            "path": "/data1/video-highlight-cache/dc6156d7dbc42d90/frames/frame_000003.jpg",
+            "change_score": 0.4203526973724365,
+            "semantic_change_score": 0.0
+          },
+          {
+            "timestamp_sec": 3.0,
+            "path": "/data1/video-highlight-cache/dc6156d7dbc42d90/frames/frame_000004.jpg",
+            "change_score": 0.06998123228549957,
+            "semantic_change_score": 0.36869827544629746
+          },
+          {
+            "timestamp_sec": 4.0,
+            "path": "/data1/video-highlight-cache/dc6156d7dbc42d90/frames/frame_000005.jpg",
+            "change_score": 0.27115023136138916,
+            "semantic_change_score": 0.42857141576487384
+          },
+          {
+            "timestamp_sec": 5.0,
+            "path": "/data1/video-highlight-cache/dc6156d7dbc42d90/frames/frame_000006.jpg",
+            "change_score": 0.2931114137172699,
+            "semantic_change_score": 0.21890448787010522
+          },
+          {
+            "timestamp_sec": 6.0,
+            "path": "/data1/video-highlight-cache/dc6156d7dbc42d90/frames/frame_000007.jpg",
+            "change_score": 0.23749329149723053,
+            "semantic_change_score": 0.5846964438016236
+          },
+          {
+            "timestamp_sec": 8.0,
+            "path": "/data1/video-highlight-cache/dc6156d7dbc42d90/frames/frame_000009.jpg",
+            "change_score": 0.3150409758090973,
+            "semantic_change_score": 1.0
+          }
+        ],
+        "speakers": [],
+        "face_track_ids": [],
+        "actors": [
+          "林知夏",
+          "中年妇女",
+          "男子"
+        ],
+        "action": "中年妇女向林知夏索要欠款并威胁其后果；男子在旁附和；林知夏对此进行言语反击并指出对方不敢报警的实质动机。",
+        "event_type": [
+          "conflict",
+          "reveal"
+        ],
+        "claims": [
+          "林知夏欠了中年妇女儿子钱",
+          "中年妇女威胁林知夏必须还钱否则后果严重",
+          "林知夏指出对方不敢报警的原因是心里有鬼"
+        ],
+        "state_before": "双方处于对峙状态，林知夏被围堵",
+        "new_evidence": "林知夏指出对方‘不敢报警’这一事实，直接揭露对方心虚的状态",
+        "state_after": "冲突升级，从索债转变为双方互指对方理亏，林知夏占据心理主动权",
+        "relationship_change": "敌对关系明朗化，力量对比因‘不敢报警’的指控而发生偏移",
+        "emotion": [
+          "愤怒",
+          "坚定",
+          "警惕"
+        ],
+        "salience": 0.85,
+        "uncertainty": 0.1,
+        "evidence": [
+          "[1.64s ASR] 赶紧把欠我儿子钱还回来",
+          "[3.60s ASR] 今天这事就算了",
+          "[5.12s ASR] 否则我跟你没完",
+          "[7.08s ASR] 你们不敢报警",
+          "[8.24s ASR] 那是因为你们两个心里清楚"
+        ]
+      },
+      {
+        "scene_id": "scene_0002",
+        "start_sec": 8.28,
+        "end_sec": 17.48,
+        "shot_ids": [
+          "shot_0006",
+          "shot_0007",
+          "shot_0008",
+          "shot_0009",
+          "shot_0010"
+        ],
+        "local_score": 0.7407425053269343,
+        "transcript": "[8.24-10.16s ASR] 那是因为你们两个心里清楚\n[10.00-11.50s OCR] 这卡里的两百万\n[10.16-12.72s ASR] 这卡的两百万没有一分是他存的\n[12.72-15.12s ASR] 我这里有每一笔款的汇款记录\n[16.08-17.56s ASR] 他 他是谁",
+        "audio_context": "happy/bgm",
+        "frame_samples": [
+          {
+            "timestamp_sec": 9.0,
+            "path": "/data1/video-highlight-cache/dc6156d7dbc42d90/frames/frame_000010.jpg",
+            "change_score": 0.11874042451381683,
+            "semantic_change_score": 0.5302276055172378
+          },
+          {
+            "timestamp_sec": 10.0,
+            "path": "/data1/video-highlight-cache/dc6156d7dbc42d90/frames/frame_000011.jpg",
+            "change_score": 0.14430435001850128,
+            "semantic_change_score": 0.5273293541318952
+          },
+          {
+            "timestamp_sec": 11.0,
+            "path": "/data1/video-highlight-cache/dc6156d7dbc42d90/frames/frame_000012.jpg",
+            "change_score": 0.34799709916114807,
+            "semantic_change_score": 0.9884552239434827
+          },
+          {
+            "timestamp_sec": 12.0,
+            "path": "/data1/video-highlight-cache/dc6156d7dbc42d90/frames/frame_000013.jpg",
+            "change_score": 0.09765337407588959,
+            "semantic_change_score": 0.0
+          },
+          {
+            "timestamp_sec": 13.0,
+            "path": "/data1/video-highlight-cache/dc6156d7dbc42d90/frames/frame_000014.jpg",
+            "change_score": 0.3403684198856354,
+            "semantic_change_score": 0.0
+          },
+          {
+            "timestamp_sec": 14.0,
+            "path": "/data1/video-highlight-cache/dc6156d7dbc42d90/frames/frame_000015.jpg",
+            "change_score": 0.1589767187833786,
+            "semantic_change_score": 0.0
+          },
+          {
+            "timestamp_sec": 15.0,
+            "path": "/data1/video-highlight-cache/dc6156d7dbc42d90/frames/frame_000016.jpg",
+            "change_score": 0.26518553495407104,
+            "semantic_change_score": 0.0
+          },
+          {
+            "timestamp_sec": 17.0,
+            "path": "/data1/video-highlight-cache/dc6156d7dbc42d90/frames/frame_000018.jpg",
+            "change_score": 0.3216356337070465,
+            "semantic_change_score": 1.0
+          }
+        ],
+        "speakers": [],
+        "face_track_ids": [],
+        "actors": [
+          "年轻女性",
+          "戴眼镜男子",
+          "中年女性",
+          "轮椅男子"
+        ],
+        "action": "年轻女性在街头当众对戴眼镜男子和中年女性展示手机中的汇款记录，随后将手机伸向轮椅男子面前询问其身份。",
+        "event_type": [
+          "conflict",
+          "reveal"
+        ],
+        "claims": [
+          "卡里的两百万没有一分是轮椅男子存的",
+          "自己拥有每一笔款的汇款记录"
+        ],
+        "state_before": "年轻女性与前方三人对峙，情绪激动，试图揭露对方的谎言。",
+        "new_evidence": "年轻女性出示手机屏幕上的证据，并指向轮椅男子要求其对质。",
+        "state_after": "年轻女性对轮椅男子的身份提出质疑，现场对抗性升级。",
+        "relationship_change": "对抗加剧，揭露了双方间的信任危机。",
+        "emotion": [
+          "愤怒",
+          "挑衅",
+          "不安"
+        ],
+        "salience": 0.85,
+        "uncertainty": 0.15,
+        "evidence": [
+          "[9.0s F01] 年轻女性主张对方心里清楚",
+          "[10.0s F02] 年轻女性提及卡里两百万",
+          "[12.0s F03] 戴眼镜男子表情凝重",
+          "[13.0s F04] 年轻女性表示有汇款记录",
+          "[15.0s F05] 年轻女性向轮椅男子展示手机",
+          "[17.0s F06] 轮椅男子坐在轮椅上，面对质疑"
+        ]
+      },
+      {
+        "scene_id": "scene_0003",
+        "start_sec": 17.48,
+        "end_sec": 26.0,
+        "shot_ids": [
+          "shot_0011",
+          "shot_0012",
+          "shot_0013",
+          "shot_0014",
+          "shot_0015"
+        ],
+        "local_score": 0.9330164102365204,
+        "transcript": "[16.08-17.56s ASR] 他 他是谁\n[17.56-19.20s ASR] 你跟他什么关系啊\n[19.20-20.76s ASR] 对 和他没关系\n[20.76-21.44s ASR] 夫妻啊\n[23.00-24.50s OCR] 7310377-2025-00878063 1012422001/6/58\n[24.00-25.50s OCR] 202503月20 J110377-2025-008780631 电午2001年06月1 林知夏 大夏 101242200106158575 110101199907090560",
+        "audio_context": "happy/bgm",
+        "frame_samples": [
+          {
+            "timestamp_sec": 18.0,
+            "path": "/data1/video-highlight-cache/dc6156d7dbc42d90/frames/frame_000019.jpg",
+            "change_score": 0.07816234230995178,
+            "semantic_change_score": 0.0
+          },
+          {
+            "timestamp_sec": 19.0,
+            "path": "/data1/video-highlight-cache/dc6156d7dbc42d90/frames/frame_000020.jpg",
+            "change_score": 0.27774778008461,
+            "semantic_change_score": 0.3021846163720992
+          },
+          {
+            "timestamp_sec": 20.0,
+            "path": "/data1/video-highlight-cache/dc6156d7dbc42d90/frames/frame_000021.jpg",
+            "change_score": 0.18351620435714722,
+            "semantic_change_score": 0.5575095369772232
+          },
+          {
+            "timestamp_sec": 21.0,
+            "path": "/data1/video-highlight-cache/dc6156d7dbc42d90/frames/frame_000022.jpg",
+            "change_score": 0.09718137234449387,
+            "semantic_change_score": 0.9754579156507546
+          },
+          {
+            "timestamp_sec": 22.0,
+            "path": "/data1/video-highlight-cache/dc6156d7dbc42d90/frames/frame_000023.jpg",
+            "change_score": 0.32065334916114807,
+            "semantic_change_score": 0.36906537533565653
+          },
+          {
+            "timestamp_sec": 23.0,
+            "path": "/data1/video-highlight-cache/dc6156d7dbc42d90/frames/frame_000024.jpg",
+            "change_score": 0.39995309710502625,
+            "semantic_change_score": 1.0
+          },
+          {
+            "timestamp_sec": 24.0,
+            "path": "/data1/video-highlight-cache/dc6156d7dbc42d90/frames/frame_000025.jpg",
+            "change_score": 0.07671664655208588,
+            "semantic_change_score": 1.0
+          },
+          {
+            "timestamp_sec": 26.0,
+            "path": "/data1/video-highlight-cache/dc6156d7dbc42d90/frames/frame_000027.jpg",
+            "change_score": 0.3049555718898773,
+            "semantic_change_score": 1.0
+          }
+        ],
+        "speakers": [],
+        "face_track_ids": [],
+        "actors": [
+          "身穿浅色西装的男子",
+          "身穿浅蓝色上衣的女子",
+          "身穿深棕色西装的男子",
+          "中年女性"
+        ],
+        "action": "浅色西装男子质问女子与另一男子的关系，随后向中年女性展示了结婚证以证明其与女子的夫妻关系。",
+        "event_type": [
+          "reveal",
+          "conflict"
+        ],
+        "claims": [
+          "女子声称与另一男子没关系",
+          "浅色西装男子主张与女子为夫妻关系"
+        ],
+        "state_before": "未知女子与浅色西装男子及深棕色西装男子的关系",
+        "new_evidence": "一张标注为“结婚证”的红色证件，显示女子（林知夏）与浅色西装男子（大夏）的登记日期为2025年3月20日",
+        "state_after": "确立了浅色西装男子与女子的合法夫妻关系，引发了中年女性的震惊反应",
+        "relationship_change": "从隐瞒状态转为公开合法夫妻身份",
+        "emotion": [
+          "困惑",
+          "震惊"
+        ],
+        "salience": 0.95,
+        "uncertainty": 0.05,
+        "evidence": [
+          "[17.56s ASR] 你跟他什么关系啊",
+          "[19.20s ASR] 对 和他没关系",
+          "[20.76s ASR] 夫妻啊",
+          "[24.00s OCR] 结婚证图像及登记信息",
+          "[26.00s FRAME] 中年女性惊讶的表情"
+        ]
+      },
+      {
+        "scene_id": "scene_0004",
+        "start_sec": 26.0,
+        "end_sec": 39.08,
+        "shot_ids": [
+          "shot_0016",
+          "shot_0017",
+          "shot_0018",
+          "shot_0019",
+          "shot_0020",
+          "shot_0021"
+        ],
+        "local_score": 0.9330164102365204,
+        "transcript": "[28.00-30.50s OCR] 他随身带着结婚证\n[31.02-35.20s ASR] 那天 那天在民政局\n[35.00-36.50s OCR] 林知夏\n[35.20-37.96s ASR] 林志夏 你出轨啊你\n[36.00-37.50s OCR] 你出轨啊你啊\n[37.96-40.20s ASR] 说你个头骨一样出轨出轨的\n[38.00-39.50s OCR] 出你个头鬼呀",
+        "audio_context": "happy/bgm",
+        "frame_samples": [
+          {
+            "timestamp_sec": 26.0,
+            "path": "/data1/video-highlight-cache/dc6156d7dbc42d90/frames/frame_000027.jpg",
+            "change_score": 0.3049555718898773,
+            "semantic_change_score": 1.0
+          },
+          {
+            "timestamp_sec": 27.0,
+            "path": "/data1/video-highlight-cache/dc6156d7dbc42d90/frames/frame_000028.jpg",
+            "change_score": 0.03895910084247589,
+            "semantic_change_score": 1.0
+          },
+          {
+            "timestamp_sec": 29.0,
+            "path": "/data1/video-highlight-cache/dc6156d7dbc42d90/frames/frame_000030.jpg",
+            "change_score": 0.12383674085140228,
+            "semantic_change_score": 1.0
+          },
+          {
+            "timestamp_sec": 31.0,
+            "path": "/data1/video-highlight-cache/dc6156d7dbc42d90/frames/frame_000032.jpg",
+            "change_score": 0.21843597292900085,
+            "semantic_change_score": 0.0
+          },
+          {
+            "timestamp_sec": 33.0,
+            "path": "/data1/video-highlight-cache/dc6156d7dbc42d90/frames/frame_000034.jpg",
+            "change_score": 0.3854788839817047,
+            "semantic_change_score": 0.0
+          },
+          {
+            "timestamp_sec": 35.0,
+            "path": "/data1/video-highlight-cache/dc6156d7dbc42d90/frames/frame_000036.jpg",
+            "change_score": 0.11335305869579315,
+            "semantic_change_score": 0.418366576715988
+          },
+          {
+            "timestamp_sec": 37.0,
+            "path": "/data1/video-highlight-cache/dc6156d7dbc42d90/frames/frame_000038.jpg",
+            "change_score": 0.08173349499702454,
+            "semantic_change_score": 0.0
+          },
+          {
+            "timestamp_sec": 39.0,
+            "path": "/data1/video-highlight-cache/dc6156d7dbc42d90/frames/frame_000040.jpg",
+            "change_score": 0.3064520061016083,
+            "semantic_change_score": 0.0
+          }
+        ],
+        "speakers": [],
+        "face_track_ids": [],
+        "actors": [
+          "穿灰裙女士",
+          "年轻男子",
+          "戴眼镜男子",
+          "被围困女性"
+        ],
+        "action": "年轻男子手持结婚证出现；戴眼镜男子与人对峙并发生口头争执；围观者向戴眼镜男子动手",
+        "event_type": [
+          "conflict",
+          "reveal"
+        ],
+        "claims": [
+          "年轻男子声称戴眼镜男子出轨"
+        ],
+        "state_before": "穿灰裙女士态度强硬，周围气氛紧张",
+        "new_evidence": "年轻男子持有结婚证并称其为证据，随后指责对方出轨",
+        "state_after": "戴眼镜男子处于被围攻和指责的状态",
+        "relationship_change": "戴眼镜男子与现场人员关系恶化，陷入公然对立",
+        "emotion": [
+          "愤怒",
+          "震惊",
+          "混乱"
+        ],
+        "salience": 0.92,
+        "uncertainty": 0.15,
+        "evidence": [
+          "[28.00s OCR] 画面显示年轻男子持有结婚证",
+          "[35.20s ASR] 年轻男子指责戴眼镜男子出轨",
+          "[38.00s ASR/OCR] 戴眼镜男子反驳称出轨是胡说",
+          "[39.0s FRAME] 画面显示戴眼镜男子在争吵中被众人推搡动手"
+        ]
+      },
+      {
+        "scene_id": "scene_0005",
+        "start_sec": 39.08,
+        "end_sec": 47.48,
+        "shot_ids": [
+          "shot_0022",
+          "shot_0023",
+          "shot_0024",
+          "shot_0025",
+          "shot_0026",
+          "shot_0027"
+        ],
+        "local_score": 0.9330164102365204,
+        "transcript": "[37.96-40.20s ASR] 说你个头骨一样出轨出轨的\n[38.00-39.50s OCR] 出你个头鬼呀\n[40.20-41.20s ASR] 自己出轨你\n[41.20-42.72s ASR] 还倒打一耙你\n[42.72-49.93s ASR] 好好",
+        "audio_context": "happy/bgm",
+        "frame_samples": [
+          {
+            "timestamp_sec": 40.0,
+            "path": "/data1/video-highlight-cache/dc6156d7dbc42d90/frames/frame_000041.jpg",
+            "change_score": 0.27696654200553894,
+            "semantic_change_score": 0.6421334572598014
+          },
+          {
+            "timestamp_sec": 41.0,
+            "path": "/data1/video-highlight-cache/dc6156d7dbc42d90/frames/frame_000042.jpg",
+            "change_score": 0.006962316110730171,
+            "semantic_change_score": 0.49336252920438733
+          },
+          {
+            "timestamp_sec": 42.0,
+            "path": "/data1/video-highlight-cache/dc6156d7dbc42d90/frames/frame_000043.jpg",
+            "change_score": 0.2389514446258545,
+            "semantic_change_score": 0.4313127868556186
+          },
+          {
+            "timestamp_sec": 43.0,
+            "path": "/data1/video-highlight-cache/dc6156d7dbc42d90/frames/frame_000044.jpg",
+            "change_score": 0.32139819860458374,
+            "semantic_change_score": 0.7878098094469188
+          },
+          {
+            "timestamp_sec": 44.0,
+            "path": "/data1/video-highlight-cache/dc6156d7dbc42d90/frames/frame_000045.jpg",
+            "change_score": 0.2345195710659027,
+            "semantic_change_score": 0.5153723863070575
+          },
+          {
+            "timestamp_sec": 45.0,
+            "path": "/data1/video-highlight-cache/dc6156d7dbc42d90/frames/frame_000046.jpg",
+            "change_score": 0.32868507504463196,
+            "semantic_change_score": 0.9960648146903065
+          },
+          {
+            "timestamp_sec": 46.0,
+            "path": "/data1/video-highlight-cache/dc6156d7dbc42d90/frames/frame_000047.jpg",
+            "change_score": 0.05526481941342354,
+            "semantic_change_score": 1.0
+          },
+          {
+            "timestamp_sec": 47.0,
+            "path": "/data1/video-highlight-cache/dc6156d7dbc42d90/frames/frame_000048.jpg",
+            "change_score": 0.3411716818809509,
+            "semantic_change_score": 0.5694539543784931
+          }
+        ],
+        "speakers": [],
+        "face_track_ids": [],
+        "actors": [
+          "戴眼镜男子",
+          "持手机女子"
+        ],
+        "action": "女子向戴眼镜男子出示手机屏幕上的亲密照片，男子在观看后神情惊愕。",
+        "event_type": [
+          "reveal",
+          "conflict"
+        ],
+        "claims": [
+          "男子出轨"
+        ],
+        "state_before": "男子对出轨指控进行辩驳与反击",
+        "new_evidence": "手机屏幕显示的男子与他人亲密拥吻的照片",
+        "state_after": "男子证据确凿，面临当场对峙，不再辩驳",
+        "relationship_change": "信任彻底破裂",
+        "emotion": [
+          "愤怒",
+          "震惊"
+        ],
+        "salience": 0.95,
+        "uncertainty": 0.05,
+        "evidence": [
+          "[40.20-42.72s ASR] 女子指责男子出轨并倒打一耙",
+          "[43.0s FRAME] 女子将手机怼在男子面前",
+          "[46.0s FRAME] 手机屏幕中出现男子与他人的亲密拥吻画面",
+          "[47.0s FRAME] 戴眼镜男子神情惊愕僵住"
+        ]
+      },
+      {
+        "scene_id": "scene_0006",
+        "start_sec": 47.48,
+        "end_sec": 55.6,
+        "shot_ids": [
+          "shot_0028",
+          "shot_0029",
+          "shot_0030"
+        ],
+        "local_score": 0.8430560115357162,
+        "transcript": "[42.72-49.93s ASR] 好好\n[49.00-50.50s OCR] 好好好\n[49.93-51.37s ASR] 你不认\n[51.37-52.33s ASR] 别怪我不义\n[52.33-53.67s ASR] 你们\n[53.67-55.49s ASR] 冒充深河集团总裁\n[54.00-55.50s OCR] 冒充申和集团总裁\n[55.49-56.53s ASR] 骗我签合同",
+        "audio_context": "happy/bgm",
+        "frame_samples": [
+          {
+            "timestamp_sec": 48.0,
+            "path": "/data1/video-highlight-cache/dc6156d7dbc42d90/frames/frame_000049.jpg",
+            "change_score": 0.12315889447927475,
+            "semantic_change_score": 0.40987890454882925
+          },
+          {
+            "timestamp_sec": 49.0,
+            "path": "/data1/video-highlight-cache/dc6156d7dbc42d90/frames/frame_000050.jpg",
+            "change_score": 0.17929495871067047,
+            "semantic_change_score": 0.7494951592119838
+          },
+          {
+            "timestamp_sec": 50.0,
+            "path": "/data1/video-highlight-cache/dc6156d7dbc42d90/frames/frame_000051.jpg",
+            "change_score": 0.08494944870471954,
+            "semantic_change_score": 0.0
+          },
+          {
+            "timestamp_sec": 51.0,
+            "path": "/data1/video-highlight-cache/dc6156d7dbc42d90/frames/frame_000052.jpg",
+            "change_score": 0.3294883668422699,
+            "semantic_change_score": 0.7680209290863416
+          },
+          {
+            "timestamp_sec": 52.0,
+            "path": "/data1/video-highlight-cache/dc6156d7dbc42d90/frames/frame_000053.jpg",
+            "change_score": 0.055288754403591156,
+            "semantic_change_score": 0.30019044371305353
+          },
+          {
+            "timestamp_sec": 53.0,
+            "path": "/data1/video-highlight-cache/dc6156d7dbc42d90/frames/frame_000054.jpg",
+            "change_score": 0.454833984375,
+            "semantic_change_score": 1.0
+          },
+          {
+            "timestamp_sec": 54.0,
+            "path": "/data1/video-highlight-cache/dc6156d7dbc42d90/frames/frame_000055.jpg",
+            "change_score": 0.03431564196944237,
+            "semantic_change_score": 0.8716502247153338
+          },
+          {
+            "timestamp_sec": 55.0,
+            "path": "/data1/video-highlight-cache/dc6156d7dbc42d90/frames/frame_000056.jpg",
+            "change_score": 0.05967945605516434,
+            "semantic_change_score": 1.0
+          }
+        ],
+        "speakers": [],
+        "face_track_ids": [],
+        "actors": [
+          "女性角色",
+          "眼镜男",
+          "轮椅男"
+        ],
+        "action": "女性角色先低头后看向前方，眼镜男严厉地向女性角色喊话，随后切换到轮椅男持证件照看着前方",
+        "event_type": [
+          "reveal",
+          "conflict"
+        ],
+        "claims": [
+          "某人冒充申和集团总裁骗取合同"
+        ],
+        "state_before": "女性角色态度顺从（ASR: 好好好）",
+        "new_evidence": "轮椅男持有证件并揭露冒充行为",
+        "state_after": "冲突公开化，女性角色的欺诈行为被指出",
+        "relationship_change": "从潜在合作转向揭露欺诈",
+        "emotion": [
+          "警觉",
+          "愤怒"
+        ],
+        "salience": 0.85,
+        "uncertainty": 0.1,
+        "evidence": [
+          "[48.0s-49.0s FRAME] 女性角色低头至抬头神情转换",
+          "[51.0s-52.0s FRAME] 眼镜男严厉指责",
+          "[54.0s-55.0s FRAME] 轮椅男手持印有文字的红本（证件）",
+          "[53.67-55.49s ASR] 冒充申和集团总裁骗我签合同"
+        ]
+      },
+      {
+        "scene_id": "scene_0007",
+        "start_sec": 55.6,
+        "end_sec": 65.0,
+        "shot_ids": [
+          "shot_0031",
+          "shot_0032",
+          "shot_0033",
+          "shot_0034"
+        ],
+        "local_score": 0.6530845640346243,
+        "transcript": "[55.49-56.53s ASR] 骗我签合同\n[56.53-59.47s ASR] 知道深河集团总裁是什么人吗\n[58.00-59.50s OCR] 申和集团总裁\n[59.47-60.17s ASR] 他最烦\n[60.17-61.53s ASR] 有人打着他的名义\n[61.53-62.73s ASR] 在这招摇撞骗了\n[62.73-64.37s ASR] 一旦让他知道\n[64.37-65.45s ASR] 他杀伐果断",
+        "audio_context": "happy/bgm",
+        "frame_samples": [
+          {
+            "timestamp_sec": 56.0,
+            "path": "/data1/video-highlight-cache/dc6156d7dbc42d90/frames/frame_000057.jpg",
+            "change_score": 0.36178097128868103,
+            "semantic_change_score": 0.0
+          },
+          {
+            "timestamp_sec": 57.0,
+            "path": "/data1/video-highlight-cache/dc6156d7dbc42d90/frames/frame_000058.jpg",
+            "change_score": 0.11487055569887161,
+            "semantic_change_score": 0.0
+          },
+          {
+            "timestamp_sec": 58.0,
+            "path": "/data1/video-highlight-cache/dc6156d7dbc42d90/frames/frame_000059.jpg",
+            "change_score": 0.06436887383460999,
+            "semantic_change_score": 0.0
+          },
+          {
+            "timestamp_sec": 59.0,
+            "path": "/data1/video-highlight-cache/dc6156d7dbc42d90/frames/frame_000060.jpg",
+            "change_score": 0.07766544073820114,
+            "semantic_change_score": 0.0
+          },
+          {
+            "timestamp_sec": 61.0,
+            "path": "/data1/video-highlight-cache/dc6156d7dbc42d90/frames/frame_000062.jpg",
+            "change_score": 0.08907973021268845,
+            "semantic_change_score": 0.0
+          },
+          {
+            "timestamp_sec": 62.0,
+            "path": "/data1/video-highlight-cache/dc6156d7dbc42d90/frames/frame_000063.jpg",
+            "change_score": 0.28729990124702454,
+            "semantic_change_score": 0.35646788767944637
+          },
+          {
+            "timestamp_sec": 63.0,
+            "path": "/data1/video-highlight-cache/dc6156d7dbc42d90/frames/frame_000064.jpg",
+            "change_score": 0.33214038610458374,
+            "semantic_change_score": 0.3469214976384585
+          },
+          {
+            "timestamp_sec": 65.0,
+            "path": "/data1/video-highlight-cache/dc6156d7dbc42d90/frames/frame_000066.jpg",
+            "change_score": 0.0413823164999485,
+            "semantic_change_score": 0.3240465577684342
+          }
+        ],
+        "speakers": [],
+        "face_track_ids": [],
+        "actors": [
+          "穿棕色西装的男子",
+          "穿浅色套裙的女子",
+          "穿白色西装的男子"
+        ],
+        "action": "棕色西装男子向女子抱怨某人，随后画面转至白色西装男子发表对某人行为准则的评论。",
+        "event_type": [
+          "conflict",
+          "reveal"
+        ],
+        "claims": [
+          "有人打着深河集团总裁的名义招摇撞骗",
+          "深河集团总裁杀伐果断，绝不留情"
+        ],
+        "state_before": "state_before unknown",
+        "new_evidence": "棕色西装男子主张某人打着总裁名义行骗，白色西装男子确认总裁会对此类行为绝不留情。",
+        "state_after": "双方达成对总裁严苛作风的共识，意识到招摇撞骗的风险极高。",
+        "relationship_change": "未知",
+        "emotion": [
+          "烦躁",
+          "严肃",
+          "警告"
+        ],
+        "salience": 0.75,
+        "uncertainty": 0.2,
+        "evidence": [
+          "[56.53s ASR] 知道深河集团总裁是什么人吗",
+          "[61.53s ASR] 在这招摇撞骗了",
+          "[64.37s ASR] 他杀伐果断",
+          "[65.0s ASR] 绝不留情"
+        ]
+      },
+      {
+        "scene_id": "scene_0008",
+        "start_sec": 65.0,
+        "end_sec": 74.16,
+        "shot_ids": [
+          "shot_0035",
+          "shot_0036",
+          "shot_0037",
+          "shot_0038",
+          "shot_0039"
+        ],
+        "local_score": 0.598608846144411,
+        "transcript": "[64.37-65.45s ASR] 他杀伐果断\n[65.45-66.21s ASR] 绝不留情\n[66.21-67.71s ASR] 你说\n[67.71-70.03s ASR] 如果我告诉他了\n[70.03-70.77s ASR] 你们\n[70.77-72.25s ASR] 会有什么下场\n[71.00-72.50s OCR] 会有什么下场啊\n[72.25-72.75s ASR] 啊\n[72.75-74.09s ASR] 你用不要脸\n[73.00-74.50s OCR] 你要不要脸\n[74.00-75.50s OCR] 要不要脸\n[74.09-74.61s ASR] 用不要脸",
+        "audio_context": "happy/bgm",
+        "frame_samples": [
+          {
+            "timestamp_sec": 65.0,
+            "path": "/data1/video-highlight-cache/dc6156d7dbc42d90/frames/frame_000066.jpg",
+            "change_score": 0.0413823164999485,
+            "semantic_change_score": 0.3240465577684342
+          },
+          {
+            "timestamp_sec": 66.0,
+            "path": "/data1/video-highlight-cache/dc6156d7dbc42d90/frames/frame_000067.jpg",
+            "change_score": 0.44371744990348816,
+            "semantic_change_score": 0.2946687055726211
+          },
+          {
+            "timestamp_sec": 67.0,
+            "path": "/data1/video-highlight-cache/dc6156d7dbc42d90/frames/frame_000068.jpg",
+            "change_score": 0.05397135391831398,
+            "semantic_change_score": 0.08253875705266568
+          },
+          {
+            "timestamp_sec": 68.0,
+            "path": "/data1/video-highlight-cache/dc6156d7dbc42d90/frames/frame_000069.jpg",
+            "change_score": 0.15440985560417175,
+            "semantic_change_score": 0.19965751687001038
+          },
+          {
+            "timestamp_sec": 70.0,
+            "path": "/data1/video-highlight-cache/dc6156d7dbc42d90/frames/frame_000071.jpg",
+            "change_score": 0.33985620737075806,
+            "semantic_change_score": 0.046950686337841975
+          },
+          {
+            "timestamp_sec": 71.0,
+            "path": "/data1/video-highlight-cache/dc6156d7dbc42d90/frames/frame_000072.jpg",
+            "change_score": 0.08999023586511612,
+            "semantic_change_score": 0.0
+          },
+          {
+            "timestamp_sec": 72.0,
+            "path": "/data1/video-highlight-cache/dc6156d7dbc42d90/frames/frame_000073.jpg",
+            "change_score": 0.09674766659736633,
+            "semantic_change_score": 0.5654423011309185
+          },
+          {
+            "timestamp_sec": 74.0,
+            "path": "/data1/video-highlight-cache/dc6156d7dbc42d90/frames/frame_000075.jpg",
+            "change_score": 0.2253820151090622,
+            "semantic_change_score": 0.5991921830224682
+          }
+        ],
+        "speakers": [],
+        "face_track_ids": [],
+        "actors": [
+          "白衣男子",
+          "眼镜男子",
+          "中年女子"
+        ],
+        "action": "白衣男子宣告绝不留情；随后眼镜男子与中年女子与一名女子发生肢体拉扯及言语争执",
+        "event_type": [
+          "conflict",
+          "action"
+        ],
+        "claims": [
+          "“他杀伐果断，绝不留情”",
+          "“如果我告诉他了，你们会有什么下场”"
+        ],
+        "state_before": "眼镜男子与中年女子在场，对峙状态（unknown）",
+        "new_evidence": "眼镜男子与中年女子对女子进行肢体拉扯，并高声质问对方“要不要脸”",
+        "state_after": "双方爆发言语与肢体冲突，对峙升级",
+        "relationship_change": "敌对关系确认",
+        "emotion": [
+          "愤怒",
+          "轻蔑"
+        ],
+        "salience": 0.75,
+        "uncertainty": 0.15,
+        "evidence": [
+          "[65.0s FRAME] 白衣男子镜头",
+          "[66.0s FRAME] 眼镜男子与中年女子双手抱胸对峙",
+          "[70.0s ASR] 女子发出威胁性言语",
+          "[74.0s FRAME] 三人发生肢体拉扯"
+        ]
+      },
+      {
+        "scene_id": "scene_0009",
+        "start_sec": 74.16,
+        "end_sec": 106.72,
+        "shot_ids": [
+          "shot_0040",
+          "shot_0041",
+          "shot_0042",
+          "shot_0043",
+          "shot_0044",
+          "shot_0045",
+          "shot_0046",
+          "shot_0047",
+          "shot_0048",
+          "shot_0049",
+          "shot_0050",
+          "shot_0051",
+          "shot_0052",
+          "shot_0053",
+          "shot_0054",
+          "shot_0055",
+          "shot_0056",
+          "shot_0057"
+        ],
+        "local_score": 0.598608846144411,
+        "transcript": "[73.00-74.50s OCR] 你要不要脸\n[74.00-75.50s OCR] 要不要脸\n[74.09-74.61s ASR] 用不要脸\n[74.61-75.39s ASR] 用不要脸\n[75.00-76.50s OCR] 要不要脸啊你\n[75.39-79.19s ASR] 你都别踹他\n[79.19-81.84s ASR] 怎么不出来了\n[80.00-81.50s OCR] 哎呀\n[81.00-82.50s OCR] 你怎么出来了\n[81.84-82.52s ASR] 老公\n[82.00-83.50s OCR] 外公\n[82.52-89.73s ASR] 你想干嘛\n[83.00-84.50s OCR] m\n[89.73-108.83s ASR] 我要报警\n[102.00-103.50s OCR] 你要干什么\n[106.00-107.50s OCR] 夏夏",
+        "audio_context": "happy/bgm",
+        "frame_samples": [
+          {
+            "timestamp_sec": 75.0,
+            "path": "/data1/video-highlight-cache/dc6156d7dbc42d90/frames/frame_000076.jpg",
+            "change_score": 0.3249052166938782,
+            "semantic_change_score": 0.0
+          },
+          {
+            "timestamp_sec": 79.0,
+            "path": "/data1/video-highlight-cache/dc6156d7dbc42d90/frames/frame_000080.jpg",
+            "change_score": 0.17186063528060913,
+            "semantic_change_score": 0.7751204347610156
+          },
+          {
+            "timestamp_sec": 83.0,
+            "path": "/data1/video-highlight-cache/dc6156d7dbc42d90/frames/frame_000084.jpg",
+            "change_score": 0.228759765625,
+            "semantic_change_score": 0.0
+          },
+          {
+            "timestamp_sec": 88.0,
+            "path": "/data1/video-highlight-cache/dc6156d7dbc42d90/frames/frame_000089.jpg",
+            "change_score": 0.15141984820365906,
+            "semantic_change_score": 0.33827066996491795
+          },
+          {
+            "timestamp_sec": 92.0,
+            "path": "/data1/video-highlight-cache/dc6156d7dbc42d90/frames/frame_000093.jpg",
+            "change_score": 0.2976323068141937,
+            "semantic_change_score": 0.08564677980335636
+          },
+          {
+            "timestamp_sec": 97.0,
+            "path": "/data1/video-highlight-cache/dc6156d7dbc42d90/frames/frame_000098.jpg",
+            "change_score": 0.12484681606292725,
+            "semantic_change_score": 0.0
+          },
+          {
+            "timestamp_sec": 101.0,
+            "path": "/data1/video-highlight-cache/dc6156d7dbc42d90/frames/frame_000102.jpg",
+            "change_score": 0.002512254985049367,
+            "semantic_change_score": 0.20480901751519182
+          },
+          {
+            "timestamp_sec": 106.0,
+            "path": "/data1/video-highlight-cache/dc6156d7dbc42d90/frames/frame_000107.jpg",
+            "change_score": 0.3120385408401489,
+            "semantic_change_score": 0.4824391784062431
+          }
+        ],
+        "speakers": [],
+        "face_track_ids": [],
+        "actors": [
+          "女性角色",
+          "外公",
+          "戴眼镜男性角色"
+        ],
+        "action": "女性角色言语辱骂他人；外公现身质问；戴眼镜男性角色随后介入，并呼唤名为“夏夏”的女性角色离开。",
+        "event_type": [
+          "conflict",
+          "action"
+        ],
+        "claims": [
+          "女性角色称对方“不要脸”；外公询问对方“想干嘛”；某人声称“我要报警”"
+        ],
+        "state_before": "女性角色处于激烈的争执冲突中",
+        "new_evidence": "外公出面打断冲突；戴眼镜男性角色介入并护住女性角色",
+        "state_after": "冲突双方被外公和戴眼镜男性角色介入而中断；女性角色在男性的维护下准备离开",
+        "relationship_change": "戴眼镜男性角色与女性角色表现出保护性关联",
+        "emotion": [
+          "愤怒",
+          "警惕"
+        ],
+        "salience": 0.75,
+        "uncertainty": 0.2,
+        "evidence": [
+          "[75.0s F01] 女性角色辱骂对方；[79.0s F02] 外公现身；[88.0s F03] 戴眼镜男性神情严峻；[106.0s F06] 戴眼镜男性呼唤夏夏"
+        ]
+      },
+      {
+        "scene_id": "scene_0010",
+        "start_sec": 106.72,
+        "end_sec": 122.12,
+        "shot_ids": [
+          "shot_0058",
+          "shot_0059",
+          "shot_0060",
+          "shot_0061",
+          "shot_0062",
+          "shot_0063",
+          "shot_0064"
+        ],
+        "local_score": 0.41482765362177587,
+        "transcript": "[89.73-108.83s ASR] 我要报警\n[106.00-107.50s OCR] 夏夏\n[108.00-109.50s OCR] 打电话报警\n[108.83-110.01s ASR] 我外公\n[109.00-112.50s OCR] 外公被徐嘉明给打了\n[110.01-110.61s ASR] 分心\n[110.61-115.29s ASR] 他没有给你打一句\n[112.00-113.50s OCR] 哎呦\n[113.00-114.50s OCR] 1\n[115.29-115.45s ASR] 报警了\n[116.00-117.50s OCR] 果然\n[117.00-118.50s OCR] 姜\n[118.00-119.50s OCR] 还是老的辣",
+        "audio_context": "happy/bgm",
+        "frame_samples": [
+          {
+            "timestamp_sec": 107.0,
+            "path": "/data1/video-highlight-cache/dc6156d7dbc42d90/frames/frame_000108.jpg",
+            "change_score": 0.21539618074893951,
+            "semantic_change_score": 1.0
+          },
+          {
+            "timestamp_sec": 109.0,
+            "path": "/data1/video-highlight-cache/dc6156d7dbc42d90/frames/frame_000110.jpg",
+            "change_score": 0.24241536855697632,
+            "semantic_change_score": 0.17957683916148107
+          },
+          {
+            "timestamp_sec": 111.0,
+            "path": "/data1/video-highlight-cache/dc6156d7dbc42d90/frames/frame_000112.jpg",
+            "change_score": 0.28742915391921997,
+            "semantic_change_score": 0.0
+          },
+          {
+            "timestamp_sec": 113.0,
+            "path": "/data1/video-highlight-cache/dc6156d7dbc42d90/frames/frame_000114.jpg",
+            "change_score": 0.0869753360748291,
+            "semantic_change_score": 0.0
+          },
+          {
+            "timestamp_sec": 115.0,
+            "path": "/data1/video-highlight-cache/dc6156d7dbc42d90/frames/frame_000116.jpg",
+            "change_score": 0.12354090064764023,
+            "semantic_change_score": 0.15625904863127768
+          },
+          {
+            "timestamp_sec": 117.0,
+            "path": "/data1/video-highlight-cache/dc6156d7dbc42d90/frames/frame_000118.jpg",
+            "change_score": 0.07461990416049957,
+            "semantic_change_score": 0.926372760847555
+          },
+          {
+            "timestamp_sec": 119.0,
+            "path": "/data1/video-highlight-cache/dc6156d7dbc42d90/frames/frame_000120.jpg",
+            "change_score": 0.06513863056898117,
+            "semantic_change_score": 0.4799864670575585
+          },
+          {
+            "timestamp_sec": 121.0,
+            "path": "/data1/video-highlight-cache/dc6156d7dbc42d90/frames/frame_000122.jpg",
+            "change_score": 0.1097196713089943,
+            "semantic_change_score": 0.0
+          }
+        ],
+        "speakers": [],
+        "face_track_ids": [],
+        "actors": [
+          "女性角色",
+          "白色西装男性角色"
+        ],
+        "action": "女性角色向白色西装男性角色陈述外公被徐嘉明殴打的事实，男性角色表情痛苦，以手掩面。",
+        "event_type": [
+          "conflict",
+          "reveal"
+        ],
+        "claims": [
+          "外公被徐嘉明给打了"
+        ],
+        "state_before": "白色西装男性角色处于相对平静状态",
+        "new_evidence": "女性角色提供的关于外公被徐嘉明殴打的叙述",
+        "state_after": "白色西装男性角色表现出显著的心理压力与痛苦",
+        "relationship_change": "unknown",
+        "emotion": [
+          "焦虑",
+          "痛苦",
+          "震惊"
+        ],
+        "salience": 0.9,
+        "uncertainty": 0.1,
+        "evidence": [
+          "[107.0s F01] 女性角色焦急对话",
+          "[109.0s F02] 屏幕显示字幕：外公被徐嘉明给打了",
+          "[113.0s F03] 白色西装男性角色以手掩面，表情痛苦",
+          "[121.0s F06] 白色西装男性角色动作重复，显示情绪波动"
+        ]
+      }
+    ],
+    "decisions": [
+      {
+        "scene": {
+          "scene_id": "scene_0001",
+          "start_sec": 0.0,
+          "end_sec": 8.28,
+          "shot_ids": [
+            "shot_0001",
+            "shot_0002",
+            "shot_0003",
+            "shot_0004",
+            "shot_0005"
+          ],
+          "local_score": 0.7407425053269343,
+          "transcript": "[0.00-1.64s ASR] 林志夏 我告你\n[0.00-1.50s OCR] 林知夏\n[1.64-3.60s ASR] 赶紧把欠我儿子钱还回来\n[3.60-5.12s ASR] 今天这事就算了\n[5.12-6.36s ASR] 否则我跟你没完\n[6.36-7.08s ASR] 没完\n[7.08-8.24s ASR] 你们不敢报警\n[8.24-10.16s ASR] 那是因为你们两个心里清楚",
+          "audio_context": "happy/bgm",
+          "frame_samples": [
+            {
+              "timestamp_sec": 0.0,
+              "path": "/data1/video-highlight-cache/dc6156d7dbc42d90/frames/frame_000001.jpg",
+              "change_score": 0.0,
+              "semantic_change_score": 0.0
+            },
+            {
+              "timestamp_sec": 1.0,
+              "path": "/data1/video-highlight-cache/dc6156d7dbc42d90/frames/frame_000002.jpg",
+              "change_score": 0.10420017689466476,
+              "semantic_change_score": 0.0
+            },
+            {
+              "timestamp_sec": 2.0,
+              "path": "/data1/video-highlight-cache/dc6156d7dbc42d90/frames/frame_000003.jpg",
+              "change_score": 0.4203526973724365,
+              "semantic_change_score": 0.0
+            },
+            {
+              "timestamp_sec": 3.0,
+              "path": "/data1/video-highlight-cache/dc6156d7dbc42d90/frames/frame_000004.jpg",
+              "change_score": 0.06998123228549957,
+              "semantic_change_score": 0.36869827544629746
+            },
+            {
+              "timestamp_sec": 4.0,
+              "path": "/data1/video-highlight-cache/dc6156d7dbc42d90/frames/frame_000005.jpg",
+              "change_score": 0.27115023136138916,
+              "semantic_change_score": 0.42857141576487384
+            },
+            {
+              "timestamp_sec": 5.0,
+              "path": "/data1/video-highlight-cache/dc6156d7dbc42d90/frames/frame_000006.jpg",
+              "change_score": 0.2931114137172699,
+              "semantic_change_score": 0.21890448787010522
+            },
+            {
+              "timestamp_sec": 6.0,
+              "path": "/data1/video-highlight-cache/dc6156d7dbc42d90/frames/frame_000007.jpg",
+              "change_score": 0.23749329149723053,
+              "semantic_change_score": 0.5846964438016236
+            },
+            {
+              "timestamp_sec": 8.0,
+              "path": "/data1/video-highlight-cache/dc6156d7dbc42d90/frames/frame_000009.jpg",
+              "change_score": 0.3150409758090973,
+              "semantic_change_score": 1.0
+            }
+          ],
+          "speakers": [],
+          "face_track_ids": [],
+          "actors": [
+            "林知夏",
+            "中年妇女",
+            "男子"
+          ],
+          "action": "中年妇女向林知夏索要欠款并威胁其后果；男子在旁附和；林知夏对此进行言语反击并指出对方不敢报警的实质动机。",
+          "event_type": [
+            "conflict",
+            "reveal"
+          ],
+          "claims": [
+            "林知夏欠了中年妇女儿子钱",
+            "中年妇女威胁林知夏必须还钱否则后果严重",
+            "林知夏指出对方不敢报警的原因是心里有鬼"
+          ],
+          "state_before": "双方处于对峙状态，林知夏被围堵",
+          "new_evidence": "林知夏指出对方‘不敢报警’这一事实，直接揭露对方心虚的状态",
+          "state_after": "冲突升级，从索债转变为双方互指对方理亏，林知夏占据心理主动权",
+          "relationship_change": "敌对关系明朗化，力量对比因‘不敢报警’的指控而发生偏移",
+          "emotion": [
+            "愤怒",
+            "坚定",
+            "警惕"
+          ],
+          "salience": 0.85,
+          "uncertainty": 0.1,
+          "evidence": [
+            "[1.64s ASR] 赶紧把欠我儿子钱还回来",
+            "[3.60s ASR] 今天这事就算了",
+            "[5.12s ASR] 否则我跟你没完",
+            "[7.08s ASR] 你们不敢报警",
+            "[8.24s ASR] 那是因为你们两个心里清楚"
+          ]
+        },
+        "decision": {
+          "map_supported": true,
+          "is_highlight": false,
+          "score": 0.59,
+          "highlight_type": "conflict",
+          "description": "中年妇女一行围堵林知夏索要欠款并言语威胁，林知夏反唇相讥指出对方心虚不敢报警",
+          "reason": "呈现了债务纠纷的言语对抗开端，但林知夏的反驳尚未说完即被截断，未形成可见后果或完整落幅，不具备独立短视频高光闭环",
+          "confidence": 0.984,
+          "evidence_grounding": 0.88,
+          "narrative_impact": 0.46,
+          "standalone_clarity": 0.52,
+          "clipability": 0.42,
+          "start_sec": null,
+          "end_sec": null,
+          "evidence": [
+            "[2.00s OCR] 欠我儿子钱还回来",
+            "[5.00s OCR] 否则我跟你没完",
+            "[6.00s OCR] 没完",
+            "[7.08s ASR] 你们不敢报警",
+            "[8.00s OCR] 那是因为你们两个"
+          ],
+          "setup_evidence_times_sec": [
+            1.64,
+            5.12
+          ],
+          "decisive_evidence_times_sec": [
+            7.08
+          ],
+          "reaction_evidence_times_sec": [],
+          "counter_evidence": [
+            "台词在8.28秒林知夏话音未落处戛然而止，冲突对抗缺少后续反应与可见后果"
+          ],
+          "continue_previous_scene": false
+        },
+        "votes": [
+          {
+            "map_supported": true,
+            "is_highlight": false,
+            "score": 0.59,
+            "highlight_type": "conflict",
+            "description": "中年妇女一行围堵林知夏索要欠款并言语威胁，林知夏反唇相讥指出对方心虚不敢报警",
+            "reason": "呈现了债务纠纷的言语对抗开端，但林知夏的反驳尚未说完即被截断，未形成可见后果或完整落幅，不具备独立短视频高光闭环",
+            "confidence": 0.0,
+            "evidence_grounding": 0.88,
+            "narrative_impact": 0.46,
+            "standalone_clarity": 0.52,
+            "clipability": 0.42,
+            "start_sec": null,
+            "end_sec": null,
+            "evidence": [
+              "[2.00s OCR] 欠我儿子钱还回来",
+              "[5.00s OCR] 否则我跟你没完",
+              "[6.00s OCR] 没完",
+              "[7.08s ASR] 你们不敢报警",
+              "[8.00s OCR] 那是因为你们两个"
+            ],
+            "setup_evidence_times_sec": [
+              1.64,
+              5.12
+            ],
+            "decisive_evidence_times_sec": [
+              7.08
+            ],
+            "reaction_evidence_times_sec": [],
+            "counter_evidence": [
+              "台词在8.28秒林知夏话音未落处戛然而止，冲突对抗缺少后续反应与可见后果"
+            ],
+            "continue_previous_scene": false
+          },
+          {
+            "map_supported": true,
+            "is_highlight": false,
+            "score": 0.526,
+            "highlight_type": "other",
+            "description": "中年妇女一行人向林知夏讨债并威胁，林知夏言语反驳",
+            "reason": "片段仅展示讨债口角的起始阶段，林知夏的反驳台词在句中中断，既未形成决定性反转，也无完整冲突后果或实质结果兑现，不具备独立短视频高光闭环",
+            "confidence": 0.0,
+            "evidence_grounding": 0.88,
+            "narrative_impact": 0.32,
+            "standalone_clarity": 0.45,
+            "clipability": 0.38,
+            "start_sec": null,
+            "end_sec": null,
+            "evidence": [
+              "F03 [2.0s] 中年妇女：欠我儿子钱还回来",
+              "F06 [5.0s] 否则我跟你没完",
+              "F08 [8.0s] 林知夏：那是因为你们两个"
+            ],
+            "setup_evidence_times_sec": [
+              2.0
+            ],
+            "decisive_evidence_times_sec": [],
+            "reaction_evidence_times_sec": [],
+            "counter_evidence": [
+              "片段在林知夏反驳未结束时截断（8.0s 台词未完）",
+              "双方仅进行初步口头交锋，缺乏明确事实证据、可见后果或关系质变"
+            ],
+            "continue_previous_scene": false
+          }
+        ]
+      },
+      {
+        "scene": {
+          "scene_id": "scene_0002",
+          "start_sec": 8.28,
+          "end_sec": 17.48,
+          "shot_ids": [
+            "shot_0006",
+            "shot_0007",
+            "shot_0008",
+            "shot_0009",
+            "shot_0010"
+          ],
+          "local_score": 0.7407425053269343,
+          "transcript": "[8.24-10.16s ASR] 那是因为你们两个心里清楚\n[10.00-11.50s OCR] 这卡里的两百万\n[10.16-12.72s ASR] 这卡的两百万没有一分是他存的\n[12.72-15.12s ASR] 我这里有每一笔款的汇款记录\n[16.08-17.56s ASR] 他 他是谁",
+          "audio_context": "happy/bgm",
+          "frame_samples": [
+            {
+              "timestamp_sec": 9.0,
+              "path": "/data1/video-highlight-cache/dc6156d7dbc42d90/frames/frame_000010.jpg",
+              "change_score": 0.11874042451381683,
+              "semantic_change_score": 0.5302276055172378
+            },
+            {
+              "timestamp_sec": 10.0,
+              "path": "/data1/video-highlight-cache/dc6156d7dbc42d90/frames/frame_000011.jpg",
+              "change_score": 0.14430435001850128,
+              "semantic_change_score": 0.5273293541318952
+            },
+            {
+              "timestamp_sec": 11.0,
+              "path": "/data1/video-highlight-cache/dc6156d7dbc42d90/frames/frame_000012.jpg",
+              "change_score": 0.34799709916114807,
+              "semantic_change_score": 0.9884552239434827
+            },
+            {
+              "timestamp_sec": 12.0,
+              "path": "/data1/video-highlight-cache/dc6156d7dbc42d90/frames/frame_000013.jpg",
+              "change_score": 0.09765337407588959,
+              "semantic_change_score": 0.0
+            },
+            {
+              "timestamp_sec": 13.0,
+              "path": "/data1/video-highlight-cache/dc6156d7dbc42d90/frames/frame_000014.jpg",
+              "change_score": 0.3403684198856354,
+              "semantic_change_score": 0.0
+            },
+            {
+              "timestamp_sec": 14.0,
+              "path": "/data1/video-highlight-cache/dc6156d7dbc42d90/frames/frame_000015.jpg",
+              "change_score": 0.1589767187833786,
+              "semantic_change_score": 0.0
+            },
+            {
+              "timestamp_sec": 15.0,
+              "path": "/data1/video-highlight-cache/dc6156d7dbc42d90/frames/frame_000016.jpg",
+              "change_score": 0.26518553495407104,
+              "semantic_change_score": 0.0
+            },
+            {
+              "timestamp_sec": 17.0,
+              "path": "/data1/video-highlight-cache/dc6156d7dbc42d90/frames/frame_000018.jpg",
+              "change_score": 0.3216356337070465,
+              "semantic_change_score": 1.0
+            }
+          ],
+          "speakers": [],
+          "face_track_ids": [],
+          "actors": [
+            "年轻女性",
+            "戴眼镜男子",
+            "中年女性",
+            "轮椅男子"
+          ],
+          "action": "年轻女性在街头当众对戴眼镜男子和中年女性展示手机中的汇款记录，随后将手机伸向轮椅男子面前询问其身份。",
+          "event_type": [
+            "conflict",
+            "reveal"
+          ],
+          "claims": [
+            "卡里的两百万没有一分是轮椅男子存的",
+            "自己拥有每一笔款的汇款记录"
+          ],
+          "state_before": "年轻女性与前方三人对峙，情绪激动，试图揭露对方的谎言。",
+          "new_evidence": "年轻女性出示手机屏幕上的证据，并指向轮椅男子要求其对质。",
+          "state_after": "年轻女性对轮椅男子的身份提出质疑，现场对抗性升级。",
+          "relationship_change": "对抗加剧，揭露了双方间的信任危机。",
+          "emotion": [
+            "愤怒",
+            "挑衅",
+            "不安"
+          ],
+          "salience": 0.85,
+          "uncertainty": 0.15,
+          "evidence": [
+            "[9.0s F01] 年轻女性主张对方心里清楚",
+            "[10.0s F02] 年轻女性提及卡里两百万",
+            "[12.0s F03] 戴眼镜男子表情凝重",
+            "[13.0s F04] 年轻女性表示有汇款记录",
+            "[15.0s F05] 年轻女性向轮椅男子展示手机",
+            "[17.0s F06] 轮椅男子坐在轮椅上，面对质疑"
+          ]
+        },
+        "decision": {
+          "map_supported": true,
+          "is_highlight": true,
+          "score": 0.691,
+          "highlight_type": "reveal",
+          "description": "年轻女性当面出示转账记录，揭露卡中两百万并非对方所存并质问轮椅男子身份。",
+          "reason": "承接前场索债施压，本场亮出汇款凭证反制对方并揭开真相，构成清晰的揭示反击结构。",
+          "confidence": 0.7017,
+          "evidence_grounding": 0.71,
+          "narrative_impact": 0.68,
+          "standalone_clarity": 0.67,
+          "clipability": 0.7,
+          "start_sec": 1.64,
+          "end_sec": 17.48,
+          "evidence": [
+            "[1.64s ASR] 赶紧把欠我儿子钱还回来",
+            "[7.08s ASR] 你们不敢报警",
+            "[10.16s ASR] 这卡的两百万没有一分是他存的",
+            "[11.0s F03] 戴眼镜男子表情严肃凝重",
+            "[12.72s ASR] 我这里有每一笔款的汇款记录",
+            "[15.0s F07] 年轻女性举起手机出示记录并与对方对峙",
+            "[17.0s F08] 轮椅男子低头坐在轮椅上"
+          ],
+          "setup_evidence_times_sec": [
+            1.64,
+            7.08
+          ],
+          "decisive_evidence_times_sec": [
+            10.16,
+            12.72,
+            15.0
+          ],
+          "reaction_evidence_times_sec": [
+            11.0,
+            15.0,
+            17.0
+          ],
+          "counter_evidence": [],
+          "continue_previous_scene": true
+        },
+        "votes": [
+          {
+            "map_supported": true,
+            "is_highlight": true,
+            "score": 0.884,
+            "highlight_type": "reveal",
+            "description": "年轻女性拿出手机汇款记录当场反驳索债者，揭露卡内两百万并非对方所存并质问轮椅男子身份",
+            "reason": "形成‘前场索债施压 → 当场亮出汇款记录证据反击 → 对方神色动摇且牵出轮椅男子身份悬念’的冲突与揭露结构",
+            "confidence": 0.0,
+            "evidence_grounding": 0.92,
+            "narrative_impact": 0.86,
+            "standalone_clarity": 0.85,
+            "clipability": 0.9,
+            "start_sec": 1.64,
+            "end_sec": 17.48,
+            "evidence": [
+              "[1.64s ASR] 赶紧把欠我儿子钱还回来",
+              "[7.08s ASR] 你们不敢报警",
+              "[10.16s ASR] 这卡的两百万没有一分是他存的",
+              "[11.0s F03] 戴眼镜男子表情严肃凝重",
+              "[12.72s ASR] 我这里有每一笔款的汇款记录",
+              "[15.0s F07] 年轻女性举起手机出示记录并与对方对峙",
+              "[17.0s F08] 轮椅男子低头坐在轮椅上"
+            ],
+            "setup_evidence_times_sec": [
+              1.64,
+              7.08
+            ],
+            "decisive_evidence_times_sec": [
+              10.16,
+              12.72,
+              15.0
+            ],
+            "reaction_evidence_times_sec": [
+              11.0,
+              15.0,
+              17.0
+            ],
+            "counter_evidence": [],
+            "continue_previous_scene": true
+          },
+          {
+            "map_supported": true,
+            "is_highlight": true,
+            "score": 0.883,
+            "highlight_type": "reversal",
+            "description": "年轻女性当众出示手机汇款记录，反驳对方索要两百万欠款的指控",
+            "reason": "符合冲突兑现与叙事反转结构：前场对方以欠款威胁逼迫（旧状态），当前场女性直接亮出汇款记录证据推翻主张，形成强有力的言语反击与对峙（新状态/后果）。",
+            "confidence": 0.0,
+            "evidence_grounding": 0.92,
+            "narrative_impact": 0.85,
+            "standalone_clarity": 0.86,
+            "clipability": 0.9,
+            "start_sec": 0.0,
+            "end_sec": 17.48,
+            "evidence": [
+              "[1.64s ASR] 赶紧把欠我儿子钱还回来",
+              "[7.08s ASR] 你们不敢报警",
+              "[10.0s F02] 这卡里的两百万没有一分是他存的",
+              "[12.0s F03] 戴眼镜男子表情凝重",
+              "[14.0s F06] 我这里有每一笔款的汇款记录",
+              "[15.0s F07] 年轻女性举起手机向对方出示记录"
+            ],
+            "setup_evidence_times_sec": [
+              1.64,
+              7.08
+            ],
+            "decisive_evidence_times_sec": [
+              10.0,
+              14.0,
+              15.0
+            ],
+            "reaction_evidence_times_sec": [
+              12.0,
+              15.0
+            ],
+            "counter_evidence": [],
+            "continue_previous_scene": true
+          },
+          {
+            "map_supported": true,
+            "is_highlight": true,
+            "score": 0.691,
+            "highlight_type": "reveal",
+            "description": "年轻女性当面出示转账记录，揭露卡中两百万并非对方所存并质问轮椅男子身份。",
+            "reason": "承接前场索债施压，本场亮出汇款凭证反制对方并揭开真相，构成清晰的揭示反击结构。",
+            "confidence": 0.0,
+            "evidence_grounding": 0.71,
+            "narrative_impact": 0.68,
+            "standalone_clarity": 0.67,
+            "clipability": 0.7,
+            "start_sec": 1.64,
+            "end_sec": 17.48,
+            "evidence": [
+              "[1.64s ASR] 赶紧把欠我儿子钱还回来",
+              "[7.08s ASR] 你们不敢报警",
+              "[10.16s ASR] 这卡的两百万没有一分是他存的",
+              "[11.0s F03] 戴眼镜男子表情严肃凝重",
+              "[12.72s ASR] 我这里有每一笔款的汇款记录",
+              "[15.0s F07] 年轻女性举起手机出示记录并与对方对峙",
+              "[17.0s F08] 轮椅男子低头坐在轮椅上"
+            ],
+            "setup_evidence_times_sec": [
+              1.64,
+              7.08
+            ],
+            "decisive_evidence_times_sec": [
+              10.16,
+              12.72,
+              15.0
+            ],
+            "reaction_evidence_times_sec": [
+              11.0,
+              15.0,
+              17.0
+            ],
+            "counter_evidence": [],
+            "continue_previous_scene": true
+          }
+        ]
+      },
+      {
+        "scene": {
+          "scene_id": "scene_0003",
+          "start_sec": 17.48,
+          "end_sec": 26.0,
+          "shot_ids": [
+            "shot_0011",
+            "shot_0012",
+            "shot_0013",
+            "shot_0014",
+            "shot_0015"
+          ],
+          "local_score": 0.9330164102365204,
+          "transcript": "[16.08-17.56s ASR] 他 他是谁\n[17.56-19.20s ASR] 你跟他什么关系啊\n[19.20-20.76s ASR] 对 和他没关系\n[20.76-21.44s ASR] 夫妻啊\n[23.00-24.50s OCR] 7310377-2025-00878063 1012422001/6/58\n[24.00-25.50s OCR] 202503月20 J110377-2025-008780631 电午2001年06月1 林知夏 大夏 101242200106158575 110101199907090560",
+          "audio_context": "happy/bgm",
+          "frame_samples": [
+            {
+              "timestamp_sec": 18.0,
+              "path": "/data1/video-highlight-cache/dc6156d7dbc42d90/frames/frame_000019.jpg",
+              "change_score": 0.07816234230995178,
+              "semantic_change_score": 0.0
+            },
+            {
+              "timestamp_sec": 19.0,
+              "path": "/data1/video-highlight-cache/dc6156d7dbc42d90/frames/frame_000020.jpg",
+              "change_score": 0.27774778008461,
+              "semantic_change_score": 0.3021846163720992
+            },
+            {
+              "timestamp_sec": 20.0,
+              "path": "/data1/video-highlight-cache/dc6156d7dbc42d90/frames/frame_000021.jpg",
+              "change_score": 0.18351620435714722,
+              "semantic_change_score": 0.5575095369772232
+            },
+            {
+              "timestamp_sec": 21.0,
+              "path": "/data1/video-highlight-cache/dc6156d7dbc42d90/frames/frame_000022.jpg",
+              "change_score": 0.09718137234449387,
+              "semantic_change_score": 0.9754579156507546
+            },
+            {
+              "timestamp_sec": 22.0,
+              "path": "/data1/video-highlight-cache/dc6156d7dbc42d90/frames/frame_000023.jpg",
+              "change_score": 0.32065334916114807,
+              "semantic_change_score": 0.36906537533565653
+            },
+            {
+              "timestamp_sec": 23.0,
+              "path": "/data1/video-highlight-cache/dc6156d7dbc42d90/frames/frame_000024.jpg",
+              "change_score": 0.39995309710502625,
+              "semantic_change_score": 1.0
+            },
+            {
+              "timestamp_sec": 24.0,
+              "path": "/data1/video-highlight-cache/dc6156d7dbc42d90/frames/frame_000025.jpg",
+              "change_score": 0.07671664655208588,
+              "semantic_change_score": 1.0
+            },
+            {
+              "timestamp_sec": 26.0,
+              "path": "/data1/video-highlight-cache/dc6156d7dbc42d90/frames/frame_000027.jpg",
+              "change_score": 0.3049555718898773,
+              "semantic_change_score": 1.0
+            }
+          ],
+          "speakers": [],
+          "face_track_ids": [],
+          "actors": [
+            "身穿浅色西装的男子",
+            "身穿浅蓝色上衣的女子",
+            "身穿深棕色西装的男子",
+            "中年女性"
+          ],
+          "action": "浅色西装男子质问女子与另一男子的关系，随后向中年女性展示了结婚证以证明其与女子的夫妻关系。",
+          "event_type": [
+            "reveal",
+            "conflict"
+          ],
+          "claims": [
+            "女子声称与另一男子没关系",
+            "浅色西装男子主张与女子为夫妻关系"
+          ],
+          "state_before": "未知女子与浅色西装男子及深棕色西装男子的关系",
+          "new_evidence": "一张标注为“结婚证”的红色证件，显示女子（林知夏）与浅色西装男子（大夏）的登记日期为2025年3月20日",
+          "state_after": "确立了浅色西装男子与女子的合法夫妻关系，引发了中年女性的震惊反应",
+          "relationship_change": "从隐瞒状态转为公开合法夫妻身份",
+          "emotion": [
+            "困惑",
+            "震惊"
+          ],
+          "salience": 0.95,
+          "uncertainty": 0.05,
+          "evidence": [
+            "[17.56s ASR] 你跟他什么关系啊",
+            "[19.20s ASR] 对 和他没关系",
+            "[20.76s ASR] 夫妻啊",
+            "[24.00s OCR] 结婚证图像及登记信息",
+            "[26.00s FRAME] 中年女性惊讶的表情"
+          ]
+        },
+        "decision": {
+          "map_supported": true,
+          "is_highlight": true,
+          "score": 0.934,
+          "highlight_type": "reveal",
+          "description": "轮椅男子当众亮出结婚证证明其与女子的夫妻关系，引发中年女性震惊",
+          "reason": "具备从关系质问与否认（铺垫）、出示结婚证物证（决定性证据）到中年女性震惊反应（明确后果）的完整揭露与反转结构",
+          "confidence": 0.9922,
+          "evidence_grounding": 0.96,
+          "narrative_impact": 0.92,
+          "standalone_clarity": 0.9,
+          "clipability": 0.95,
+          "start_sec": 17.48,
+          "end_sec": 26.0,
+          "evidence": [
+            "[18.0s F01] 轮椅男子质问'你跟他什么关系啊'",
+            "[20.0s F03] 女子回答'和他没关系'",
+            "[23.0s F06] 轮椅男子出示结婚证",
+            "[24.0s F07] 结婚证特写直接证实双方登记结婚",
+            "[26.0s F08] 中年女性呈现出震惊与错愕的反应"
+          ],
+          "setup_evidence_times_sec": [
+            18.0,
+            20.0
+          ],
+          "decisive_evidence_times_sec": [
+            23.0,
+            24.0
+          ],
+          "reaction_evidence_times_sec": [
+            26.0
+          ],
+          "counter_evidence": [],
+          "continue_previous_scene": false
+        },
+        "votes": [
+          {
+            "map_supported": true,
+            "is_highlight": true,
+            "score": 0.934,
+            "highlight_type": "reveal",
+            "description": "轮椅男子当众亮出结婚证证明其与女子的夫妻关系，引发中年女性震惊",
+            "reason": "具备从关系质问与否认（铺垫）、出示结婚证物证（决定性证据）到中年女性震惊反应（明确后果）的完整揭露与反转结构",
+            "confidence": 0.0,
+            "evidence_grounding": 0.96,
+            "narrative_impact": 0.92,
+            "standalone_clarity": 0.9,
+            "clipability": 0.95,
+            "start_sec": 17.48,
+            "end_sec": 26.0,
+            "evidence": [
+              "[18.0s F01] 轮椅男子质问'你跟他什么关系啊'",
+              "[20.0s F03] 女子回答'和他没关系'",
+              "[23.0s F06] 轮椅男子出示结婚证",
+              "[24.0s F07] 结婚证特写直接证实双方登记结婚",
+              "[26.0s F08] 中年女性呈现出震惊与错愕的反应"
+            ],
+            "setup_evidence_times_sec": [
+              18.0,
+              20.0
+            ],
+            "decisive_evidence_times_sec": [
+              23.0,
+              24.0
+            ],
+            "reaction_evidence_times_sec": [
+              26.0
+            ],
+            "counter_evidence": [],
+            "continue_previous_scene": false
+          },
+          {
+            "map_supported": true,
+            "is_highlight": true,
+            "score": 0.903,
+            "highlight_type": "reveal",
+            "description": "轮椅男子质问关系后当场出示结婚证宣称与林知夏是夫妻，引发中年女性震惊",
+            "reason": "符合叙事变化与关系揭露结构：通过关系质问铺垫，男子亮出结婚证这一决定性物证公开夫妻身份，直接引发在场中年女性震惊的反应后果。",
+            "confidence": 0.0,
+            "evidence_grounding": 0.95,
+            "narrative_impact": 0.88,
+            "standalone_clarity": 0.85,
+            "clipability": 0.92,
+            "start_sec": 17.56,
+            "end_sec": 26.0,
+            "evidence": [
+              "[18.0s F01] 轮椅男子询问“你跟他什么关系啊”",
+              "[20.0s F03] 女子回应“和他没关系”",
+              "[20.76s ASR] 轮椅男子说“夫妻啊”",
+              "[24.0s F07] 轮椅男子出示显示林知夏信息的结婚证",
+              "[26.0s F08] 中年女性神情震惊"
+            ],
+            "setup_evidence_times_sec": [
+              18.0,
+              20.0
+            ],
+            "decisive_evidence_times_sec": [
+              21.0,
+              24.0
+            ],
+            "reaction_evidence_times_sec": [
+              26.0
+            ],
+            "counter_evidence": [],
+            "continue_previous_scene": false
+          }
+        ]
+      },
+      {
+        "scene": {
+          "scene_id": "scene_0004",
+          "start_sec": 26.0,
+          "end_sec": 39.08,
+          "shot_ids": [
+            "shot_0016",
+            "shot_0017",
+            "shot_0018",
+            "shot_0019",
+            "shot_0020",
+            "shot_0021"
+          ],
+          "local_score": 0.9330164102365204,
+          "transcript": "[28.00-30.50s OCR] 他随身带着结婚证\n[31.02-35.20s ASR] 那天 那天在民政局\n[35.00-36.50s OCR] 林知夏\n[35.20-37.96s ASR] 林志夏 你出轨啊你\n[36.00-37.50s OCR] 你出轨啊你啊\n[37.96-40.20s ASR] 说你个头骨一样出轨出轨的\n[38.00-39.50s OCR] 出你个头鬼呀",
+          "audio_context": "happy/bgm",
+          "frame_samples": [
+            {
+              "timestamp_sec": 26.0,
+              "path": "/data1/video-highlight-cache/dc6156d7dbc42d90/frames/frame_000027.jpg",
+              "change_score": 0.3049555718898773,
+              "semantic_change_score": 1.0
+            },
+            {
+              "timestamp_sec": 27.0,
+              "path": "/data1/video-highlight-cache/dc6156d7dbc42d90/frames/frame_000028.jpg",
+              "change_score": 0.03895910084247589,
+              "semantic_change_score": 1.0
+            },
+            {
+              "timestamp_sec": 29.0,
+              "path": "/data1/video-highlight-cache/dc6156d7dbc42d90/frames/frame_000030.jpg",
+              "change_score": 0.12383674085140228,
+              "semantic_change_score": 1.0
+            },
+            {
+              "timestamp_sec": 31.0,
+              "path": "/data1/video-highlight-cache/dc6156d7dbc42d90/frames/frame_000032.jpg",
+              "change_score": 0.21843597292900085,
+              "semantic_change_score": 0.0
+            },
+            {
+              "timestamp_sec": 33.0,
+              "path": "/data1/video-highlight-cache/dc6156d7dbc42d90/frames/frame_000034.jpg",
+              "change_score": 0.3854788839817047,
+              "semantic_change_score": 0.0
+            },
+            {
+              "timestamp_sec": 35.0,
+              "path": "/data1/video-highlight-cache/dc6156d7dbc42d90/frames/frame_000036.jpg",
+              "change_score": 0.11335305869579315,
+              "semantic_change_score": 0.418366576715988
+            },
+            {
+              "timestamp_sec": 37.0,
+              "path": "/data1/video-highlight-cache/dc6156d7dbc42d90/frames/frame_000038.jpg",
+              "change_score": 0.08173349499702454,
+              "semantic_change_score": 0.0
+            },
+            {
+              "timestamp_sec": 39.0,
+              "path": "/data1/video-highlight-cache/dc6156d7dbc42d90/frames/frame_000040.jpg",
+              "change_score": 0.3064520061016083,
+              "semantic_change_score": 0.0
+            }
+          ],
+          "speakers": [],
+          "face_track_ids": [],
+          "actors": [
+            "穿灰裙女士",
+            "年轻男子",
+            "戴眼镜男子",
+            "被围困女性"
+          ],
+          "action": "年轻男子手持结婚证出现；戴眼镜男子与人对峙并发生口头争执；围观者向戴眼镜男子动手",
+          "event_type": [
+            "conflict",
+            "reveal"
+          ],
+          "claims": [
+            "年轻男子声称戴眼镜男子出轨"
+          ],
+          "state_before": "穿灰裙女士态度强硬，周围气氛紧张",
+          "new_evidence": "年轻男子持有结婚证并称其为证据，随后指责对方出轨",
+          "state_after": "戴眼镜男子处于被围攻和指责的状态",
+          "relationship_change": "戴眼镜男子与现场人员关系恶化，陷入公然对立",
+          "emotion": [
+            "愤怒",
+            "震惊",
+            "混乱"
+          ],
+          "salience": 0.92,
+          "uncertainty": 0.15,
+          "evidence": [
+            "[28.00s OCR] 画面显示年轻男子持有结婚证",
+            "[35.20s ASR] 年轻男子指责戴眼镜男子出轨",
+            "[38.00s ASR/OCR] 戴眼镜男子反驳称出轨是胡说",
+            "[39.0s FRAME] 画面显示戴眼镜男子在争吵中被众人推搡动手"
+          ]
+        },
+        "decision": {
+          "map_supported": true,
+          "is_highlight": true,
+          "score": 0.892,
+          "highlight_type": "conflict",
+          "description": "浅色西装男子亮出结婚证后，戴眼镜男子情绪失控指责出轨，随即遭到身旁长辈拍打制止",
+          "reason": "形成‘结婚证公开证明夫妻关系 → 戴眼镜男子失控指责出轨 → 遭到长辈推搡拍打制止’的冲突兑现结构",
+          "confidence": 0.997,
+          "evidence_grounding": 0.95,
+          "narrative_impact": 0.85,
+          "standalone_clarity": 0.86,
+          "clipability": 0.9,
+          "start_sec": 26.0,
+          "end_sec": 39.08,
+          "evidence": [
+            "[26.0s F01/27.0s F02] 穿灰裙中年女士震惊注视",
+            "[29.0s F03] 林知夏台词‘他随身带着结婚证’",
+            "[31.0s F04] 浅色西装男子手持结婚证展示",
+            "[35.0s F06/37.0s F07] 戴眼镜男子愤怒指责‘林知夏 你出轨啊你’",
+            "[39.0s F08] 戴眼镜男子被身旁长辈拍打推搡并反击‘出你个头鬼呀’"
+          ],
+          "setup_evidence_times_sec": [
+            26.0,
+            29.0,
+            31.0
+          ],
+          "decisive_evidence_times_sec": [
+            35.2,
+            37.0
+          ],
+          "reaction_evidence_times_sec": [
+            38.0,
+            39.0
+          ],
+          "counter_evidence": [],
+          "continue_previous_scene": true
+        },
+        "votes": [
+          {
+            "map_supported": true,
+            "is_highlight": true,
+            "score": 0.892,
+            "highlight_type": "conflict",
+            "description": "浅色西装男子亮出结婚证后，戴眼镜男子情绪失控指责出轨，随即遭到身旁长辈拍打制止",
+            "reason": "形成‘结婚证公开证明夫妻关系 → 戴眼镜男子失控指责出轨 → 遭到长辈推搡拍打制止’的冲突兑现结构",
+            "confidence": 0.0,
+            "evidence_grounding": 0.95,
+            "narrative_impact": 0.85,
+            "standalone_clarity": 0.86,
+            "clipability": 0.9,
+            "start_sec": 26.0,
+            "end_sec": 39.08,
+            "evidence": [
+              "[26.0s F01/27.0s F02] 穿灰裙中年女士震惊注视",
+              "[29.0s F03] 林知夏台词‘他随身带着结婚证’",
+              "[31.0s F04] 浅色西装男子手持结婚证展示",
+              "[35.0s F06/37.0s F07] 戴眼镜男子愤怒指责‘林知夏 你出轨啊你’",
+              "[39.0s F08] 戴眼镜男子被身旁长辈拍打推搡并反击‘出你个头鬼呀’"
+            ],
+            "setup_evidence_times_sec": [
+              26.0,
+              29.0,
+              31.0
+            ],
+            "decisive_evidence_times_sec": [
+              35.2,
+              37.0
+            ],
+            "reaction_evidence_times_sec": [
+              38.0,
+              39.0
+            ],
+            "counter_evidence": [],
+            "continue_previous_scene": true
+          },
+          {
+            "map_supported": true,
+            "is_highlight": true,
+            "score": 0.88,
+            "highlight_type": "conflict",
+            "description": "浅色西装男子出示结婚证后，戴眼镜男子气急败坏指责林知夏出轨，随即遭到众人推搡掌掴反击",
+            "reason": "符合冲突兑现结构：结婚证证实合法关系后，戴眼镜男子言语挑衅诬陷出轨，立即引发当场推搡动手的可见反击后果",
+            "confidence": 0.0,
+            "evidence_grounding": 0.95,
+            "narrative_impact": 0.85,
+            "standalone_clarity": 0.82,
+            "clipability": 0.88,
+            "start_sec": 24.0,
+            "end_sec": 39.08,
+            "evidence": [
+              "[24.00s OCR] 结婚证图像及登记信息",
+              "[29.0s F03] 林知夏说明对方随身带着结婚证",
+              "[31.0s F04] 浅色西装男子手持结婚证",
+              "[35.0s F06] 戴眼镜男子愤怒质问",
+              "[37.0s F07] 戴眼镜男子手指对方指责林知夏出轨",
+              "[39.0s F08] 穿灰裙女士等人动手掌掴推搡戴眼镜男子，驳斥其出轨言论"
+            ],
+            "setup_evidence_times_sec": [
+              24.0,
+              29.0,
+              31.0
+            ],
+            "decisive_evidence_times_sec": [
+              35.0,
+              37.0
+            ],
+            "reaction_evidence_times_sec": [
+              39.0
+            ],
+            "counter_evidence": [],
+            "continue_previous_scene": true
+          }
+        ]
+      },
+      {
+        "scene": {
+          "scene_id": "scene_0005",
+          "start_sec": 39.08,
+          "end_sec": 47.48,
+          "shot_ids": [
+            "shot_0022",
+            "shot_0023",
+            "shot_0024",
+            "shot_0025",
+            "shot_0026",
+            "shot_0027"
+          ],
+          "local_score": 0.9330164102365204,
+          "transcript": "[37.96-40.20s ASR] 说你个头骨一样出轨出轨的\n[38.00-39.50s OCR] 出你个头鬼呀\n[40.20-41.20s ASR] 自己出轨你\n[41.20-42.72s ASR] 还倒打一耙你\n[42.72-49.93s ASR] 好好",
+          "audio_context": "happy/bgm",
+          "frame_samples": [
+            {
+              "timestamp_sec": 40.0,
+              "path": "/data1/video-highlight-cache/dc6156d7dbc42d90/frames/frame_000041.jpg",
+              "change_score": 0.27696654200553894,
+              "semantic_change_score": 0.6421334572598014
+            },
+            {
+              "timestamp_sec": 41.0,
+              "path": "/data1/video-highlight-cache/dc6156d7dbc42d90/frames/frame_000042.jpg",
+              "change_score": 0.006962316110730171,
+              "semantic_change_score": 0.49336252920438733
+            },
+            {
+              "timestamp_sec": 42.0,
+              "path": "/data1/video-highlight-cache/dc6156d7dbc42d90/frames/frame_000043.jpg",
+              "change_score": 0.2389514446258545,
+              "semantic_change_score": 0.4313127868556186
+            },
+            {
+              "timestamp_sec": 43.0,
+              "path": "/data1/video-highlight-cache/dc6156d7dbc42d90/frames/frame_000044.jpg",
+              "change_score": 0.32139819860458374,
+              "semantic_change_score": 0.7878098094469188
+            },
+            {
+              "timestamp_sec": 44.0,
+              "path": "/data1/video-highlight-cache/dc6156d7dbc42d90/frames/frame_000045.jpg",
+              "change_score": 0.2345195710659027,
+              "semantic_change_score": 0.5153723863070575
+            },
+            {
+              "timestamp_sec": 45.0,
+              "path": "/data1/video-highlight-cache/dc6156d7dbc42d90/frames/frame_000046.jpg",
+              "change_score": 0.32868507504463196,
+              "semantic_change_score": 0.9960648146903065
+            },
+            {
+              "timestamp_sec": 46.0,
+              "path": "/data1/video-highlight-cache/dc6156d7dbc42d90/frames/frame_000047.jpg",
+              "change_score": 0.05526481941342354,
+              "semantic_change_score": 1.0
+            },
+            {
+              "timestamp_sec": 47.0,
+              "path": "/data1/video-highlight-cache/dc6156d7dbc42d90/frames/frame_000048.jpg",
+              "change_score": 0.3411716818809509,
+              "semantic_change_score": 0.5694539543784931
+            }
+          ],
+          "speakers": [],
+          "face_track_ids": [],
+          "actors": [
+            "戴眼镜男子",
+            "持手机女子"
+          ],
+          "action": "女子向戴眼镜男子出示手机屏幕上的亲密照片，男子在观看后神情惊愕。",
+          "event_type": [
+            "reveal",
+            "conflict"
+          ],
+          "claims": [
+            "男子出轨"
+          ],
+          "state_before": "男子对出轨指控进行辩驳与反击",
+          "new_evidence": "手机屏幕显示的男子与他人亲密拥吻的照片",
+          "state_after": "男子证据确凿，面临当场对峙，不再辩驳",
+          "relationship_change": "信任彻底破裂",
+          "emotion": [
+            "愤怒",
+            "震惊"
+          ],
+          "salience": 0.95,
+          "uncertainty": 0.05,
+          "evidence": [
+            "[40.20-42.72s ASR] 女子指责男子出轨并倒打一耙",
+            "[43.0s FRAME] 女子将手机怼在男子面前",
+            "[46.0s FRAME] 手机屏幕中出现男子与他人的亲密拥吻画面",
+            "[47.0s FRAME] 戴眼镜男子神情惊愕僵住"
+          ]
+        },
+        "decision": {
+          "map_supported": true,
+          "is_highlight": true,
+          "score": 0.928,
+          "highlight_type": "reveal",
+          "description": "女子当众出示手机中男子与他人拥吻的照片实锤其出轨",
+          "reason": "形成‘前序否认/指责倒打一耙 → 亮出手机亲密照决定性证据 → 戴眼镜男子错愕当场被实锤’的完整反转揭露高光结构",
+          "confidence": 0.9962,
+          "evidence_grounding": 0.96,
+          "narrative_impact": 0.92,
+          "standalone_clarity": 0.9,
+          "clipability": 0.92,
+          "start_sec": 40.0,
+          "end_sec": 47.48,
+          "evidence": [
+            "[40.20-42.72s ASR] 自己出轨你 还倒打一耙你",
+            "[43.0s-44.0s F04-F05] 女子将手机怼至戴眼镜男子面前，男子神情惊愕",
+            "[45.0s-46.0s F06-F07] 手机屏幕特写显示男子与他人在车前亲密拥吻实锤照片",
+            "[47.0s F08] 女子冷峻对视对质"
+          ],
+          "setup_evidence_times_sec": [
+            40.0,
+            41.0,
+            42.0
+          ],
+          "decisive_evidence_times_sec": [
+            45.0,
+            46.0
+          ],
+          "reaction_evidence_times_sec": [
+            47.0
+          ],
+          "counter_evidence": [],
+          "continue_previous_scene": false
+        },
+        "votes": [
+          {
+            "map_supported": true,
+            "is_highlight": true,
+            "score": 0.928,
+            "highlight_type": "reveal",
+            "description": "女子当众出示手机中男子与他人拥吻的照片实锤其出轨",
+            "reason": "形成‘前序否认/指责倒打一耙 → 亮出手机亲密照决定性证据 → 戴眼镜男子错愕当场被实锤’的完整反转揭露高光结构",
+            "confidence": 0.0,
+            "evidence_grounding": 0.96,
+            "narrative_impact": 0.92,
+            "standalone_clarity": 0.9,
+            "clipability": 0.92,
+            "start_sec": 40.0,
+            "end_sec": 47.48,
+            "evidence": [
+              "[40.20-42.72s ASR] 自己出轨你 还倒打一耙你",
+              "[43.0s-44.0s F04-F05] 女子将手机怼至戴眼镜男子面前，男子神情惊愕",
+              "[45.0s-46.0s F06-F07] 手机屏幕特写显示男子与他人在车前亲密拥吻实锤照片",
+              "[47.0s F08] 女子冷峻对视对质"
+            ],
+            "setup_evidence_times_sec": [
+              40.0,
+              41.0,
+              42.0
+            ],
+            "decisive_evidence_times_sec": [
+              45.0,
+              46.0
+            ],
+            "reaction_evidence_times_sec": [
+              44.0,
+              47.0
+            ],
+            "counter_evidence": [],
+            "continue_previous_scene": false
+          },
+          {
+            "map_supported": true,
+            "is_highlight": true,
+            "score": 0.913,
+            "highlight_type": "reveal",
+            "description": "女子当众出示手机中的拥吻照片，当场揭穿戴眼镜男子出轨并反驳其倒打一耙",
+            "reason": "具备完整的叙事变化与冲突兑现结构：男子此前否认出轨指控，女子直接拿出手机屏幕上的亲密拥吻照片作为决定性铁证当面对质，男子神情惊愕，完成当场揭露打脸。",
+            "confidence": 0.0,
+            "evidence_grounding": 0.95,
+            "narrative_impact": 0.88,
+            "standalone_clarity": 0.9,
+            "clipability": 0.92,
+            "start_sec": 40.0,
+            "end_sec": 47.48,
+            "evidence": [
+              "[40.20-42.72s ASR] 女子指责男子‘自己出轨你还倒打一耙你’",
+              "[43.0s F04] 女子将手机屏幕举到男子面前对质",
+              "[45.0s F06] 手机屏幕清晰显示戴眼镜男子与他人的亲密拥吻画面",
+              "[46.0s F07] 手机画面中拥吻证据特写",
+              "[47.0s F08] 女子怒视男子完成证据对峙"
+            ],
+            "setup_evidence_times_sec": [
+              40.0,
+              42.0
+            ],
+            "decisive_evidence_times_sec": [
+              45.0,
+              46.0
+            ],
+            "reaction_evidence_times_sec": [
+              47.0
+            ],
+            "counter_evidence": [],
+            "continue_previous_scene": false
+          }
+        ]
+      },
+      {
+        "scene": {
+          "scene_id": "scene_0006",
+          "start_sec": 47.48,
+          "end_sec": 55.6,
+          "shot_ids": [
+            "shot_0028",
+            "shot_0029",
+            "shot_0030"
+          ],
+          "local_score": 0.8430560115357162,
+          "transcript": "[42.72-49.93s ASR] 好好\n[49.00-50.50s OCR] 好好好\n[49.93-51.37s ASR] 你不认\n[51.37-52.33s ASR] 别怪我不义\n[52.33-53.67s ASR] 你们\n[53.67-55.49s ASR] 冒充深河集团总裁\n[54.00-55.50s OCR] 冒充申和集团总裁\n[55.49-56.53s ASR] 骗我签合同",
+          "audio_context": "happy/bgm",
+          "frame_samples": [
+            {
+              "timestamp_sec": 48.0,
+              "path": "/data1/video-highlight-cache/dc6156d7dbc42d90/frames/frame_000049.jpg",
+              "change_score": 0.12315889447927475,
+              "semantic_change_score": 0.40987890454882925
+            },
+            {
+              "timestamp_sec": 49.0,
+              "path": "/data1/video-highlight-cache/dc6156d7dbc42d90/frames/frame_000050.jpg",
+              "change_score": 0.17929495871067047,
+              "semantic_change_score": 0.7494951592119838
+            },
+            {
+              "timestamp_sec": 50.0,
+              "path": "/data1/video-highlight-cache/dc6156d7dbc42d90/frames/frame_000051.jpg",
+              "change_score": 0.08494944870471954,
+              "semantic_change_score": 0.0
+            },
+            {
+              "timestamp_sec": 51.0,
+              "path": "/data1/video-highlight-cache/dc6156d7dbc42d90/frames/frame_000052.jpg",
+              "change_score": 0.3294883668422699,
+              "semantic_change_score": 0.7680209290863416
+            },
+            {
+              "timestamp_sec": 52.0,
+              "path": "/data1/video-highlight-cache/dc6156d7dbc42d90/frames/frame_000053.jpg",
+              "change_score": 0.055288754403591156,
+              "semantic_change_score": 0.30019044371305353
+            },
+            {
+              "timestamp_sec": 53.0,
+              "path": "/data1/video-highlight-cache/dc6156d7dbc42d90/frames/frame_000054.jpg",
+              "change_score": 0.454833984375,
+              "semantic_change_score": 1.0
+            },
+            {
+              "timestamp_sec": 54.0,
+              "path": "/data1/video-highlight-cache/dc6156d7dbc42d90/frames/frame_000055.jpg",
+              "change_score": 0.03431564196944237,
+              "semantic_change_score": 0.8716502247153338
+            },
+            {
+              "timestamp_sec": 55.0,
+              "path": "/data1/video-highlight-cache/dc6156d7dbc42d90/frames/frame_000056.jpg",
+              "change_score": 0.05967945605516434,
+              "semantic_change_score": 1.0
+            }
+          ],
+          "speakers": [],
+          "face_track_ids": [],
+          "actors": [
+            "女性角色",
+            "眼镜男",
+            "轮椅男"
+          ],
+          "action": "女性角色先低头后看向前方，眼镜男严厉地向女性角色喊话，随后切换到轮椅男持证件照看着前方",
+          "event_type": [
+            "reveal",
+            "conflict"
+          ],
+          "claims": [
+            "某人冒充申和集团总裁骗取合同"
+          ],
+          "state_before": "女性角色态度顺从（ASR: 好好好）",
+          "new_evidence": "轮椅男持有证件并揭露冒充行为",
+          "state_after": "冲突公开化，女性角色的欺诈行为被指出",
+          "relationship_change": "从潜在合作转向揭露欺诈",
+          "emotion": [
+            "警觉",
+            "愤怒"
+          ],
+          "salience": 0.85,
+          "uncertainty": 0.1,
+          "evidence": [
+            "[48.0s-49.0s FRAME] 女性角色低头至抬头神情转换",
+            "[51.0s-52.0s FRAME] 眼镜男严厉指责",
+            "[54.0s-55.0s FRAME] 轮椅男手持印有文字的红本（证件）",
+            "[53.67-55.49s ASR] 冒充申和集团总裁骗我签合同"
+          ]
+        },
+        "decision": {
+          "map_supported": true,
+          "is_highlight": false,
+          "score": 0.569,
+          "highlight_type": "conflict",
+          "description": "眼镜男在对峙中出言威胁，并反向指控对方冒充申和集团总裁骗签合同",
+          "reason": "眼镜男在出轨对峙后反扑威胁并抛出口头指控，但场内仅为单方台词施压，未有实质性证据落地、反转证实或明确后果闭环，叙事完整度与独立可看性较弱",
+          "confidence": 0.674,
+          "evidence_grounding": 0.88,
+          "narrative_impact": 0.45,
+          "standalone_clarity": 0.45,
+          "clipability": 0.4,
+          "start_sec": null,
+          "end_sec": null,
+          "evidence": [
+            "[49.0s F02] 女性角色神情冷漠，字幕显示‘好好好’",
+            "[51.0s-52.0s F04-F05] 眼镜男严厉指责‘你不认，别怪我不义’",
+            "[54.0s-55.0s F07-F08] 轮椅男手持红色证件，画外音指控‘冒充申和集团总裁骗我签合同’",
+            "[53.67-55.49s ASR] 冒充申和集团总裁"
+          ],
+          "setup_evidence_times_sec": [],
+          "decisive_evidence_times_sec": [],
+          "reaction_evidence_times_sec": [],
+          "counter_evidence": [
+            "冒充总裁的指控仅为眼镜男单方言语反扑，缺乏独立事实支撑",
+            "场景在指控提出处戛然而止，未展现被指控方的实质反应或事实确证"
+          ],
+          "continue_previous_scene": false
+        },
+        "votes": [
+          {
+            "map_supported": true,
+            "is_highlight": true,
+            "score": 0.836,
+            "highlight_type": "reveal",
+            "description": "眼镜男出言威胁，轮椅男拿出证件并当面揭露对方冒充申和集团总裁骗签合同",
+            "reason": "符合悬念钩子与冲突反转结构：眼镜男施压威胁，轮椅男随即亮出证件并抛出冒充集团总裁骗签合同的关键指控，形成强对抗转折与剧情悬念",
+            "confidence": 0.0,
+            "evidence_grounding": 0.92,
+            "narrative_impact": 0.8,
+            "standalone_clarity": 0.75,
+            "clipability": 0.85,
+            "start_sec": 48.0,
+            "end_sec": 55.6,
+            "evidence": [
+              "[49.0s F02] 女性角色神情转换，字幕显示‘好好好’",
+              "[51.0s F04] 眼镜男严厉指责‘你不认，别怪我不义’",
+              "[54.0s F07] 轮椅男手持红本证件，指控‘你们冒充申和集团总裁’",
+              "[55.0s F08] 轮椅男正面对峙"
+            ],
+            "setup_evidence_times_sec": [
+              49.0,
+              51.0
+            ],
+            "decisive_evidence_times_sec": [
+              54.0,
+              55.0
+            ],
+            "reaction_evidence_times_sec": [],
+            "counter_evidence": [
+              "指控提出后场景在台词处戛然而止，本场内未及展现对方被揭穿后的实质反应与结果"
+            ],
+            "continue_previous_scene": false
+          },
+          {
+            "map_supported": true,
+            "is_highlight": false,
+            "score": 0.532,
+            "highlight_type": "conflict",
+            "description": "眼镜男反驳指责对方冒充集团总裁骗签合同",
+            "reason": "眼镜男在对峙中提出新的指控进行口头对抗，但属于未经证实的人物主张，场内未出现决定性证据推翻或落实该指控，亦无明确后果，结构不完整",
+            "confidence": 0.0,
+            "evidence_grounding": 0.88,
+            "narrative_impact": 0.38,
+            "standalone_clarity": 0.42,
+            "clipability": 0.35,
+            "start_sec": null,
+            "end_sec": null,
+            "evidence": [
+              "[49.0s F02] 女性角色神情冷漠回应‘好好好’",
+              "[51.0s-52.0s F04-F05] 眼镜男严厉指责‘你不认别怪我不义’",
+              "[54.0s-55.0s F07-F08] 轮椅男手持红色证件低头倾听",
+              "[53.67-55.49s ASR] 冒充申和集团总裁骗我签合同"
+            ],
+            "setup_evidence_times_sec": [],
+            "decisive_evidence_times_sec": [],
+            "reaction_evidence_times_sec": [],
+            "counter_evidence": [
+              "冒充总裁的指控仅为眼镜男单方台词主张，缺乏独立证据支撑",
+              "场内未呈现指控后的明确事实反转或行动后果，无法构成独立观看单元"
+            ],
+            "continue_previous_scene": false
+          },
+          {
+            "map_supported": true,
+            "is_highlight": false,
+            "score": 0.569,
+            "highlight_type": "conflict",
+            "description": "眼镜男在对峙中出言威胁，并反向指控对方冒充申和集团总裁骗签合同",
+            "reason": "眼镜男在出轨对峙后反扑威胁并抛出口头指控，但场内仅为单方台词施压，未有实质性证据落地、反转证实或明确后果闭环，叙事完整度与独立可看性较弱",
+            "confidence": 0.0,
+            "evidence_grounding": 0.88,
+            "narrative_impact": 0.45,
+            "standalone_clarity": 0.45,
+            "clipability": 0.4,
+            "start_sec": null,
+            "end_sec": null,
+            "evidence": [
+              "[49.0s F02] 女性角色神情冷漠，字幕显示‘好好好’",
+              "[51.0s-52.0s F04-F05] 眼镜男严厉指责‘你不认，别怪我不义’",
+              "[54.0s-55.0s F07-F08] 轮椅男手持红色证件，画外音指控‘冒充申和集团总裁骗我签合同’",
+              "[53.67-55.49s ASR] 冒充申和集团总裁"
+            ],
+            "setup_evidence_times_sec": [],
+            "decisive_evidence_times_sec": [],
+            "reaction_evidence_times_sec": [],
+            "counter_evidence": [
+              "冒充总裁的指控仅为眼镜男单方言语反扑，缺乏独立事实支撑",
+              "场景在指控提出处戛然而止，未展现被指控方的实质反应或事实确证"
+            ],
+            "continue_previous_scene": false
+          }
+        ]
+      },
+      {
+        "scene": {
+          "scene_id": "scene_0007",
+          "start_sec": 55.6,
+          "end_sec": 65.0,
+          "shot_ids": [
+            "shot_0031",
+            "shot_0032",
+            "shot_0033",
+            "shot_0034"
+          ],
+          "local_score": 0.6530845640346243,
+          "transcript": "[55.49-56.53s ASR] 骗我签合同\n[56.53-59.47s ASR] 知道深河集团总裁是什么人吗\n[58.00-59.50s OCR] 申和集团总裁\n[59.47-60.17s ASR] 他最烦\n[60.17-61.53s ASR] 有人打着他的名义\n[61.53-62.73s ASR] 在这招摇撞骗了\n[62.73-64.37s ASR] 一旦让他知道\n[64.37-65.45s ASR] 他杀伐果断",
+          "audio_context": "happy/bgm",
+          "frame_samples": [
+            {
+              "timestamp_sec": 56.0,
+              "path": "/data1/video-highlight-cache/dc6156d7dbc42d90/frames/frame_000057.jpg",
+              "change_score": 0.36178097128868103,
+              "semantic_change_score": 0.0
+            },
+            {
+              "timestamp_sec": 57.0,
+              "path": "/data1/video-highlight-cache/dc6156d7dbc42d90/frames/frame_000058.jpg",
+              "change_score": 0.11487055569887161,
+              "semantic_change_score": 0.0
+            },
+            {
+              "timestamp_sec": 58.0,
+              "path": "/data1/video-highlight-cache/dc6156d7dbc42d90/frames/frame_000059.jpg",
+              "change_score": 0.06436887383460999,
+              "semantic_change_score": 0.0
+            },
+            {
+              "timestamp_sec": 59.0,
+              "path": "/data1/video-highlight-cache/dc6156d7dbc42d90/frames/frame_000060.jpg",
+              "change_score": 0.07766544073820114,
+              "semantic_change_score": 0.0
+            },
+            {
+              "timestamp_sec": 61.0,
+              "path": "/data1/video-highlight-cache/dc6156d7dbc42d90/frames/frame_000062.jpg",
+              "change_score": 0.08907973021268845,
+              "semantic_change_score": 0.0
+            },
+            {
+              "timestamp_sec": 62.0,
+              "path": "/data1/video-highlight-cache/dc6156d7dbc42d90/frames/frame_000063.jpg",
+              "change_score": 0.28729990124702454,
+              "semantic_change_score": 0.35646788767944637
+            },
+            {
+              "timestamp_sec": 63.0,
+              "path": "/data1/video-highlight-cache/dc6156d7dbc42d90/frames/frame_000064.jpg",
+              "change_score": 0.33214038610458374,
+              "semantic_change_score": 0.3469214976384585
+            },
+            {
+              "timestamp_sec": 65.0,
+              "path": "/data1/video-highlight-cache/dc6156d7dbc42d90/frames/frame_000066.jpg",
+              "change_score": 0.0413823164999485,
+              "semantic_change_score": 0.3240465577684342
+            }
+          ],
+          "speakers": [],
+          "face_track_ids": [],
+          "actors": [
+            "穿棕色西装的男子",
+            "穿浅色套裙的女子",
+            "穿白色西装的男子"
+          ],
+          "action": "棕色西装男子向女子抱怨某人，随后画面转至白色西装男子发表对某人行为准则的评论。",
+          "event_type": [
+            "conflict",
+            "reveal"
+          ],
+          "claims": [
+            "有人打着深河集团总裁的名义招摇撞骗",
+            "深河集团总裁杀伐果断，绝不留情"
+          ],
+          "state_before": "state_before unknown",
+          "new_evidence": "棕色西装男子主张某人打着总裁名义行骗，白色西装男子确认总裁会对此类行为绝不留情。",
+          "state_after": "双方达成对总裁严苛作风的共识，意识到招摇撞骗的风险极高。",
+          "relationship_change": "未知",
+          "emotion": [
+            "烦躁",
+            "严肃",
+            "警告"
+          ],
+          "salience": 0.75,
+          "uncertainty": 0.2,
+          "evidence": [
+            "[56.53s ASR] 知道深河集团总裁是什么人吗",
+            "[61.53s ASR] 在这招摇撞骗了",
+            "[64.37s ASR] 他杀伐果断",
+            "[65.0s ASR] 绝不留情"
+          ]
+        },
+        "decision": {
+          "map_supported": true,
+          "is_highlight": false,
+          "score": 0.516,
+          "highlight_type": "other",
+          "description": "棕色西装男子指责有人冒充集团总裁，白色西装男子言语附和其后果严苛",
+          "reason": "本场仅存在口头陈述与威胁言论，未发生实质性的证据揭露、身份反转或冲突兑现结果，不构成五种高光结构中的任一种完整闭环",
+          "confidence": 0.9882,
+          "evidence_grounding": 0.92,
+          "narrative_impact": 0.32,
+          "standalone_clarity": 0.42,
+          "clipability": 0.3,
+          "start_sec": null,
+          "end_sec": null,
+          "evidence": [
+            "[58.0s F03] 申和集团总裁",
+            "[61.0s F05] 在这招摇撞骗了",
+            "[63.0s F07] 一旦让他知道",
+            "[65.0s F08] 绝不留情"
+          ],
+          "setup_evidence_times_sec": [],
+          "decisive_evidence_times_sec": [],
+          "reaction_evidence_times_sec": [],
+          "counter_evidence": [
+            "台词内容仅为角色言语主张与人设立场，缺少行为后果或状态转换的独立闭环"
+          ],
+          "continue_previous_scene": false
+        },
+        "votes": [
+          {
+            "map_supported": true,
+            "is_highlight": false,
+            "score": 0.516,
+            "highlight_type": "other",
+            "description": "棕色西装男子指责有人冒充集团总裁，白色西装男子言语附和其后果严苛",
+            "reason": "本场仅存在口头陈述与威胁言论，未发生实质性的证据揭露、身份反转或冲突兑现结果，不构成五种高光结构中的任一种完整闭环",
+            "confidence": 0.0,
+            "evidence_grounding": 0.92,
+            "narrative_impact": 0.32,
+            "standalone_clarity": 0.42,
+            "clipability": 0.3,
+            "start_sec": null,
+            "end_sec": null,
+            "evidence": [
+              "[58.0s F03] 申和集团总裁",
+              "[61.0s F05] 在这招摇撞骗了",
+              "[63.0s F07] 一旦让他知道",
+              "[65.0s F08] 绝不留情"
+            ],
+            "setup_evidence_times_sec": [],
+            "decisive_evidence_times_sec": [],
+            "reaction_evidence_times_sec": [],
+            "counter_evidence": [
+              "台词内容仅为角色言语主张与人设立场，缺少行为后果或状态转换的独立闭环"
+            ],
+            "continue_previous_scene": false
+          },
+          {
+            "map_supported": true,
+            "is_highlight": false,
+            "score": 0.469,
+            "highlight_type": "other",
+            "description": "棕色西装男子声称申和集团总裁最恨被人冒名行骗并进行言语警告",
+            "reason": "仅有棕色西装男子的口头施压与台词警告，未出现决定性证据揭露、冲突解决或可见状态变化，未构成五种通用高光结构中的任一种",
+            "confidence": 0.0,
+            "evidence_grounding": 0.88,
+            "narrative_impact": 0.25,
+            "standalone_clarity": 0.35,
+            "clipability": 0.3,
+            "start_sec": null,
+            "end_sec": null,
+            "evidence": [
+              "[56.0s F01] 棕色西装男子神情激动地指责",
+              "[58.0s F03 OCR] 申和集团总裁",
+              "[61.0s F05 OCR] 在这招摇撞骗了",
+              "[65.0s F08 OCR] 绝不留情"
+            ],
+            "setup_evidence_times_sec": [],
+            "decisive_evidence_times_sec": [],
+            "reaction_evidence_times_sec": [],
+            "counter_evidence": [
+              "全场仅为单方面的台词施压与背景规则陈述，缺乏打脸反转或行动后果",
+              "脱离上下文无法形成独立的叙事高光单元"
+            ],
+            "continue_previous_scene": false
+          }
+        ]
+      },
+      {
+        "scene": {
+          "scene_id": "scene_0008",
+          "start_sec": 65.0,
+          "end_sec": 74.16,
+          "shot_ids": [
+            "shot_0035",
+            "shot_0036",
+            "shot_0037",
+            "shot_0038",
+            "shot_0039"
+          ],
+          "local_score": 0.598608846144411,
+          "transcript": "[64.37-65.45s ASR] 他杀伐果断\n[65.45-66.21s ASR] 绝不留情\n[66.21-67.71s ASR] 你说\n[67.71-70.03s ASR] 如果我告诉他了\n[70.03-70.77s ASR] 你们\n[70.77-72.25s ASR] 会有什么下场\n[71.00-72.50s OCR] 会有什么下场啊\n[72.25-72.75s ASR] 啊\n[72.75-74.09s ASR] 你用不要脸\n[73.00-74.50s OCR] 你要不要脸\n[74.00-75.50s OCR] 要不要脸\n[74.09-74.61s ASR] 用不要脸",
+          "audio_context": "happy/bgm",
+          "frame_samples": [
+            {
+              "timestamp_sec": 65.0,
+              "path": "/data1/video-highlight-cache/dc6156d7dbc42d90/frames/frame_000066.jpg",
+              "change_score": 0.0413823164999485,
+              "semantic_change_score": 0.3240465577684342
+            },
+            {
+              "timestamp_sec": 66.0,
+              "path": "/data1/video-highlight-cache/dc6156d7dbc42d90/frames/frame_000067.jpg",
+              "change_score": 0.44371744990348816,
+              "semantic_change_score": 0.2946687055726211
+            },
+            {
+              "timestamp_sec": 67.0,
+              "path": "/data1/video-highlight-cache/dc6156d7dbc42d90/frames/frame_000068.jpg",
+              "change_score": 0.05397135391831398,
+              "semantic_change_score": 0.08253875705266568
+            },
+            {
+              "timestamp_sec": 68.0,
+              "path": "/data1/video-highlight-cache/dc6156d7dbc42d90/frames/frame_000069.jpg",
+              "change_score": 0.15440985560417175,
+              "semantic_change_score": 0.19965751687001038
+            },
+            {
+              "timestamp_sec": 70.0,
+              "path": "/data1/video-highlight-cache/dc6156d7dbc42d90/frames/frame_000071.jpg",
+              "change_score": 0.33985620737075806,
+              "semantic_change_score": 0.046950686337841975
+            },
+            {
+              "timestamp_sec": 71.0,
+              "path": "/data1/video-highlight-cache/dc6156d7dbc42d90/frames/frame_000072.jpg",
+              "change_score": 0.08999023586511612,
+              "semantic_change_score": 0.0
+            },
+            {
+              "timestamp_sec": 72.0,
+              "path": "/data1/video-highlight-cache/dc6156d7dbc42d90/frames/frame_000073.jpg",
+              "change_score": 0.09674766659736633,
+              "semantic_change_score": 0.5654423011309185
+            },
+            {
+              "timestamp_sec": 74.0,
+              "path": "/data1/video-highlight-cache/dc6156d7dbc42d90/frames/frame_000075.jpg",
+              "change_score": 0.2253820151090622,
+              "semantic_change_score": 0.5991921830224682
+            }
+          ],
+          "speakers": [],
+          "face_track_ids": [],
+          "actors": [
+            "白衣男子",
+            "眼镜男子",
+            "中年女子"
+          ],
+          "action": "白衣男子宣告绝不留情；随后眼镜男子与中年女子与一名女子发生肢体拉扯及言语争执",
+          "event_type": [
+            "conflict",
+            "action"
+          ],
+          "claims": [
+            "“他杀伐果断，绝不留情”",
+            "“如果我告诉他了，你们会有什么下场”"
+          ],
+          "state_before": "眼镜男子与中年女子在场，对峙状态（unknown）",
+          "new_evidence": "眼镜男子与中年女子对女子进行肢体拉扯，并高声质问对方“要不要脸”",
+          "state_after": "双方爆发言语与肢体冲突，对峙升级",
+          "relationship_change": "敌对关系确认",
+          "emotion": [
+            "愤怒",
+            "轻蔑"
+          ],
+          "salience": 0.75,
+          "uncertainty": 0.15,
+          "evidence": [
+            "[65.0s FRAME] 白衣男子镜头",
+            "[66.0s FRAME] 眼镜男子与中年女子双手抱胸对峙",
+            "[70.0s ASR] 女子发出威胁性言语",
+            "[74.0s FRAME] 三人发生肢体拉扯"
+          ]
+        },
+        "decision": {
+          "map_supported": true,
+          "is_highlight": true,
+          "score": 0.77,
+          "highlight_type": "conflict",
+          "description": "戴眼镜男子借总裁之势言语威胁，随即引发激烈的现场肢体拉扯与言语冲突",
+          "reason": "戴眼镜男子借助深河集团总裁严酷名义对女子进行当面威胁施压，台词交锋后矛盾迅速激化，中年女子与眼镜男随即与女子爆发直接的肢体撕扯与怒骂，构成了明确的肢体与言语冲突爆发点",
+          "confidence": 0.683,
+          "evidence_grounding": 0.92,
+          "narrative_impact": 0.68,
+          "standalone_clarity": 0.65,
+          "clipability": 0.8,
+          "start_sec": 65.0,
+          "end_sec": 74.16,
+          "evidence": [
+            "[65.0s FRAME F01] 白衣男子画面及台词“绝不留情”",
+            "[66.0s FRAME F02] 戴眼镜男子双手抱胸对峙",
+            "[71.0s FRAME F06] 戴眼镜男子言语挑衅威胁“会有什么下场啊”",
+            "[74.0s FRAME F08] 现场爆发肢体推搡撕扯并厉声斥责“要不要脸”"
+          ],
+          "setup_evidence_times_sec": [
+            65.0,
+            66.0
+          ],
+          "decisive_evidence_times_sec": [
+            71.0,
+            72.0
+          ],
+          "reaction_evidence_times_sec": [
+            74.0
+          ],
+          "counter_evidence": [
+            "冲突发生在多方拉扯阶段，后续胜负或具体反制尚未在本片段内完全结算"
+          ],
+          "continue_previous_scene": true
+        },
+        "votes": [
+          {
+            "map_supported": true,
+            "is_highlight": true,
+            "score": 0.811,
+            "highlight_type": "conflict",
+            "description": "戴眼镜男子借势言语威胁对方，随即引发当面肢体拉扯与言语冲突",
+            "reason": "戴眼镜男子以总裁名义施加言语威胁后，矛盾迅速激化为现场肢体推搡与斥责，兑现了冲突升级与可见后果",
+            "confidence": 0.0,
+            "evidence_grounding": 0.95,
+            "narrative_impact": 0.72,
+            "standalone_clarity": 0.7,
+            "clipability": 0.85,
+            "start_sec": 65.0,
+            "end_sec": 74.16,
+            "evidence": [
+              "[65.0s FRAME F01] 白衣男子画面及台词“绝不留情”",
+              "[66.0s FRAME F02] 戴眼镜男子双手抱胸对峙",
+              "[71.0s FRAME F06] 戴眼镜男子质问“会有什么下场啊”",
+              "[74.0s FRAME F08] 现场爆发肢体拉扯并高喊“要不要脸”"
+            ],
+            "setup_evidence_times_sec": [
+              65.0,
+              66.0
+            ],
+            "decisive_evidence_times_sec": [
+              71.0,
+              72.0
+            ],
+            "reaction_evidence_times_sec": [
+              74.0
+            ],
+            "counter_evidence": [],
+            "continue_previous_scene": true
+          },
+          {
+            "map_supported": true,
+            "is_highlight": false,
+            "score": 0.543,
+            "highlight_type": "conflict",
+            "description": "女子借总裁威慑言语施压，引发眼镜男与中年女子的肢体推搡冲突",
+            "reason": "当前场仅为口头互呛后升级为肢体撕扯推搡，缺少决定性证据兑现、明确后果或实质关系变化，未形成完整的高光戏剧闭环",
+            "confidence": 0.0,
+            "evidence_grounding": 0.88,
+            "narrative_impact": 0.35,
+            "standalone_clarity": 0.42,
+            "clipability": 0.45,
+            "start_sec": null,
+            "end_sec": null,
+            "evidence": [
+              "[65.0s FRAME] F01 白衣男子台词“绝不留情”",
+              "[71.0s FRAME] F06 女子质问“会有什么下场啊”",
+              "[74.0s FRAME] F08 中年女子与眼镜男上前撕扯拉扯并骂“要不要脸”"
+            ],
+            "setup_evidence_times_sec": [],
+            "decisive_evidence_times_sec": [],
+            "reaction_evidence_times_sec": [],
+            "counter_evidence": [
+              "台词与肢体冲突激烈但属于过渡性口角，未带来实质性状态改变或高光结果兑现，脱离全片独立观看价值不足"
+            ],
+            "continue_previous_scene": false
+          },
+          {
+            "map_supported": true,
+            "is_highlight": true,
+            "score": 0.77,
+            "highlight_type": "conflict",
+            "description": "戴眼镜男子借总裁之势言语威胁，随即引发激烈的现场肢体拉扯与言语冲突",
+            "reason": "戴眼镜男子借助深河集团总裁严酷名义对女子进行当面威胁施压，台词交锋后矛盾迅速激化，中年女子与眼镜男随即与女子爆发直接的肢体撕扯与怒骂，构成了明确的肢体与言语冲突爆发点",
+            "confidence": 0.0,
+            "evidence_grounding": 0.92,
+            "narrative_impact": 0.68,
+            "standalone_clarity": 0.65,
+            "clipability": 0.8,
+            "start_sec": 65.0,
+            "end_sec": 74.16,
+            "evidence": [
+              "[65.0s FRAME F01] 白衣男子画面及台词“绝不留情”",
+              "[66.0s FRAME F02] 戴眼镜男子双手抱胸对峙",
+              "[71.0s FRAME F06] 戴眼镜男子言语挑衅威胁“会有什么下场啊”",
+              "[74.0s FRAME F08] 现场爆发肢体推搡撕扯并厉声斥责“要不要脸”"
+            ],
+            "setup_evidence_times_sec": [
+              65.0,
+              66.0
+            ],
+            "decisive_evidence_times_sec": [
+              71.0,
+              72.0
+            ],
+            "reaction_evidence_times_sec": [
+              74.0
+            ],
+            "counter_evidence": [
+              "冲突发生在多方拉扯阶段，后续胜负或具体反制尚未在本片段内完全结算"
+            ],
+            "continue_previous_scene": true
+          }
+        ]
+      },
+      {
+        "scene": {
+          "scene_id": "scene_0009",
+          "start_sec": 74.16,
+          "end_sec": 106.72,
+          "shot_ids": [
+            "shot_0040",
+            "shot_0041",
+            "shot_0042",
+            "shot_0043",
+            "shot_0044",
+            "shot_0045",
+            "shot_0046",
+            "shot_0047",
+            "shot_0048",
+            "shot_0049",
+            "shot_0050",
+            "shot_0051",
+            "shot_0052",
+            "shot_0053",
+            "shot_0054",
+            "shot_0055",
+            "shot_0056",
+            "shot_0057"
+          ],
+          "local_score": 0.598608846144411,
+          "transcript": "[73.00-74.50s OCR] 你要不要脸\n[74.00-75.50s OCR] 要不要脸\n[74.09-74.61s ASR] 用不要脸\n[74.61-75.39s ASR] 用不要脸\n[75.00-76.50s OCR] 要不要脸啊你\n[75.39-79.19s ASR] 你都别踹他\n[79.19-81.84s ASR] 怎么不出来了\n[80.00-81.50s OCR] 哎呀\n[81.00-82.50s OCR] 你怎么出来了\n[81.84-82.52s ASR] 老公\n[82.00-83.50s OCR] 外公\n[82.52-89.73s ASR] 你想干嘛\n[83.00-84.50s OCR] m\n[89.73-108.83s ASR] 我要报警\n[102.00-103.50s OCR] 你要干什么\n[106.00-107.50s OCR] 夏夏",
+          "audio_context": "happy/bgm",
+          "frame_samples": [
+            {
+              "timestamp_sec": 75.0,
+              "path": "/data1/video-highlight-cache/dc6156d7dbc42d90/frames/frame_000076.jpg",
+              "change_score": 0.3249052166938782,
+              "semantic_change_score": 0.0
+            },
+            {
+              "timestamp_sec": 79.0,
+              "path": "/data1/video-highlight-cache/dc6156d7dbc42d90/frames/frame_000080.jpg",
+              "change_score": 0.17186063528060913,
+              "semantic_change_score": 0.7751204347610156
+            },
+            {
+              "timestamp_sec": 83.0,
+              "path": "/data1/video-highlight-cache/dc6156d7dbc42d90/frames/frame_000084.jpg",
+              "change_score": 0.228759765625,
+              "semantic_change_score": 0.0
+            },
+            {
+              "timestamp_sec": 88.0,
+              "path": "/data1/video-highlight-cache/dc6156d7dbc42d90/frames/frame_000089.jpg",
+              "change_score": 0.15141984820365906,
+              "semantic_change_score": 0.33827066996491795
+            },
+            {
+              "timestamp_sec": 92.0,
+              "path": "/data1/video-highlight-cache/dc6156d7dbc42d90/frames/frame_000093.jpg",
+              "change_score": 0.2976323068141937,
+              "semantic_change_score": 0.08564677980335636
+            },
+            {
+              "timestamp_sec": 97.0,
+              "path": "/data1/video-highlight-cache/dc6156d7dbc42d90/frames/frame_000098.jpg",
+              "change_score": 0.12484681606292725,
+              "semantic_change_score": 0.0
+            },
+            {
+              "timestamp_sec": 101.0,
+              "path": "/data1/video-highlight-cache/dc6156d7dbc42d90/frames/frame_000102.jpg",
+              "change_score": 0.002512254985049367,
+              "semantic_change_score": 0.20480901751519182
+            },
+            {
+              "timestamp_sec": 106.0,
+              "path": "/data1/video-highlight-cache/dc6156d7dbc42d90/frames/frame_000107.jpg",
+              "change_score": 0.3120385408401489,
+              "semantic_change_score": 0.4824391784062431
+            }
+          ],
+          "speakers": [],
+          "face_track_ids": [],
+          "actors": [
+            "女性角色",
+            "外公",
+            "戴眼镜男性角色"
+          ],
+          "action": "女性角色言语辱骂他人；外公现身质问；戴眼镜男性角色随后介入，并呼唤名为“夏夏”的女性角色离开。",
+          "event_type": [
+            "conflict",
+            "action"
+          ],
+          "claims": [
+            "女性角色称对方“不要脸”；外公询问对方“想干嘛”；某人声称“我要报警”"
+          ],
+          "state_before": "女性角色处于激烈的争执冲突中",
+          "new_evidence": "外公出面打断冲突；戴眼镜男性角色介入并护住女性角色",
+          "state_after": "冲突双方被外公和戴眼镜男性角色介入而中断；女性角色在男性的维护下准备离开",
+          "relationship_change": "戴眼镜男性角色与女性角色表现出保护性关联",
+          "emotion": [
+            "愤怒",
+            "警惕"
+          ],
+          "salience": 0.75,
+          "uncertainty": 0.2,
+          "evidence": [
+            "[75.0s F01] 女性角色辱骂对方；[79.0s F02] 外公现身；[88.0s F03] 戴眼镜男性神情严峻；[106.0s F06] 戴眼镜男性呼唤夏夏"
+          ]
+        },
+        "decision": {
+          "map_supported": true,
+          "is_highlight": false,
+          "score": 0.795,
+          "highlight_type": "conflict",
+          "description": "肢体争执中外公突然现身质问，随后戴眼镜男子介入制止并护住夏夏",
+          "reason": "承接前场的肢体拉扯冲突，外公与戴眼镜男子的相继介入直接阻断了冲突升级，造成对方惊愕并改变现场局势，构成冲突对抗与结果兑现",
+          "confidence": 0.9868,
+          "evidence_grounding": 0.9,
+          "narrative_impact": 0.75,
+          "standalone_clarity": 0.72,
+          "clipability": 0.78,
+          "start_sec": 75.0,
+          "end_sec": 106.0,
+          "evidence": [
+            "[75.0s F01] 现场激烈争执，喊叫“要不要脸啊你”",
+            "[79.0s F02] 外公现身质问打断争执",
+            "[92.0s F05] 戴眼镜男子出手制止纠纷",
+            "[97.0s F06] 对峙老人神情惊愕指认",
+            "[106.0s F08] 戴眼镜男子护住夏夏"
+          ],
+          "setup_evidence_times_sec": [
+            75.0
+          ],
+          "decisive_evidence_times_sec": [
+            79.0,
+            92.0
+          ],
+          "reaction_evidence_times_sec": [
+            97.0,
+            106.0
+          ],
+          "counter_evidence": [],
+          "continue_previous_scene": true
+        },
+        "votes": [
+          {
+            "map_supported": true,
+            "is_highlight": true,
+            "score": 0.795,
+            "highlight_type": "conflict",
+            "description": "肢体争执中外公突然现身质问，随后戴眼镜男子介入制止并护住夏夏",
+            "reason": "承接前场的肢体拉扯冲突，外公与戴眼镜男子的相继介入直接阻断了冲突升级，造成对方惊愕并改变现场局势，构成冲突对抗与结果兑现",
+            "confidence": 0.0,
+            "evidence_grounding": 0.9,
+            "narrative_impact": 0.75,
+            "standalone_clarity": 0.72,
+            "clipability": 0.78,
+            "start_sec": 75.0,
+            "end_sec": 106.0,
+            "evidence": [
+              "[75.0s F01] 现场激烈争执，喊叫“要不要脸啊你”",
+              "[79.0s F02] 外公现身质问打断争执",
+              "[92.0s F05] 戴眼镜男子出手制止纠纷",
+              "[97.0s F06] 对峙老人神情惊愕指认",
+              "[106.0s F08] 戴眼镜男子护住夏夏"
+            ],
+            "setup_evidence_times_sec": [
+              75.0
+            ],
+            "decisive_evidence_times_sec": [
+              79.0,
+              92.0
+            ],
+            "reaction_evidence_times_sec": [
+              97.0,
+              106.0
+            ],
+            "counter_evidence": [],
+            "continue_previous_scene": true
+          },
+          {
+            "map_supported": true,
+            "is_highlight": true,
+            "score": 0.742,
+            "highlight_type": "conflict",
+            "description": "肢体争执升级引出长辈质问，戴眼镜男子强力介入制止并护送女性脱身",
+            "reason": "符合冲突兑现与动作峰值结构：肢体拉扯冲突升级引发外公出面质问，戴眼镜男子果断动手制止并带走女性角色，完成冲突中断与护短结果。",
+            "confidence": 0.0,
+            "evidence_grounding": 0.88,
+            "narrative_impact": 0.68,
+            "standalone_clarity": 0.65,
+            "clipability": 0.72,
+            "start_sec": 75.0,
+            "end_sec": 106.5,
+            "evidence": [
+              "[75.0s F01] 女性角色在肢体拉扯中激烈争吵喊话",
+              "[79.0s F02] 外公现身质问并介入对峙",
+              "[92.0s F05] 戴眼镜男子伸手阻拦压制对方",
+              "[97.0s F06] 外公神情震惊指向对方",
+              "[106.0s F08] 戴眼镜男子护住女性角色并呼唤‘夏夏’离开"
+            ],
+            "setup_evidence_times_sec": [
+              75.0
+            ],
+            "decisive_evidence_times_sec": [
+              79.0,
+              92.0
+            ],
+            "reaction_evidence_times_sec": [
+              97.0,
+              106.0
+            ],
+            "counter_evidence": [
+              "人物关系与前情纠纷较复杂，争执台词略显零碎"
+            ],
+            "continue_previous_scene": true
+          }
+        ]
+      },
+      {
+        "scene": {
+          "scene_id": "scene_0010",
+          "start_sec": 106.72,
+          "end_sec": 122.12,
+          "shot_ids": [
+            "shot_0058",
+            "shot_0059",
+            "shot_0060",
+            "shot_0061",
+            "shot_0062",
+            "shot_0063",
+            "shot_0064"
+          ],
+          "local_score": 0.41482765362177587,
+          "transcript": "[89.73-108.83s ASR] 我要报警\n[106.00-107.50s OCR] 夏夏\n[108.00-109.50s OCR] 打电话报警\n[108.83-110.01s ASR] 我外公\n[109.00-112.50s OCR] 外公被徐嘉明给打了\n[110.01-110.61s ASR] 分心\n[110.61-115.29s ASR] 他没有给你打一句\n[112.00-113.50s OCR] 哎呦\n[113.00-114.50s OCR] 1\n[115.29-115.45s ASR] 报警了\n[116.00-117.50s OCR] 果然\n[117.00-118.50s OCR] 姜\n[118.00-119.50s OCR] 还是老的辣",
+          "audio_context": "happy/bgm",
+          "frame_samples": [
+            {
+              "timestamp_sec": 107.0,
+              "path": "/data1/video-highlight-cache/dc6156d7dbc42d90/frames/frame_000108.jpg",
+              "change_score": 0.21539618074893951,
+              "semantic_change_score": 1.0
+            },
+            {
+              "timestamp_sec": 109.0,
+              "path": "/data1/video-highlight-cache/dc6156d7dbc42d90/frames/frame_000110.jpg",
+              "change_score": 0.24241536855697632,
+              "semantic_change_score": 0.17957683916148107
+            },
+            {
+              "timestamp_sec": 111.0,
+              "path": "/data1/video-highlight-cache/dc6156d7dbc42d90/frames/frame_000112.jpg",
+              "change_score": 0.28742915391921997,
+              "semantic_change_score": 0.0
+            },
+            {
+              "timestamp_sec": 113.0,
+              "path": "/data1/video-highlight-cache/dc6156d7dbc42d90/frames/frame_000114.jpg",
+              "change_score": 0.0869753360748291,
+              "semantic_change_score": 0.0
+            },
+            {
+              "timestamp_sec": 115.0,
+              "path": "/data1/video-highlight-cache/dc6156d7dbc42d90/frames/frame_000116.jpg",
+              "change_score": 0.12354090064764023,
+              "semantic_change_score": 0.15625904863127768
+            },
+            {
+              "timestamp_sec": 117.0,
+              "path": "/data1/video-highlight-cache/dc6156d7dbc42d90/frames/frame_000118.jpg",
+              "change_score": 0.07461990416049957,
+              "semantic_change_score": 0.926372760847555
+            },
+            {
+              "timestamp_sec": 119.0,
+              "path": "/data1/video-highlight-cache/dc6156d7dbc42d90/frames/frame_000120.jpg",
+              "change_score": 0.06513863056898117,
+              "semantic_change_score": 0.4799864670575585
+            },
+            {
+              "timestamp_sec": 121.0,
+              "path": "/data1/video-highlight-cache/dc6156d7dbc42d90/frames/frame_000122.jpg",
+              "change_score": 0.1097196713089943,
+              "semantic_change_score": 0.0
+            }
+          ],
+          "speakers": [],
+          "face_track_ids": [],
+          "actors": [
+            "女性角色",
+            "白色西装男性角色"
+          ],
+          "action": "女性角色向白色西装男性角色陈述外公被徐嘉明殴打的事实，男性角色表情痛苦，以手掩面。",
+          "event_type": [
+            "conflict",
+            "reveal"
+          ],
+          "claims": [
+            "外公被徐嘉明给打了"
+          ],
+          "state_before": "白色西装男性角色处于相对平静状态",
+          "new_evidence": "女性角色提供的关于外公被徐嘉明殴打的叙述",
+          "state_after": "白色西装男性角色表现出显著的心理压力与痛苦",
+          "relationship_change": "unknown",
+          "emotion": [
+            "焦虑",
+            "痛苦",
+            "震惊"
+          ],
+          "salience": 0.9,
+          "uncertainty": 0.1,
+          "evidence": [
+            "[107.0s F01] 女性角色焦急对话",
+            "[109.0s F02] 屏幕显示字幕：外公被徐嘉明给打了",
+            "[113.0s F03] 白色西装男性角色以手掩面，表情痛苦",
+            "[121.0s F06] 白色西装男性角色动作重复，显示情绪波动"
+          ]
+        },
+        "decision": {
+          "map_supported": true,
+          "is_highlight": true,
+          "score": 0.761,
+          "highlight_type": "reveal",
+          "description": "女性角色焦急告知外公被徐嘉明殴打，白色西装男子痛苦扶额，众人神情震惊难过",
+          "reason": "突发关键事件信息（外公被殴打）的揭示与传递，引发白色西装男子扶额痛苦及在场多人的情绪剧烈波动",
+          "confidence": 0.7475,
+          "evidence_grounding": 0.9,
+          "narrative_impact": 0.65,
+          "standalone_clarity": 0.7,
+          "clipability": 0.78,
+          "start_sec": 106.72,
+          "end_sec": 122.12,
+          "evidence": [
+            "[107.0s F01] 女性角色焦急赶来叙述",
+            "[109.0s F02] 蓝衣女子惊呼告知：外公被徐嘉明给打了",
+            "[113.0s F04] 轮椅上的白色西装男子以手扶额，神情痛苦无奈",
+            "[115.0s F05] 戴眼镜男子神情焦急跑来",
+            "[117.0s F06] 年轻男子眼眶泛红、神情委屈复杂",
+            "[121.0s F08] 白色西装男子持续痛苦抚额"
+          ],
+          "setup_evidence_times_sec": [
+            107.0
+          ],
+          "decisive_evidence_times_sec": [
+            109.0
+          ],
+          "reaction_evidence_times_sec": [
+            113.0,
+            115.0,
+            117.0,
+            121.0
+          ],
+          "counter_evidence": [
+            "外公被殴打为角色口头陈述，画面未直接展现殴打过程"
+          ],
+          "continue_previous_scene": false
+        },
+        "votes": [
+          {
+            "map_supported": true,
+            "is_highlight": true,
+            "score": 0.751,
+            "highlight_type": "reveal",
+            "description": "女性角色焦急告知外公被徐嘉明殴打，白色西装男子及众人震惊且痛苦掩面",
+            "reason": "关键突发事件信息揭示触发角色明显的情绪反应与压力状态",
+            "confidence": 0.0,
+            "evidence_grounding": 0.9,
+            "narrative_impact": 0.65,
+            "standalone_clarity": 0.68,
+            "clipability": 0.75,
+            "start_sec": 106.72,
+            "end_sec": 122.12,
+            "evidence": [
+              "[107.0s F01] 女性角色神情焦急",
+              "[109.0s F02 OCR] 外公被徐嘉明给打了",
+              "[113.0s F04] 白色西装男子以手扶额，神情痛苦无奈",
+              "[115.0s F05] 戴眼镜男子神情焦急赶来",
+              "[117.0s F06] 年轻男子神情委屈复杂"
+            ],
+            "setup_evidence_times_sec": [
+              107.0
+            ],
+            "decisive_evidence_times_sec": [
+              109.0
+            ],
+            "reaction_evidence_times_sec": [
+              113.0,
+              115.0,
+              117.0,
+              121.0
+            ],
+            "counter_evidence": [
+              "外公被殴打仅为女性角色口头主张，现场未直接展现殴打过程"
+            ],
+            "continue_previous_scene": false
+          },
+          {
+            "map_supported": true,
+            "is_highlight": true,
+            "score": 0.759,
+            "highlight_type": "emotion",
+            "description": "女子告知外公被徐嘉明殴打，轮椅男子闻讯痛苦扶额",
+            "reason": "符合情绪兑现结构：告知关键冲突事件触发轮椅男子的强烈痛苦反应",
+            "confidence": 0.0,
+            "evidence_grounding": 0.88,
+            "narrative_impact": 0.65,
+            "standalone_clarity": 0.68,
+            "clipability": 0.82,
+            "start_sec": 107.0,
+            "end_sec": 122.0,
+            "evidence": [
+              "[107.0s F01] 女性角色焦急赶来对话",
+              "[109.0s F02] 蓝衣女子称外公被徐嘉明打了",
+              "[113.0s F04] 白色西装男子扶额痛苦",
+              "[117.0s F06] 青年男子眼眶泛红神情难过"
+            ],
+            "setup_evidence_times_sec": [
+              107.0
+            ],
+            "decisive_evidence_times_sec": [
+              109.0
+            ],
+            "reaction_evidence_times_sec": [
+              113.0,
+              117.0,
+              121.0
+            ],
+            "counter_evidence": [
+              "殴打事件为口头告知，无现场直接视觉证据"
+            ],
+            "continue_previous_scene": false
+          },
+          {
+            "map_supported": true,
+            "is_highlight": true,
+            "score": 0.761,
+            "highlight_type": "reveal",
+            "description": "女性角色焦急告知外公被徐嘉明殴打，白色西装男子痛苦扶额，众人神情震惊难过",
+            "reason": "突发关键事件信息（外公被殴打）的揭示与传递，引发白色西装男子扶额痛苦及在场多人的情绪剧烈波动",
+            "confidence": 0.0,
+            "evidence_grounding": 0.9,
+            "narrative_impact": 0.65,
+            "standalone_clarity": 0.7,
+            "clipability": 0.78,
+            "start_sec": 106.72,
+            "end_sec": 122.12,
+            "evidence": [
+              "[107.0s F01] 女性角色焦急赶来叙述",
+              "[109.0s F02] 蓝衣女子惊呼告知：外公被徐嘉明给打了",
+              "[113.0s F04] 轮椅上的白色西装男子以手扶额，神情痛苦无奈",
+              "[115.0s F05] 戴眼镜男子神情焦急跑来",
+              "[117.0s F06] 年轻男子眼眶泛红、神情委屈复杂",
+              "[121.0s F08] 白色西装男子持续痛苦抚额"
+            ],
+            "setup_evidence_times_sec": [
+              107.0
+            ],
+            "decisive_evidence_times_sec": [
+              109.0
+            ],
+            "reaction_evidence_times_sec": [
+              113.0,
+              115.0,
+              117.0,
+              121.0
+            ],
+            "counter_evidence": [
+              "外公被殴打为角色口头陈述，画面未直接展现殴打过程"
+            ],
+            "continue_previous_scene": false
+          }
+        ]
+      }
+    ],
+    "ranking": {
+      "ranked_highlight_ids": [
+        "hl_9d87ce13325e",
+        "hl_3923a8907fe7",
+        "hl_2ed493534588",
+        "hl_4412a8ccc1f6",
+        "hl_43b245c56c2e"
+      ],
+      "selected_highlight_ids": [
+        "hl_9d87ce13325e",
+        "hl_3923a8907fe7"
+      ],
+      "rationale": "hl_9d87ce13325e以当众出示结婚证直接确立夫妻关系，引发激烈家庭冲突与反转；hl_3923a8907fe7紧随其后出示亲密照实锤出轨，反制利落。两段高光证据确凿、叙事功能互补且戏剧张力最强，为最终保留组合。"
+    }
+  },
+  "stats": {
+    "sampled_frames": 122,
+    "detected_scenes": 64,
+    "transcript_segments": 76,
+    "ocr_segments": 28,
+    "audio_events": 10,
+    "local_candidate_windows": 8,
+    "scene_map_calls": 10,
+    "judge_calls": 24,
+    "listwise_calls": 1
+  },
+  "notes": []
+}

@@ -1,0 +1,3543 @@
+{
+  "pipeline_version": "0.21.0",
+  "preprocess": {
+    "video": {
+      "path": "/data1/my_short_drama/zh/夫人她专治不服4/(洋洋放映官)P19_第19集_#夫人她专治不服4【三分钟一集，高能不断，不用会员不用等，评论区下载红果短剧，全部..._480P.mp4",
+      "duration_sec": 93.320998,
+      "width": 480,
+      "height": 852,
+      "fps": 25.0,
+      "has_audio": true,
+      "title": "夫人她专治不服4",
+      "language": "zh"
+    },
+    "scenes": [
+      {
+        "start_sec": 0.0,
+        "end_sec": 1.52
+      },
+      {
+        "start_sec": 1.52,
+        "end_sec": 1.96
+      },
+      {
+        "start_sec": 1.96,
+        "end_sec": 4.2
+      },
+      {
+        "start_sec": 4.2,
+        "end_sec": 5.8
+      },
+      {
+        "start_sec": 5.8,
+        "end_sec": 10.0
+      },
+      {
+        "start_sec": 10.0,
+        "end_sec": 10.52
+      },
+      {
+        "start_sec": 10.52,
+        "end_sec": 12.04
+      },
+      {
+        "start_sec": 12.04,
+        "end_sec": 13.2
+      },
+      {
+        "start_sec": 13.2,
+        "end_sec": 14.04
+      },
+      {
+        "start_sec": 14.04,
+        "end_sec": 18.48
+      },
+      {
+        "start_sec": 18.48,
+        "end_sec": 19.92
+      },
+      {
+        "start_sec": 19.92,
+        "end_sec": 22.56
+      },
+      {
+        "start_sec": 22.56,
+        "end_sec": 24.28
+      },
+      {
+        "start_sec": 24.28,
+        "end_sec": 26.8
+      },
+      {
+        "start_sec": 26.8,
+        "end_sec": 27.64
+      },
+      {
+        "start_sec": 27.64,
+        "end_sec": 30.52
+      },
+      {
+        "start_sec": 30.52,
+        "end_sec": 32.76
+      },
+      {
+        "start_sec": 32.76,
+        "end_sec": 33.84
+      },
+      {
+        "start_sec": 33.84,
+        "end_sec": 36.0
+      },
+      {
+        "start_sec": 36.0,
+        "end_sec": 37.16
+      },
+      {
+        "start_sec": 37.16,
+        "end_sec": 39.12
+      },
+      {
+        "start_sec": 39.12,
+        "end_sec": 40.0
+      },
+      {
+        "start_sec": 40.0,
+        "end_sec": 41.8
+      },
+      {
+        "start_sec": 41.8,
+        "end_sec": 43.08
+      },
+      {
+        "start_sec": 43.08,
+        "end_sec": 45.72
+      },
+      {
+        "start_sec": 45.72,
+        "end_sec": 47.28
+      },
+      {
+        "start_sec": 47.28,
+        "end_sec": 50.24
+      },
+      {
+        "start_sec": 50.24,
+        "end_sec": 51.6
+      },
+      {
+        "start_sec": 51.6,
+        "end_sec": 52.88
+      },
+      {
+        "start_sec": 52.88,
+        "end_sec": 53.84
+      },
+      {
+        "start_sec": 53.84,
+        "end_sec": 60.12
+      },
+      {
+        "start_sec": 60.12,
+        "end_sec": 69.04
+      },
+      {
+        "start_sec": 69.04,
+        "end_sec": 70.0
+      },
+      {
+        "start_sec": 70.0,
+        "end_sec": 71.2
+      },
+      {
+        "start_sec": 71.2,
+        "end_sec": 75.0
+      },
+      {
+        "start_sec": 75.0,
+        "end_sec": 75.4
+      },
+      {
+        "start_sec": 75.4,
+        "end_sec": 77.56
+      },
+      {
+        "start_sec": 77.56,
+        "end_sec": 80.0
+      },
+      {
+        "start_sec": 80.0,
+        "end_sec": 80.32
+      },
+      {
+        "start_sec": 80.32,
+        "end_sec": 83.8
+      },
+      {
+        "start_sec": 83.8,
+        "end_sec": 86.16
+      },
+      {
+        "start_sec": 86.16,
+        "end_sec": 87.76
+      },
+      {
+        "start_sec": 87.76,
+        "end_sec": 91.24
+      },
+      {
+        "start_sec": 91.24,
+        "end_sec": 93.28
+      }
+    ],
+    "transcript": [
+      {
+        "start_sec": 0.3,
+        "end_sec": 1.04,
+        "text": "外婆",
+        "source": "asr",
+        "confidence": 0.8559322811473818
+      },
+      {
+        "start_sec": 1.04,
+        "end_sec": 4.52,
+        "text": "那你自己去管啊",
+        "source": "asr",
+        "confidence": 0.8559322811473818
+      },
+      {
+        "start_sec": 4.52,
+        "end_sec": 5.6,
+        "text": "我又不是你娘",
+        "source": "asr",
+        "confidence": 0.8559322811473818
+      },
+      {
+        "start_sec": 5.6,
+        "end_sec": 7.0,
+        "text": "我是你外婆",
+        "source": "asr",
+        "confidence": 0.8559322811473818
+      },
+      {
+        "start_sec": 6.0,
+        "end_sec": 7.5,
+        "text": "我是你外婆啊",
+        "source": "ocr",
+        "confidence": 0.999967098236084
+      },
+      {
+        "start_sec": 7.0,
+        "end_sec": 9.14,
+        "text": "外婆是来享福的",
+        "source": "asr",
+        "confidence": 0.8559322811473818
+      },
+      {
+        "start_sec": 9.14,
+        "end_sec": 10.82,
+        "text": "不是来给你擦屁股的",
+        "source": "asr",
+        "confidence": 0.8559322811473818
+      },
+      {
+        "start_sec": 10.82,
+        "end_sec": 16.96,
+        "text": "我不是不想管",
+        "source": "asr",
+        "confidence": 0.8559322811473818
+      },
+      {
+        "start_sec": 16.96,
+        "end_sec": 18.7,
+        "text": "是我管不了啊",
+        "source": "asr",
+        "confidence": 0.8559322811473818
+      },
+      {
+        "start_sec": 18.7,
+        "end_sec": 21.76,
+        "text": "我是一个连大学毕业证都没混到的人",
+        "source": "asr",
+        "confidence": 0.8559322811473818
+      },
+      {
+        "start_sec": 21.76,
+        "end_sec": 23.38,
+        "text": "我怎么扛起大任",
+        "source": "asr",
+        "confidence": 0.8559322811473818
+      },
+      {
+        "start_sec": 23.38,
+        "end_sec": 25.26,
+        "text": "怎么负重前行嘛",
+        "source": "asr",
+        "confidence": 0.8559322811473818
+      },
+      {
+        "start_sec": 25.26,
+        "end_sec": 26.34,
+        "text": "外婆",
+        "source": "asr",
+        "confidence": 0.8559322811473818
+      },
+      {
+        "start_sec": 26.34,
+        "end_sec": 28.56,
+        "text": "乖孙",
+        "source": "asr",
+        "confidence": 0.8559322811473818
+      },
+      {
+        "start_sec": 28.56,
+        "end_sec": 30.58,
+        "text": "你真想扛起大任吗",
+        "source": "asr",
+        "confidence": 0.8559322811473818
+      },
+      {
+        "start_sec": 29.0,
+        "end_sec": 31.5,
+        "text": "你真想扛起大任嘛",
+        "source": "ocr",
+        "confidence": 0.9965254068374634
+      },
+      {
+        "start_sec": 30.58,
+        "end_sec": 32.4,
+        "text": "那你就回去上大学",
+        "source": "asr",
+        "confidence": 0.8559322811473818
+      },
+      {
+        "start_sec": 32.4,
+        "end_sec": 35.86,
+        "text": "只要你一年之内拿到毕业证",
+        "source": "asr",
+        "confidence": 0.7608025319008617
+      },
+      {
+        "start_sec": 35.86,
+        "end_sec": 37.84,
+        "text": "外婆就为了你",
+        "source": "asr",
+        "confidence": 0.7608025319008617
+      },
+      {
+        "start_sec": 37.84,
+        "end_sec": 40.52,
+        "text": "把这个家再撑一年",
+        "source": "asr",
+        "confidence": 0.7608025319008617
+      },
+      {
+        "start_sec": 40.52,
+        "end_sec": 41.84,
+        "text": "如果拿不到",
+        "source": "asr",
+        "confidence": 0.7608025319008617
+      },
+      {
+        "start_sec": 41.84,
+        "end_sec": 44.52,
+        "text": "我就把全部家产捐给百乐门",
+        "source": "asr",
+        "confidence": 0.7608025319008617
+      },
+      {
+        "start_sec": 44.52,
+        "end_sec": 45.82,
+        "text": "你好好想想吧",
+        "source": "asr",
+        "confidence": 0.7608025319008617
+      },
+      {
+        "start_sec": 45.82,
+        "end_sec": 47.54,
+        "text": "薛老太 看地图",
+        "source": "asr",
+        "confidence": 0.7608025319008617
+      },
+      {
+        "start_sec": 46.0,
+        "end_sec": 48.5,
+        "text": "薛老太看镜头",
+        "source": "ocr",
+        "confidence": 0.9987308979034424
+      },
+      {
+        "start_sec": 47.54,
+        "end_sec": 49.48,
+        "text": "百乐门不行啊",
+        "source": "asr",
+        "confidence": 0.7608025319008617
+      },
+      {
+        "start_sec": 49.48,
+        "end_sec": 59.42,
+        "text": "不是逼老虎吃素",
+        "source": "asr",
+        "confidence": 0.7608025319008617
+      },
+      {
+        "start_sec": 50.0,
+        "end_sec": 51.5,
+        "text": "心",
+        "source": "ocr",
+        "confidence": 0.9369917511940002
+      },
+      {
+        "start_sec": 56.0,
+        "end_sec": 58.5,
+        "text": "要我读书",
+        "source": "ocr",
+        "confidence": 0.9999791979789734
+      },
+      {
+        "start_sec": 58.0,
+        "end_sec": 60.5,
+        "text": "那不是逼老虎吃素",
+        "source": "ocr",
+        "confidence": 0.9999566078186035
+      },
+      {
+        "start_sec": 59.42,
+        "end_sec": 61.5,
+        "text": "却老饱从粮",
+        "source": "asr",
+        "confidence": 0.7608025319008617
+      },
+      {
+        "start_sec": 60.0,
+        "end_sec": 62.5,
+        "text": "劝老鸨从良",
+        "source": "ocr",
+        "confidence": 0.9536593556404114
+      },
+      {
+        "start_sec": 61.5,
+        "end_sec": 63.26,
+        "text": "就土匪",
+        "source": "asr",
+        "confidence": 0.7608025319008617
+      },
+      {
+        "start_sec": 63.0,
+        "end_sec": 64.5,
+        "text": "教土匪",
+        "source": "ocr",
+        "confidence": 0.9998262524604797
+      },
+      {
+        "start_sec": 63.26,
+        "end_sec": 66.36,
+        "text": "土匪绣花嘛",
+        "source": "asr",
+        "confidence": 0.7608025319008617
+      },
+      {
+        "start_sec": 65.0,
+        "end_sec": 67.5,
+        "text": "土匪绣花么",
+        "source": "ocr",
+        "confidence": 0.9991847276687622
+      },
+      {
+        "start_sec": 66.36,
+        "end_sec": 70.61,
+        "text": "霍南风",
+        "source": "asr",
+        "confidence": 0.8177197197097774
+      },
+      {
+        "start_sec": 70.61,
+        "end_sec": 72.55,
+        "text": "我看了你家的账",
+        "source": "asr",
+        "confidence": 0.8177197197097774
+      },
+      {
+        "start_sec": 72.55,
+        "end_sec": 75.01,
+        "text": "如果再没人管的话",
+        "source": "asr",
+        "confidence": 0.8177197197097774
+      },
+      {
+        "start_sec": 75.01,
+        "end_sec": 77.45,
+        "text": "最多三个月就要破产",
+        "source": "asr",
+        "confidence": 0.8177197197097774
+      },
+      {
+        "start_sec": 76.0,
+        "end_sec": 78.5,
+        "text": "最多三个月就要破产了",
+        "source": "ocr",
+        "confidence": 0.9999752044677734
+      },
+      {
+        "start_sec": 77.45,
+        "end_sec": 80.81,
+        "text": "你年轻倒是可以要饭",
+        "source": "asr",
+        "confidence": 0.8177197197097774
+      },
+      {
+        "start_sec": 80.81,
+        "end_sec": 83.19,
+        "text": "就是不知道你外婆",
+        "source": "asr",
+        "confidence": 0.8177197197097774
+      },
+      {
+        "start_sec": 83.0,
+        "end_sec": 85.5,
+        "text": "要不要的动哦",
+        "source": "ocr",
+        "confidence": 0.999870777130127
+      },
+      {
+        "start_sec": 83.19,
+        "end_sec": 84.31,
+        "text": "要不要的动物",
+        "source": "asr",
+        "confidence": 0.8177197197097774
+      },
+      {
+        "start_sec": 89.0,
+        "end_sec": 91.5,
+        "text": "我学",
+        "source": "ocr",
+        "confidence": 0.9999891519546509
+      }
+    ],
+    "audio_events": [
+      {
+        "start_sec": 0.0,
+        "end_sec": 13.54,
+        "emotion": "happy",
+        "event": "bgm",
+        "confidence": null
+      },
+      {
+        "start_sec": 13.54,
+        "end_sec": 43.55,
+        "emotion": "happy",
+        "event": "bgm",
+        "confidence": null
+      },
+      {
+        "start_sec": 43.55,
+        "end_sec": 55.49,
+        "emotion": "happy",
+        "event": "bgm",
+        "confidence": null
+      },
+      {
+        "start_sec": 55.49,
+        "end_sec": 69.93,
+        "emotion": "happy",
+        "event": "bgm",
+        "confidence": null
+      },
+      {
+        "start_sec": 69.93,
+        "end_sec": 84.7,
+        "emotion": "happy",
+        "event": "bgm",
+        "confidence": null
+      },
+      {
+        "start_sec": 84.7,
+        "end_sec": 90.71,
+        "emotion": "happy",
+        "event": "bgm",
+        "confidence": null
+      }
+    ],
+    "frame_samples": [
+      {
+        "timestamp_sec": 0.0,
+        "path": "/data1/video-highlight-cache/7b454d114c4e2fdf/frames/frame_000001.jpg",
+        "change_score": 0.0,
+        "semantic_change_score": 0.0
+      },
+      {
+        "timestamp_sec": 1.0,
+        "path": "/data1/video-highlight-cache/7b454d114c4e2fdf/frames/frame_000002.jpg",
+        "change_score": 0.14088541269302368,
+        "semantic_change_score": 0.0
+      },
+      {
+        "timestamp_sec": 2.0,
+        "path": "/data1/video-highlight-cache/7b454d114c4e2fdf/frames/frame_000003.jpg",
+        "change_score": 0.22293102741241455,
+        "semantic_change_score": 0.0
+      },
+      {
+        "timestamp_sec": 3.0,
+        "path": "/data1/video-highlight-cache/7b454d114c4e2fdf/frames/frame_000004.jpg",
+        "change_score": 0.16485907137393951,
+        "semantic_change_score": 0.12460655870044184
+      },
+      {
+        "timestamp_sec": 4.0,
+        "path": "/data1/video-highlight-cache/7b454d114c4e2fdf/frames/frame_000005.jpg",
+        "change_score": 0.19863663613796234,
+        "semantic_change_score": 0.2609863786865264
+      },
+      {
+        "timestamp_sec": 5.0,
+        "path": "/data1/video-highlight-cache/7b454d114c4e2fdf/frames/frame_000006.jpg",
+        "change_score": 0.09055223315954208,
+        "semantic_change_score": 0.2565520381605621
+      },
+      {
+        "timestamp_sec": 6.0,
+        "path": "/data1/video-highlight-cache/7b454d114c4e2fdf/frames/frame_000007.jpg",
+        "change_score": 0.2216184139251709,
+        "semantic_change_score": 0.10082031709586502
+      },
+      {
+        "timestamp_sec": 7.0,
+        "path": "/data1/video-highlight-cache/7b454d114c4e2fdf/frames/frame_000008.jpg",
+        "change_score": 0.09876493364572525,
+        "semantic_change_score": 1.0
+      },
+      {
+        "timestamp_sec": 8.0,
+        "path": "/data1/video-highlight-cache/7b454d114c4e2fdf/frames/frame_000009.jpg",
+        "change_score": 0.09430146962404251,
+        "semantic_change_score": 0.0
+      },
+      {
+        "timestamp_sec": 9.0,
+        "path": "/data1/video-highlight-cache/7b454d114c4e2fdf/frames/frame_000010.jpg",
+        "change_score": 0.10472866892814636,
+        "semantic_change_score": 0.0
+      },
+      {
+        "timestamp_sec": 10.0,
+        "path": "/data1/video-highlight-cache/7b454d114c4e2fdf/frames/frame_000011.jpg",
+        "change_score": 0.046963080763816833,
+        "semantic_change_score": 0.0
+      },
+      {
+        "timestamp_sec": 11.0,
+        "path": "/data1/video-highlight-cache/7b454d114c4e2fdf/frames/frame_000012.jpg",
+        "change_score": 0.2773064076900482,
+        "semantic_change_score": 0.09109769468657693
+      },
+      {
+        "timestamp_sec": 12.0,
+        "path": "/data1/video-highlight-cache/7b454d114c4e2fdf/frames/frame_000013.jpg",
+        "change_score": 0.2996399998664856,
+        "semantic_change_score": 0.37497652302364376
+      },
+      {
+        "timestamp_sec": 13.0,
+        "path": "/data1/video-highlight-cache/7b454d114c4e2fdf/frames/frame_000014.jpg",
+        "change_score": 0.3060058653354645,
+        "semantic_change_score": 0.07877119223445739
+      },
+      {
+        "timestamp_sec": 14.0,
+        "path": "/data1/video-highlight-cache/7b454d114c4e2fdf/frames/frame_000015.jpg",
+        "change_score": 0.27580422163009644,
+        "semantic_change_score": 0.4471527748785941
+      },
+      {
+        "timestamp_sec": 15.0,
+        "path": "/data1/video-highlight-cache/7b454d114c4e2fdf/frames/frame_000016.jpg",
+        "change_score": 0.11583562940359116,
+        "semantic_change_score": 0.0
+      },
+      {
+        "timestamp_sec": 16.0,
+        "path": "/data1/video-highlight-cache/7b454d114c4e2fdf/frames/frame_000017.jpg",
+        "change_score": 0.16655464470386505,
+        "semantic_change_score": 0.0
+      },
+      {
+        "timestamp_sec": 17.0,
+        "path": "/data1/video-highlight-cache/7b454d114c4e2fdf/frames/frame_000018.jpg",
+        "change_score": 0.12268976122140884,
+        "semantic_change_score": 0.0
+      },
+      {
+        "timestamp_sec": 18.0,
+        "path": "/data1/video-highlight-cache/7b454d114c4e2fdf/frames/frame_000019.jpg",
+        "change_score": 0.24635320901870728,
+        "semantic_change_score": 0.33048643474405814
+      },
+      {
+        "timestamp_sec": 19.0,
+        "path": "/data1/video-highlight-cache/7b454d114c4e2fdf/frames/frame_000020.jpg",
+        "change_score": 0.07568933814764023,
+        "semantic_change_score": 0.07107546246437944
+      },
+      {
+        "timestamp_sec": 20.0,
+        "path": "/data1/video-highlight-cache/7b454d114c4e2fdf/frames/frame_000021.jpg",
+        "change_score": 0.23103074729442596,
+        "semantic_change_score": 0.0
+      },
+      {
+        "timestamp_sec": 21.0,
+        "path": "/data1/video-highlight-cache/7b454d114c4e2fdf/frames/frame_000022.jpg",
+        "change_score": 0.07162990421056747,
+        "semantic_change_score": 0.4772263841107208
+      },
+      {
+        "timestamp_sec": 22.0,
+        "path": "/data1/video-highlight-cache/7b454d114c4e2fdf/frames/frame_000023.jpg",
+        "change_score": 0.09467486292123795,
+        "semantic_change_score": 0.456622548585673
+      },
+      {
+        "timestamp_sec": 23.0,
+        "path": "/data1/video-highlight-cache/7b454d114c4e2fdf/frames/frame_000024.jpg",
+        "change_score": 0.17158395051956177,
+        "semantic_change_score": 0.509300216342068
+      },
+      {
+        "timestamp_sec": 24.0,
+        "path": "/data1/video-highlight-cache/7b454d114c4e2fdf/frames/frame_000025.jpg",
+        "change_score": 0.2142348289489746,
+        "semantic_change_score": 0.43218033641289033
+      },
+      {
+        "timestamp_sec": 25.0,
+        "path": "/data1/video-highlight-cache/7b454d114c4e2fdf/frames/frame_000026.jpg",
+        "change_score": 0.060452092438936234,
+        "semantic_change_score": 0.7686706712840702
+      },
+      {
+        "timestamp_sec": 26.0,
+        "path": "/data1/video-highlight-cache/7b454d114c4e2fdf/frames/frame_000027.jpg",
+        "change_score": 0.1162722110748291,
+        "semantic_change_score": 1.0
+      },
+      {
+        "timestamp_sec": 27.0,
+        "path": "/data1/video-highlight-cache/7b454d114c4e2fdf/frames/frame_000028.jpg",
+        "change_score": 0.26902955770492554,
+        "semantic_change_score": 0.9990635366219801
+      },
+      {
+        "timestamp_sec": 28.0,
+        "path": "/data1/video-highlight-cache/7b454d114c4e2fdf/frames/frame_000029.jpg",
+        "change_score": 0.20204120874404907,
+        "semantic_change_score": 0.9535600020227895
+      },
+      {
+        "timestamp_sec": 29.0,
+        "path": "/data1/video-highlight-cache/7b454d114c4e2fdf/frames/frame_000030.jpg",
+        "change_score": 0.15896044671535492,
+        "semantic_change_score": 1.0
+      },
+      {
+        "timestamp_sec": 30.0,
+        "path": "/data1/video-highlight-cache/7b454d114c4e2fdf/frames/frame_000031.jpg",
+        "change_score": 0.14513824880123138,
+        "semantic_change_score": 1.0
+      },
+      {
+        "timestamp_sec": 31.0,
+        "path": "/data1/video-highlight-cache/7b454d114c4e2fdf/frames/frame_000032.jpg",
+        "change_score": 0.21955806016921997,
+        "semantic_change_score": 0.3050364179062835
+      },
+      {
+        "timestamp_sec": 32.0,
+        "path": "/data1/video-highlight-cache/7b454d114c4e2fdf/frames/frame_000033.jpg",
+        "change_score": 0.07526616007089615,
+        "semantic_change_score": 0.19933540282901288
+      },
+      {
+        "timestamp_sec": 33.0,
+        "path": "/data1/video-highlight-cache/7b454d114c4e2fdf/frames/frame_000034.jpg",
+        "change_score": 0.17520584166049957,
+        "semantic_change_score": 0.22140299128733637
+      },
+      {
+        "timestamp_sec": 34.0,
+        "path": "/data1/video-highlight-cache/7b454d114c4e2fdf/frames/frame_000035.jpg",
+        "change_score": 0.2276587337255478,
+        "semantic_change_score": 0.59977697000681
+      },
+      {
+        "timestamp_sec": 35.0,
+        "path": "/data1/video-highlight-cache/7b454d114c4e2fdf/frames/frame_000036.jpg",
+        "change_score": 0.08418639004230499,
+        "semantic_change_score": 0.566044491319186
+      },
+      {
+        "timestamp_sec": 36.0,
+        "path": "/data1/video-highlight-cache/7b454d114c4e2fdf/frames/frame_000037.jpg",
+        "change_score": 0.23831284046173096,
+        "semantic_change_score": 0.34444337537938846
+      },
+      {
+        "timestamp_sec": 37.0,
+        "path": "/data1/video-highlight-cache/7b454d114c4e2fdf/frames/frame_000038.jpg",
+        "change_score": 0.16957911849021912,
+        "semantic_change_score": 0.0
+      },
+      {
+        "timestamp_sec": 38.0,
+        "path": "/data1/video-highlight-cache/7b454d114c4e2fdf/frames/frame_000039.jpg",
+        "change_score": 0.043291397392749786,
+        "semantic_change_score": 0.6170968496692912
+      },
+      {
+        "timestamp_sec": 39.0,
+        "path": "/data1/video-highlight-cache/7b454d114c4e2fdf/frames/frame_000040.jpg",
+        "change_score": 0.2244447022676468,
+        "semantic_change_score": 0.9943517292645855
+      },
+      {
+        "timestamp_sec": 40.0,
+        "path": "/data1/video-highlight-cache/7b454d114c4e2fdf/frames/frame_000041.jpg",
+        "change_score": 0.06348613649606705,
+        "semantic_change_score": 0.4710826222369611
+      },
+      {
+        "timestamp_sec": 41.0,
+        "path": "/data1/video-highlight-cache/7b454d114c4e2fdf/frames/frame_000042.jpg",
+        "change_score": 0.10314414650201797,
+        "semantic_change_score": 0.5019045200218731
+      },
+      {
+        "timestamp_sec": 42.0,
+        "path": "/data1/video-highlight-cache/7b454d114c4e2fdf/frames/frame_000043.jpg",
+        "change_score": 0.22294922173023224,
+        "semantic_change_score": 0.8648716528704276
+      },
+      {
+        "timestamp_sec": 43.0,
+        "path": "/data1/video-highlight-cache/7b454d114c4e2fdf/frames/frame_000044.jpg",
+        "change_score": 0.19190411269664764,
+        "semantic_change_score": 0.044214519095616175
+      },
+      {
+        "timestamp_sec": 44.0,
+        "path": "/data1/video-highlight-cache/7b454d114c4e2fdf/frames/frame_000045.jpg",
+        "change_score": 0.11406250298023224,
+        "semantic_change_score": 0.0
+      },
+      {
+        "timestamp_sec": 45.0,
+        "path": "/data1/video-highlight-cache/7b454d114c4e2fdf/frames/frame_000046.jpg",
+        "change_score": 0.08232134580612183,
+        "semantic_change_score": 0.04421964787253726
+      },
+      {
+        "timestamp_sec": 46.0,
+        "path": "/data1/video-highlight-cache/7b454d114c4e2fdf/frames/frame_000047.jpg",
+        "change_score": 0.20302638411521912,
+        "semantic_change_score": 0.7671151132439071
+      },
+      {
+        "timestamp_sec": 47.0,
+        "path": "/data1/video-highlight-cache/7b454d114c4e2fdf/frames/frame_000048.jpg",
+        "change_score": 0.2221861630678177,
+        "semantic_change_score": 0.4056830233278315
+      },
+      {
+        "timestamp_sec": 48.0,
+        "path": "/data1/video-highlight-cache/7b454d114c4e2fdf/frames/frame_000049.jpg",
+        "change_score": 0.19377106428146362,
+        "semantic_change_score": 0.0
+      },
+      {
+        "timestamp_sec": 49.0,
+        "path": "/data1/video-highlight-cache/7b454d114c4e2fdf/frames/frame_000050.jpg",
+        "change_score": 0.18856656551361084,
+        "semantic_change_score": 0.0
+      },
+      {
+        "timestamp_sec": 50.0,
+        "path": "/data1/video-highlight-cache/7b454d114c4e2fdf/frames/frame_000051.jpg",
+        "change_score": 0.17792777717113495,
+        "semantic_change_score": 0.0
+      },
+      {
+        "timestamp_sec": 51.0,
+        "path": "/data1/video-highlight-cache/7b454d114c4e2fdf/frames/frame_000052.jpg",
+        "change_score": 0.16554361581802368,
+        "semantic_change_score": 1.0
+      },
+      {
+        "timestamp_sec": 52.0,
+        "path": "/data1/video-highlight-cache/7b454d114c4e2fdf/frames/frame_000053.jpg",
+        "change_score": 0.23323281109333038,
+        "semantic_change_score": 0.0
+      },
+      {
+        "timestamp_sec": 53.0,
+        "path": "/data1/video-highlight-cache/7b454d114c4e2fdf/frames/frame_000054.jpg",
+        "change_score": 0.26404812932014465,
+        "semantic_change_score": 0.7063878301098798
+      },
+      {
+        "timestamp_sec": 54.0,
+        "path": "/data1/video-highlight-cache/7b454d114c4e2fdf/frames/frame_000055.jpg",
+        "change_score": 0.19201324880123138,
+        "semantic_change_score": 0.0
+      },
+      {
+        "timestamp_sec": 55.0,
+        "path": "/data1/video-highlight-cache/7b454d114c4e2fdf/frames/frame_000056.jpg",
+        "change_score": 0.09644225239753723,
+        "semantic_change_score": 1.0
+      },
+      {
+        "timestamp_sec": 56.0,
+        "path": "/data1/video-highlight-cache/7b454d114c4e2fdf/frames/frame_000057.jpg",
+        "change_score": 0.1026194840669632,
+        "semantic_change_score": 0.755851293369835
+      },
+      {
+        "timestamp_sec": 57.0,
+        "path": "/data1/video-highlight-cache/7b454d114c4e2fdf/frames/frame_000058.jpg",
+        "change_score": 0.0568033866584301,
+        "semantic_change_score": 0.1453673347992746
+      },
+      {
+        "timestamp_sec": 58.0,
+        "path": "/data1/video-highlight-cache/7b454d114c4e2fdf/frames/frame_000059.jpg",
+        "change_score": 0.10061848908662796,
+        "semantic_change_score": 0.0
+      },
+      {
+        "timestamp_sec": 59.0,
+        "path": "/data1/video-highlight-cache/7b454d114c4e2fdf/frames/frame_000060.jpg",
+        "change_score": 0.08790307492017746,
+        "semantic_change_score": 0.0
+      },
+      {
+        "timestamp_sec": 60.0,
+        "path": "/data1/video-highlight-cache/7b454d114c4e2fdf/frames/frame_000061.jpg",
+        "change_score": 0.14808517694473267,
+        "semantic_change_score": 0.0
+      },
+      {
+        "timestamp_sec": 61.0,
+        "path": "/data1/video-highlight-cache/7b454d114c4e2fdf/frames/frame_000062.jpg",
+        "change_score": 0.13314950466156006,
+        "semantic_change_score": 0.0
+      },
+      {
+        "timestamp_sec": 62.0,
+        "path": "/data1/video-highlight-cache/7b454d114c4e2fdf/frames/frame_000063.jpg",
+        "change_score": 0.11646178364753723,
+        "semantic_change_score": 0.0
+      },
+      {
+        "timestamp_sec": 63.0,
+        "path": "/data1/video-highlight-cache/7b454d114c4e2fdf/frames/frame_000064.jpg",
+        "change_score": 0.12410194426774979,
+        "semantic_change_score": 0.0
+      },
+      {
+        "timestamp_sec": 64.0,
+        "path": "/data1/video-highlight-cache/7b454d114c4e2fdf/frames/frame_000065.jpg",
+        "change_score": 0.1011967658996582,
+        "semantic_change_score": 0.0
+      },
+      {
+        "timestamp_sec": 65.0,
+        "path": "/data1/video-highlight-cache/7b454d114c4e2fdf/frames/frame_000066.jpg",
+        "change_score": 0.11346794664859772,
+        "semantic_change_score": 0.0
+      },
+      {
+        "timestamp_sec": 66.0,
+        "path": "/data1/video-highlight-cache/7b454d114c4e2fdf/frames/frame_000067.jpg",
+        "change_score": 0.10293064266443253,
+        "semantic_change_score": 0.0
+      },
+      {
+        "timestamp_sec": 67.0,
+        "path": "/data1/video-highlight-cache/7b454d114c4e2fdf/frames/frame_000068.jpg",
+        "change_score": 0.07809819281101227,
+        "semantic_change_score": 0.0
+      },
+      {
+        "timestamp_sec": 68.0,
+        "path": "/data1/video-highlight-cache/7b454d114c4e2fdf/frames/frame_000069.jpg",
+        "change_score": 0.12969133257865906,
+        "semantic_change_score": 0.0
+      },
+      {
+        "timestamp_sec": 69.0,
+        "path": "/data1/video-highlight-cache/7b454d114c4e2fdf/frames/frame_000070.jpg",
+        "change_score": 0.17731598019599915,
+        "semantic_change_score": 0.0
+      },
+      {
+        "timestamp_sec": 70.0,
+        "path": "/data1/video-highlight-cache/7b454d114c4e2fdf/frames/frame_000071.jpg",
+        "change_score": 0.052838731557130814,
+        "semantic_change_score": 0.713080883991887
+      },
+      {
+        "timestamp_sec": 71.0,
+        "path": "/data1/video-highlight-cache/7b454d114c4e2fdf/frames/frame_000072.jpg",
+        "change_score": 0.17366153001785278,
+        "semantic_change_score": 0.6943762345607145
+      },
+      {
+        "timestamp_sec": 72.0,
+        "path": "/data1/video-highlight-cache/7b454d114c4e2fdf/frames/frame_000073.jpg",
+        "change_score": 0.07439299672842026,
+        "semantic_change_score": 0.5762343453059843
+      },
+      {
+        "timestamp_sec": 73.0,
+        "path": "/data1/video-highlight-cache/7b454d114c4e2fdf/frames/frame_000074.jpg",
+        "change_score": 0.06965092569589615,
+        "semantic_change_score": 0.36121806605515916
+      },
+      {
+        "timestamp_sec": 74.0,
+        "path": "/data1/video-highlight-cache/7b454d114c4e2fdf/frames/frame_000075.jpg",
+        "change_score": 0.09447859227657318,
+        "semantic_change_score": 0.4428979415448676
+      },
+      {
+        "timestamp_sec": 75.0,
+        "path": "/data1/video-highlight-cache/7b454d114c4e2fdf/frames/frame_000076.jpg",
+        "change_score": 0.1903684139251709,
+        "semantic_change_score": 0.6546194945015921
+      },
+      {
+        "timestamp_sec": 76.0,
+        "path": "/data1/video-highlight-cache/7b454d114c4e2fdf/frames/frame_000077.jpg",
+        "change_score": 0.089111328125,
+        "semantic_change_score": 0.0
+      },
+      {
+        "timestamp_sec": 77.0,
+        "path": "/data1/video-highlight-cache/7b454d114c4e2fdf/frames/frame_000078.jpg",
+        "change_score": 0.05738070607185364,
+        "semantic_change_score": 0.0
+      },
+      {
+        "timestamp_sec": 78.0,
+        "path": "/data1/video-highlight-cache/7b454d114c4e2fdf/frames/frame_000079.jpg",
+        "change_score": 0.19044117629528046,
+        "semantic_change_score": 0.0
+      },
+      {
+        "timestamp_sec": 79.0,
+        "path": "/data1/video-highlight-cache/7b454d114c4e2fdf/frames/frame_000080.jpg",
+        "change_score": 0.04062499850988388,
+        "semantic_change_score": 0.0
+      },
+      {
+        "timestamp_sec": 80.0,
+        "path": "/data1/video-highlight-cache/7b454d114c4e2fdf/frames/frame_000081.jpg",
+        "change_score": 0.19023437798023224,
+        "semantic_change_score": 0.0
+      },
+      {
+        "timestamp_sec": 81.0,
+        "path": "/data1/video-highlight-cache/7b454d114c4e2fdf/frames/frame_000082.jpg",
+        "change_score": 0.11366325616836548,
+        "semantic_change_score": 1.0
+      },
+      {
+        "timestamp_sec": 82.0,
+        "path": "/data1/video-highlight-cache/7b454d114c4e2fdf/frames/frame_000083.jpg",
+        "change_score": 0.07138671725988388,
+        "semantic_change_score": 0.2793099599924628
+      },
+      {
+        "timestamp_sec": 83.0,
+        "path": "/data1/video-highlight-cache/7b454d114c4e2fdf/frames/frame_000084.jpg",
+        "change_score": 0.06352922320365906,
+        "semantic_change_score": 0.20607820584715447
+      },
+      {
+        "timestamp_sec": 84.0,
+        "path": "/data1/video-highlight-cache/7b454d114c4e2fdf/frames/frame_000085.jpg",
+        "change_score": 0.20085209608078003,
+        "semantic_change_score": 0.6628906730422149
+      },
+      {
+        "timestamp_sec": 85.0,
+        "path": "/data1/video-highlight-cache/7b454d114c4e2fdf/frames/frame_000086.jpg",
+        "change_score": 0.14090552926063538,
+        "semantic_change_score": 0.6715434325857661
+      },
+      {
+        "timestamp_sec": 86.0,
+        "path": "/data1/video-highlight-cache/7b454d114c4e2fdf/frames/frame_000087.jpg",
+        "change_score": 0.21443110704421997,
+        "semantic_change_score": 0.0
+      },
+      {
+        "timestamp_sec": 87.0,
+        "path": "/data1/video-highlight-cache/7b454d114c4e2fdf/frames/frame_000088.jpg",
+        "change_score": 0.14765433967113495,
+        "semantic_change_score": 0.1728401412547225
+      },
+      {
+        "timestamp_sec": 88.0,
+        "path": "/data1/video-highlight-cache/7b454d114c4e2fdf/frames/frame_000089.jpg",
+        "change_score": 0.20407475531101227,
+        "semantic_change_score": 0.12870393858269127
+      },
+      {
+        "timestamp_sec": 89.0,
+        "path": "/data1/video-highlight-cache/7b454d114c4e2fdf/frames/frame_000090.jpg",
+        "change_score": 0.06787779927253723,
+        "semantic_change_score": 1.0
+      },
+      {
+        "timestamp_sec": 90.0,
+        "path": "/data1/video-highlight-cache/7b454d114c4e2fdf/frames/frame_000091.jpg",
+        "change_score": 0.07543466240167618,
+        "semantic_change_score": 1.0
+      },
+      {
+        "timestamp_sec": 91.0,
+        "path": "/data1/video-highlight-cache/7b454d114c4e2fdf/frames/frame_000092.jpg",
+        "change_score": 0.18879729509353638,
+        "semantic_change_score": 0.03155464614362656
+      },
+      {
+        "timestamp_sec": 92.0,
+        "path": "/data1/video-highlight-cache/7b454d114c4e2fdf/frames/frame_000093.jpg",
+        "change_score": 0.09917949885129929,
+        "semantic_change_score": 0.06052556833772142
+      }
+    ],
+    "saliency_per_second": [
+      0.3358,
+      0.4637,
+      0.5105,
+      0.5539,
+      0.6473,
+      0.6465,
+      0.6222,
+      0.5508,
+      0.4428,
+      0.4158,
+      0.4381,
+      0.4852,
+      0.5804,
+      0.5778,
+      0.5967,
+      0.5123,
+      0.5927,
+      0.6248,
+      0.7223,
+      0.6608,
+      0.6898,
+      0.7093,
+      0.7676,
+      0.7967,
+      0.8386,
+      0.9054,
+      0.9874,
+      1.0,
+      0.88,
+      0.8169,
+      0.733,
+      0.6499,
+      0.5814,
+      0.5944,
+      0.6089,
+      0.6079,
+      0.604,
+      0.6088,
+      0.6201,
+      0.7218,
+      0.7054,
+      0.7147,
+      0.6743,
+      0.5873,
+      0.5718,
+      0.6256,
+      0.7366,
+      0.7536,
+      0.6881,
+      0.6625,
+      0.7137,
+      0.7689,
+      0.7402,
+      0.7287,
+      0.6192,
+      0.6048,
+      0.5349,
+      0.4257,
+      0.383,
+      0.3445,
+      0.3856,
+      0.377,
+      0.3434,
+      0.339,
+      0.3364,
+      0.3781,
+      0.3431,
+      0.3227,
+      0.3812,
+      0.5325,
+      0.6873,
+      0.7132,
+      0.6232,
+      0.5916,
+      0.6043,
+      0.6238,
+      0.5205,
+      0.4778,
+      0.4633,
+      0.5201,
+      0.5674,
+      0.6208,
+      0.6372,
+      0.6393,
+      0.6339,
+      0.5655,
+      0.4753,
+      0.4363,
+      0.4364,
+      0.5068,
+      0.4756,
+      0.3502,
+      0.1799,
+      0.103
+    ]
+  },
+  "local_candidates": [
+    {
+      "start_sec": 0.0,
+      "end_sec": 20.0,
+      "local_score": 0.3238885604374981,
+      "audio_score": 0.4148109310447216,
+      "visual_score": 0.9092637422855376,
+      "semantic_score": 0.0,
+      "scene_score": 1.0,
+      "cue_score": 0.0,
+      "filter_penalty": 0.0,
+      "filter_reasons": [],
+      "transcript": "外婆 那你自己去管啊 我又不是你娘 我是你外婆 我是你外婆啊 外婆是来享福的 不是来给你擦屁股的 我不是不想管 是我管不了啊 我是一个连大学毕业证都没混到的人"
+    },
+    {
+      "start_sec": 10.04,
+      "end_sec": 18.04,
+      "local_score": 0.49299273873797883,
+      "audio_score": 0.9829924814216778,
+      "visual_score": 0.30282293260097504,
+      "semantic_score": 0.384205244215432,
+      "scene_score": 1.0,
+      "cue_score": 0.0,
+      "filter_penalty": 0.0,
+      "filter_reasons": [],
+      "transcript": "不是来给你擦屁股的 我不是不想管 是我管不了啊"
+    },
+    {
+      "start_sec": 20.28,
+      "end_sec": 28.28,
+      "local_score": 0.669425573197172,
+      "audio_score": 1.0,
+      "visual_score": 0.24163219332695007,
+      "semantic_score": 0.9842078462149232,
+      "scene_score": 1.0,
+      "cue_score": 0.0,
+      "filter_penalty": 0.0,
+      "filter_reasons": [],
+      "transcript": "我是一个连大学毕业证都没混到的人 我怎么扛起大任 怎么负重前行嘛 外婆 乖孙"
+    },
+    {
+      "start_sec": 23.64,
+      "end_sec": 31.64,
+      "local_score": 0.6744293808937072,
+      "audio_score": 1.0,
+      "visual_score": 0.24429380893707275,
+      "semantic_score": 1.0,
+      "scene_score": 1.0,
+      "cue_score": 0.0,
+      "filter_penalty": 0.0,
+      "filter_reasons": [],
+      "transcript": "怎么负重前行嘛 外婆 乖孙 你真想扛起大任吗 你真想扛起大任嘛 那你就回去上大学"
+    },
+    {
+      "start_sec": 37.8,
+      "end_sec": 45.8,
+      "local_score": 0.5515713299978997,
+      "audio_score": 0.5437974041171697,
+      "visual_score": 0.22369696199893951,
+      "semantic_score": 0.8254400772681013,
+      "scene_score": 1.0,
+      "cue_score": 0.0,
+      "filter_penalty": 0.0,
+      "filter_reasons": [],
+      "transcript": "外婆就为了你 把这个家再撑一年 如果拿不到 我就把全部家产捐给百乐门 你好好想想吧"
+    },
+    {
+      "start_sec": 48.88,
+      "end_sec": 56.88,
+      "local_score": 0.6260990621650021,
+      "audio_score": 0.8376659053822991,
+      "visual_score": 0.24864047020673752,
+      "semantic_score": 0.9186170977899449,
+      "scene_score": 1.0,
+      "cue_score": 0.0,
+      "filter_penalty": 0.0,
+      "filter_reasons": [],
+      "transcript": "百乐门不行啊 不是逼老虎吃素 心 要我读书"
+    },
+    {
+      "start_sec": 65.04,
+      "end_sec": 73.04,
+      "local_score": 0.5083535193783699,
+      "audio_score": 0.6162366498787913,
+      "visual_score": 0.17548875510692596,
+      "semantic_score": 0.6612304879528619,
+      "scene_score": 1.0,
+      "cue_score": 0.0,
+      "filter_penalty": 0.0,
+      "filter_reasons": [],
+      "transcript": "土匪绣花嘛 土匪绣花么 霍南风 我看了你家的账 如果再没人管的话"
+    },
+    {
+      "start_sec": 75.0,
+      "end_sec": 93.320998,
+      "local_score": 0.22571656653349403,
+      "audio_score": 0.0,
+      "visual_score": 0.0,
+      "semantic_score": 0.6028662661339762,
+      "scene_score": 0.5,
+      "cue_score": 0.0,
+      "filter_penalty": 0.0,
+      "filter_reasons": [],
+      "transcript": "如果再没人管的话 最多三个月就要破产 最多三个月就要破产了 你年轻倒是可以要饭 就是不知道你外婆 要不要的动哦 要不要的动物 我学"
+    }
+  ],
+  "reasoning": {
+    "scenes": [
+      {
+        "scene_id": "scene_0001",
+        "start_sec": 0.0,
+        "end_sec": 24.28,
+        "shot_ids": [
+          "shot_0001",
+          "shot_0002",
+          "shot_0003",
+          "shot_0004",
+          "shot_0005",
+          "shot_0006",
+          "shot_0007",
+          "shot_0008",
+          "shot_0009",
+          "shot_0010",
+          "shot_0011",
+          "shot_0012",
+          "shot_0013"
+        ],
+        "local_score": 0.6744293808937072,
+        "transcript": "[0.30-1.04s ASR] 外婆\n[1.04-4.52s ASR] 那你自己去管啊\n[4.52-5.60s ASR] 我又不是你娘\n[5.60-7.00s ASR] 我是你外婆\n[6.00-7.50s OCR] 我是你外婆啊\n[7.00-9.14s ASR] 外婆是来享福的\n[9.14-10.82s ASR] 不是来给你擦屁股的\n[10.82-16.96s ASR] 我不是不想管\n[16.96-18.70s ASR] 是我管不了啊\n[18.70-21.76s ASR] 我是一个连大学毕业证都没混到的人\n[21.76-23.38s ASR] 我怎么扛起大任\n[23.38-25.26s ASR] 怎么负重前行嘛",
+        "audio_context": "happy/bgm",
+        "frame_samples": [
+          {
+            "timestamp_sec": 0.0,
+            "path": "/data1/video-highlight-cache/7b454d114c4e2fdf/frames/frame_000001.jpg",
+            "change_score": 0.0,
+            "semantic_change_score": 0.0
+          },
+          {
+            "timestamp_sec": 3.0,
+            "path": "/data1/video-highlight-cache/7b454d114c4e2fdf/frames/frame_000004.jpg",
+            "change_score": 0.16485907137393951,
+            "semantic_change_score": 0.12460655870044184
+          },
+          {
+            "timestamp_sec": 6.0,
+            "path": "/data1/video-highlight-cache/7b454d114c4e2fdf/frames/frame_000007.jpg",
+            "change_score": 0.2216184139251709,
+            "semantic_change_score": 0.10082031709586502
+          },
+          {
+            "timestamp_sec": 10.0,
+            "path": "/data1/video-highlight-cache/7b454d114c4e2fdf/frames/frame_000011.jpg",
+            "change_score": 0.046963080763816833,
+            "semantic_change_score": 0.0
+          },
+          {
+            "timestamp_sec": 13.0,
+            "path": "/data1/video-highlight-cache/7b454d114c4e2fdf/frames/frame_000014.jpg",
+            "change_score": 0.3060058653354645,
+            "semantic_change_score": 0.07877119223445739
+          },
+          {
+            "timestamp_sec": 17.0,
+            "path": "/data1/video-highlight-cache/7b454d114c4e2fdf/frames/frame_000018.jpg",
+            "change_score": 0.12268976122140884,
+            "semantic_change_score": 0.0
+          },
+          {
+            "timestamp_sec": 20.0,
+            "path": "/data1/video-highlight-cache/7b454d114c4e2fdf/frames/frame_000021.jpg",
+            "change_score": 0.23103074729442596,
+            "semantic_change_score": 0.0
+          },
+          {
+            "timestamp_sec": 24.0,
+            "path": "/data1/video-highlight-cache/7b454d114c4e2fdf/frames/frame_000025.jpg",
+            "change_score": 0.2142348289489746,
+            "semantic_change_score": 0.43218033641289033
+          }
+        ],
+        "speakers": [],
+        "face_track_ids": [],
+        "actors": [
+          "穿皮衣女子",
+          "坐在地上的年轻男子"
+        ],
+        "action": "穿皮衣女子居高临下指责年轻男子，年轻男子坐在地上进行辩解",
+        "event_type": [
+          "conflict"
+        ],
+        "claims": [
+          "男子声称自己只是个连大学毕业证都没混到的人，无法扛起大任"
+        ],
+        "state_before": "年轻男子处于被动、需要帮助的状态",
+        "new_evidence": "女子明确拒绝插手男子的烂摊子，并以长辈身份表明立场",
+        "state_after": "年轻男子明确了外婆拒绝协助的处境，双方在管理责任上存在冲突",
+        "relationship_change": "确认了两人为祖孙关系，且权力层级上女子拒绝屈从于孙辈的请求",
+        "emotion": [
+          "烦躁",
+          "委屈",
+          "无奈"
+        ],
+        "salience": 0.75,
+        "uncertainty": 0.1,
+        "evidence": [
+          "[1.04s ASR] 那你自己去管啊",
+          "[6.00s OCR] 我是你外婆啊",
+          "[10.82s ASR] 我不是不想管",
+          "[20.0s FRAME] 男子在地上哀求状",
+          "[24.0s ASR] 怎么负重前行嘛"
+        ]
+      },
+      {
+        "scene_id": "scene_0002",
+        "start_sec": 24.28,
+        "end_sec": 33.84,
+        "shot_ids": [
+          "shot_0014",
+          "shot_0015",
+          "shot_0016",
+          "shot_0017",
+          "shot_0018"
+        ],
+        "local_score": 0.6744293808937072,
+        "transcript": "[23.38-25.26s ASR] 怎么负重前行嘛\n[25.26-26.34s ASR] 外婆\n[26.34-28.56s ASR] 乖孙\n[28.56-30.58s ASR] 你真想扛起大任吗\n[29.00-31.50s OCR] 你真想扛起大任嘛\n[30.58-32.40s ASR] 那你就回去上大学\n[32.40-35.86s ASR] 只要你一年之内拿到毕业证",
+        "audio_context": "happy/bgm",
+        "frame_samples": [
+          {
+            "timestamp_sec": 25.0,
+            "path": "/data1/video-highlight-cache/7b454d114c4e2fdf/frames/frame_000026.jpg",
+            "change_score": 0.060452092438936234,
+            "semantic_change_score": 0.7686706712840702
+          },
+          {
+            "timestamp_sec": 26.0,
+            "path": "/data1/video-highlight-cache/7b454d114c4e2fdf/frames/frame_000027.jpg",
+            "change_score": 0.1162722110748291,
+            "semantic_change_score": 1.0
+          },
+          {
+            "timestamp_sec": 27.0,
+            "path": "/data1/video-highlight-cache/7b454d114c4e2fdf/frames/frame_000028.jpg",
+            "change_score": 0.26902955770492554,
+            "semantic_change_score": 0.9990635366219801
+          },
+          {
+            "timestamp_sec": 28.0,
+            "path": "/data1/video-highlight-cache/7b454d114c4e2fdf/frames/frame_000029.jpg",
+            "change_score": 0.20204120874404907,
+            "semantic_change_score": 0.9535600020227895
+          },
+          {
+            "timestamp_sec": 29.0,
+            "path": "/data1/video-highlight-cache/7b454d114c4e2fdf/frames/frame_000030.jpg",
+            "change_score": 0.15896044671535492,
+            "semantic_change_score": 1.0
+          },
+          {
+            "timestamp_sec": 30.0,
+            "path": "/data1/video-highlight-cache/7b454d114c4e2fdf/frames/frame_000031.jpg",
+            "change_score": 0.14513824880123138,
+            "semantic_change_score": 1.0
+          },
+          {
+            "timestamp_sec": 31.0,
+            "path": "/data1/video-highlight-cache/7b454d114c4e2fdf/frames/frame_000032.jpg",
+            "change_score": 0.21955806016921997,
+            "semantic_change_score": 0.3050364179062835
+          },
+          {
+            "timestamp_sec": 33.0,
+            "path": "/data1/video-highlight-cache/7b454d114c4e2fdf/frames/frame_000034.jpg",
+            "change_score": 0.17520584166049957,
+            "semantic_change_score": 0.22140299128733637
+          }
+        ],
+        "speakers": [],
+        "face_track_ids": [],
+        "actors": [
+          "年轻男子",
+          "年长女子"
+        ],
+        "action": "年轻男子对年长女子表现出恳求状，随后年长女子提出条件并引导其行动。",
+        "event_type": [
+          "conflict",
+          "reveal"
+        ],
+        "claims": [
+          "年轻男子询问是否真的想扛起大任",
+          "年长女子提出一年之内拿到毕业证的条件"
+        ],
+        "state_before": "年轻男子处于某种困境，似乎承担着某种责任",
+        "new_evidence": "年长女子为年轻男子设定了回归校园并取得毕业证的明确时限条件",
+        "state_after": "年轻男子的未来选择受到年长女子设定条件的约束",
+        "relationship_change": "年长女子在该场景中表现出明显的长辈决策权，地位高于年轻男子",
+        "emotion": [
+          "恳切",
+          "严肃"
+        ],
+        "salience": 0.75,
+        "uncertainty": 0.1,
+        "evidence": [
+          "[25.0s FRAME] 年轻男子面部恳求表情",
+          "[26.0s ASR] 外婆",
+          "[28.0s ASR] 乖孙",
+          "[31.0s ASR] 那你就回去上大学",
+          "[33.0s ASR] 只要你一年之内拿到毕业证"
+        ]
+      },
+      {
+        "scene_id": "scene_0003",
+        "start_sec": 33.84,
+        "end_sec": 45.72,
+        "shot_ids": [
+          "shot_0019",
+          "shot_0020",
+          "shot_0021",
+          "shot_0022",
+          "shot_0023",
+          "shot_0024",
+          "shot_0025"
+        ],
+        "local_score": 0.5515713299978997,
+        "transcript": "[32.40-35.86s ASR] 只要你一年之内拿到毕业证\n[35.86-37.84s ASR] 外婆就为了你\n[37.84-40.52s ASR] 把这个家再撑一年\n[40.52-41.84s ASR] 如果拿不到\n[41.84-44.52s ASR] 我就把全部家产捐给百乐门\n[44.52-45.82s ASR] 你好好想想吧",
+        "audio_context": "happy/bgm",
+        "frame_samples": [
+          {
+            "timestamp_sec": 34.0,
+            "path": "/data1/video-highlight-cache/7b454d114c4e2fdf/frames/frame_000035.jpg",
+            "change_score": 0.2276587337255478,
+            "semantic_change_score": 0.59977697000681
+          },
+          {
+            "timestamp_sec": 35.0,
+            "path": "/data1/video-highlight-cache/7b454d114c4e2fdf/frames/frame_000036.jpg",
+            "change_score": 0.08418639004230499,
+            "semantic_change_score": 0.566044491319186
+          },
+          {
+            "timestamp_sec": 37.0,
+            "path": "/data1/video-highlight-cache/7b454d114c4e2fdf/frames/frame_000038.jpg",
+            "change_score": 0.16957911849021912,
+            "semantic_change_score": 0.0
+          },
+          {
+            "timestamp_sec": 38.0,
+            "path": "/data1/video-highlight-cache/7b454d114c4e2fdf/frames/frame_000039.jpg",
+            "change_score": 0.043291397392749786,
+            "semantic_change_score": 0.6170968496692912
+          },
+          {
+            "timestamp_sec": 40.0,
+            "path": "/data1/video-highlight-cache/7b454d114c4e2fdf/frames/frame_000041.jpg",
+            "change_score": 0.06348613649606705,
+            "semantic_change_score": 0.4710826222369611
+          },
+          {
+            "timestamp_sec": 41.0,
+            "path": "/data1/video-highlight-cache/7b454d114c4e2fdf/frames/frame_000042.jpg",
+            "change_score": 0.10314414650201797,
+            "semantic_change_score": 0.5019045200218731
+          },
+          {
+            "timestamp_sec": 43.0,
+            "path": "/data1/video-highlight-cache/7b454d114c4e2fdf/frames/frame_000044.jpg",
+            "change_score": 0.19190411269664764,
+            "semantic_change_score": 0.044214519095616175
+          },
+          {
+            "timestamp_sec": 45.0,
+            "path": "/data1/video-highlight-cache/7b454d114c4e2fdf/frames/frame_000046.jpg",
+            "change_score": 0.08232134580612183,
+            "semantic_change_score": 0.04421964787253726
+          }
+        ],
+        "speakers": [],
+        "face_track_ids": [],
+        "actors": [
+          "女性长辈（夫人）",
+          "年轻男性"
+        ],
+        "action": "女性长辈抓着年轻男性的手进行谈话，随后松开手并示意其思考",
+        "event_type": [
+          "conflict",
+          "action"
+        ],
+        "claims": [
+          "若年轻男性一年内拿到毕业证，长辈会把家再撑一年",
+          "若拿不到毕业证，长辈会将全部家产捐给百乐门"
+        ],
+        "state_before": "年轻男性处于被动接受长辈条件的状态",
+        "new_evidence": "女性长辈明确提出以毕业证作为家族财产继承的必要条件，并设置了时间限制",
+        "state_after": "年轻男性面临选择，处于压力之中",
+        "relationship_change": "权力重心明确向拥有家产支配权的女性长辈倾斜",
+        "emotion": [
+          "严肃",
+          "胁迫感"
+        ],
+        "salience": 0.85,
+        "uncertainty": 0.1,
+        "evidence": [
+          "[F01 34.0s] [32.40s ASR] 只要你一年之内",
+          "[F02 35.0s] [35.00s ASR] 拿到毕业证",
+          "[F03 38.0s] 年轻男性面露难色",
+          "[F05 43.0s] [41.84s ASR] 我就把全部家产捐给百乐门",
+          "[F06 45.0s] [44.52s ASR] 你好好想想吧"
+        ]
+      },
+      {
+        "scene_id": "scene_0004",
+        "start_sec": 45.72,
+        "end_sec": 53.84,
+        "shot_ids": [
+          "shot_0026",
+          "shot_0027",
+          "shot_0028",
+          "shot_0029",
+          "shot_0030"
+        ],
+        "local_score": 0.6260990621650021,
+        "transcript": "[44.52-45.82s ASR] 你好好想想吧\n[45.82-47.54s ASR] 薛老太 看地图\n[46.00-48.50s OCR] 薛老太看镜头\n[47.54-49.48s ASR] 百乐门不行啊\n[49.48-59.42s ASR] 不是逼老虎吃素\n[50.00-51.50s OCR] 心",
+        "audio_context": "happy/bgm",
+        "frame_samples": [
+          {
+            "timestamp_sec": 46.0,
+            "path": "/data1/video-highlight-cache/7b454d114c4e2fdf/frames/frame_000047.jpg",
+            "change_score": 0.20302638411521912,
+            "semantic_change_score": 0.7671151132439071
+          },
+          {
+            "timestamp_sec": 47.0,
+            "path": "/data1/video-highlight-cache/7b454d114c4e2fdf/frames/frame_000048.jpg",
+            "change_score": 0.2221861630678177,
+            "semantic_change_score": 0.4056830233278315
+          },
+          {
+            "timestamp_sec": 48.0,
+            "path": "/data1/video-highlight-cache/7b454d114c4e2fdf/frames/frame_000049.jpg",
+            "change_score": 0.19377106428146362,
+            "semantic_change_score": 0.0
+          },
+          {
+            "timestamp_sec": 49.0,
+            "path": "/data1/video-highlight-cache/7b454d114c4e2fdf/frames/frame_000050.jpg",
+            "change_score": 0.18856656551361084,
+            "semantic_change_score": 0.0
+          },
+          {
+            "timestamp_sec": 50.0,
+            "path": "/data1/video-highlight-cache/7b454d114c4e2fdf/frames/frame_000051.jpg",
+            "change_score": 0.17792777717113495,
+            "semantic_change_score": 0.0
+          },
+          {
+            "timestamp_sec": 51.0,
+            "path": "/data1/video-highlight-cache/7b454d114c4e2fdf/frames/frame_000052.jpg",
+            "change_score": 0.16554361581802368,
+            "semantic_change_score": 1.0
+          },
+          {
+            "timestamp_sec": 52.0,
+            "path": "/data1/video-highlight-cache/7b454d114c4e2fdf/frames/frame_000053.jpg",
+            "change_score": 0.23323281109333038,
+            "semantic_change_score": 0.0
+          },
+          {
+            "timestamp_sec": 53.0,
+            "path": "/data1/video-highlight-cache/7b454d114c4e2fdf/frames/frame_000054.jpg",
+            "change_score": 0.26404812932014465,
+            "semantic_change_score": 0.7063878301098798
+          }
+        ],
+        "speakers": [],
+        "face_track_ids": [],
+        "actors": [
+          "男性摄影师",
+          "薛老太",
+          "两名伴舞女性"
+        ],
+        "action": "男性摄影师跪地拍照，薛老太在两名伴舞女性陪同下，于百乐门背景前做出时尚姿态接受拍摄，并由摄影师引导摆拍。",
+        "event_type": [
+          "action",
+          "reveal"
+        ],
+        "claims": [
+          "百乐门不行啊",
+          "不是逼老虎吃素"
+        ],
+        "state_before": "薛老太在摄影师请求下准备进入拍摄状态",
+        "new_evidence": "摄影师通过引导语言（“看镜头”）确认拍摄行为，薛老太通过穿着黑色皮衣与红裙伴舞的组合表现出与传统“老太”形象截然不同的反差感",
+        "state_after": "薛老太以时尚、自信的姿态在百乐门前完成摆拍，确立了其强势且不服老的形象",
+        "relationship_change": "摄影师处于服务拍摄的从属地位，薛老太处于被拍摄的核心地位",
+        "emotion": [
+          "自信",
+          "兴奋"
+        ],
+        "salience": 0.65,
+        "uncertainty": 0.15,
+        "evidence": [
+          "[46.0s FRAME] 摄影师跪地拍摄",
+          "[47.0s-49.0s FRAME] 薛老太着皮衣亮相",
+          "[47.54s ASR] 薛老太评论百乐门不行",
+          "[53.0s FRAME] 薛老太摆出自信姿态"
+        ]
+      },
+      {
+        "scene_id": "scene_0005",
+        "start_sec": 53.84,
+        "end_sec": 69.04,
+        "shot_ids": [
+          "shot_0031",
+          "shot_0032"
+        ],
+        "local_score": 0.6260990621650021,
+        "transcript": "[49.48-59.42s ASR] 不是逼老虎吃素\n[56.00-58.50s OCR] 要我读书\n[58.00-60.50s OCR] 那不是逼老虎吃素\n[59.42-61.50s ASR] 却老饱从粮\n[60.00-62.50s OCR] 劝老鸨从良\n[61.50-63.26s ASR] 就土匪\n[63.00-64.50s OCR] 教土匪\n[63.26-66.36s ASR] 土匪绣花嘛\n[65.00-67.50s OCR] 土匪绣花么\n[66.36-70.61s ASR] 霍南风",
+        "audio_context": "happy/bgm",
+        "frame_samples": [
+          {
+            "timestamp_sec": 54.0,
+            "path": "/data1/video-highlight-cache/7b454d114c4e2fdf/frames/frame_000055.jpg",
+            "change_score": 0.19201324880123138,
+            "semantic_change_score": 0.0
+          },
+          {
+            "timestamp_sec": 56.0,
+            "path": "/data1/video-highlight-cache/7b454d114c4e2fdf/frames/frame_000057.jpg",
+            "change_score": 0.1026194840669632,
+            "semantic_change_score": 0.755851293369835
+          },
+          {
+            "timestamp_sec": 58.0,
+            "path": "/data1/video-highlight-cache/7b454d114c4e2fdf/frames/frame_000059.jpg",
+            "change_score": 0.10061848908662796,
+            "semantic_change_score": 0.0
+          },
+          {
+            "timestamp_sec": 60.0,
+            "path": "/data1/video-highlight-cache/7b454d114c4e2fdf/frames/frame_000061.jpg",
+            "change_score": 0.14808517694473267,
+            "semantic_change_score": 0.0
+          },
+          {
+            "timestamp_sec": 62.0,
+            "path": "/data1/video-highlight-cache/7b454d114c4e2fdf/frames/frame_000063.jpg",
+            "change_score": 0.11646178364753723,
+            "semantic_change_score": 0.0
+          },
+          {
+            "timestamp_sec": 64.0,
+            "path": "/data1/video-highlight-cache/7b454d114c4e2fdf/frames/frame_000065.jpg",
+            "change_score": 0.1011967658996582,
+            "semantic_change_score": 0.0
+          },
+          {
+            "timestamp_sec": 66.0,
+            "path": "/data1/video-highlight-cache/7b454d114c4e2fdf/frames/frame_000067.jpg",
+            "change_score": 0.10293064266443253,
+            "semantic_change_score": 0.0
+          },
+          {
+            "timestamp_sec": 69.0,
+            "path": "/data1/video-highlight-cache/7b454d114c4e2fdf/frames/frame_000070.jpg",
+            "change_score": 0.17731598019599915,
+            "semantic_change_score": 0.0
+          }
+        ],
+        "speakers": [],
+        "face_track_ids": [],
+        "actors": [
+          "年轻男子",
+          "女性路人"
+        ],
+        "action": "一名身着棕色外套的年轻男子伏在地面，仰头看向女性路人，与其进行对话并做出夸张的肢体动作。",
+        "event_type": [
+          "action",
+          "conflict"
+        ],
+        "claims": [
+          "“要我读书”",
+          "“劝老鸨从良”",
+          "“教土匪绣花么”"
+        ],
+        "state_before": "年轻男子处于伏地姿态，与站立的女性路人形成明显的身体高度差和权力不对等。",
+        "new_evidence": "年轻男子不断变换语气与词汇，试图以荒谬的对比（如强迫老虎吃素、劝老鸨从良、教土匪绣花）表达不满或进行辩解。",
+        "state_after": "年轻男子依然保持伏地姿态，并未改变其与女性路人的权力从属关系，对话持续。",
+        "relationship_change": "无明显变化，维持当前的压制与被压制关系。",
+        "emotion": [
+          "窘迫",
+          "激动",
+          "防御性"
+        ],
+        "salience": 0.65,
+        "uncertainty": 0.2,
+        "evidence": [
+          "[F02 56.0s] 男子提到“要我读书”",
+          "[F03 60.0s] 男子提到“劝老鸨从良”",
+          "[F05 66.0s] 男子提到“土匪绣花么”",
+          "[F06 69.0s] 宽镜头显示女子处于站立高位，男子处于伏地低位"
+        ]
+      },
+      {
+        "scene_id": "scene_0006",
+        "start_sec": 69.04,
+        "end_sec": 80.0,
+        "shot_ids": [
+          "shot_0033",
+          "shot_0034",
+          "shot_0035",
+          "shot_0036",
+          "shot_0037",
+          "shot_0038"
+        ],
+        "local_score": 0.5083535193783699,
+        "transcript": "[66.36-70.61s ASR] 霍南风\n[70.61-72.55s ASR] 我看了你家的账\n[72.55-75.01s ASR] 如果再没人管的话\n[75.01-77.45s ASR] 最多三个月就要破产\n[76.00-78.50s OCR] 最多三个月就要破产了\n[77.45-80.81s ASR] 你年轻倒是可以要饭",
+        "audio_context": "happy/bgm",
+        "frame_samples": [
+          {
+            "timestamp_sec": 70.0,
+            "path": "/data1/video-highlight-cache/7b454d114c4e2fdf/frames/frame_000071.jpg",
+            "change_score": 0.052838731557130814,
+            "semantic_change_score": 0.713080883991887
+          },
+          {
+            "timestamp_sec": 71.0,
+            "path": "/data1/video-highlight-cache/7b454d114c4e2fdf/frames/frame_000072.jpg",
+            "change_score": 0.17366153001785278,
+            "semantic_change_score": 0.6943762345607145
+          },
+          {
+            "timestamp_sec": 72.0,
+            "path": "/data1/video-highlight-cache/7b454d114c4e2fdf/frames/frame_000073.jpg",
+            "change_score": 0.07439299672842026,
+            "semantic_change_score": 0.5762343453059843
+          },
+          {
+            "timestamp_sec": 74.0,
+            "path": "/data1/video-highlight-cache/7b454d114c4e2fdf/frames/frame_000075.jpg",
+            "change_score": 0.09447859227657318,
+            "semantic_change_score": 0.4428979415448676
+          },
+          {
+            "timestamp_sec": 75.0,
+            "path": "/data1/video-highlight-cache/7b454d114c4e2fdf/frames/frame_000076.jpg",
+            "change_score": 0.1903684139251709,
+            "semantic_change_score": 0.6546194945015921
+          },
+          {
+            "timestamp_sec": 77.0,
+            "path": "/data1/video-highlight-cache/7b454d114c4e2fdf/frames/frame_000078.jpg",
+            "change_score": 0.05738070607185364,
+            "semantic_change_score": 0.0
+          },
+          {
+            "timestamp_sec": 78.0,
+            "path": "/data1/video-highlight-cache/7b454d114c4e2fdf/frames/frame_000079.jpg",
+            "change_score": 0.19044117629528046,
+            "semantic_change_score": 0.0
+          },
+          {
+            "timestamp_sec": 80.0,
+            "path": "/data1/video-highlight-cache/7b454d114c4e2fdf/frames/frame_000081.jpg",
+            "change_score": 0.19023437798023224,
+            "semantic_change_score": 0.0
+          }
+        ],
+        "speakers": [],
+        "face_track_ids": [],
+        "actors": [
+          "女性角色",
+          "霍南风"
+        ],
+        "action": "女性角色站在霍南风面前俯视，霍南风趴在地面上，女性角色对霍南风发表言论",
+        "event_type": [
+          "conflict",
+          "reveal"
+        ],
+        "claims": [
+          "霍南风家账目显示最多三个月就会破产",
+          "霍南风年轻可以去要饭"
+        ],
+        "state_before": "霍南风趴在地面处于低位，女性角色站立于高位，双方关系不明",
+        "new_evidence": "女性角色查阅了霍南风家账目，明确指出其破产风险",
+        "state_after": "女性角色掌握了霍南风的财务危机信息并以此嘲讽，霍南风在经济与处境上处于绝对劣势",
+        "relationship_change": "女性角色展现出对比霍南风明显的支配地位",
+        "emotion": [
+          "轻蔑",
+          "冷漠"
+        ],
+        "salience": 0.9,
+        "uncertainty": 0.1,
+        "evidence": [
+          "[F01 70.0s] 霍南风趴在地面，女性角色站立于其身前",
+          "[70.61-75.01s ASR] 女性角色主张霍家账目三个月内将破产",
+          "[77.45-80.81s ASR] 女性角色嘲讽霍南风可以去要饭"
+        ]
+      },
+      {
+        "scene_id": "scene_0007",
+        "start_sec": 80.0,
+        "end_sec": 93.320998,
+        "shot_ids": [
+          "shot_0039",
+          "shot_0040",
+          "shot_0041",
+          "shot_0042",
+          "shot_0043",
+          "shot_0044"
+        ],
+        "local_score": 0.22571656653349403,
+        "transcript": "[77.45-80.81s ASR] 你年轻倒是可以要饭\n[80.81-83.19s ASR] 就是不知道你外婆\n[83.00-85.50s OCR] 要不要的动哦\n[83.19-84.31s ASR] 要不要的动物\n[89.00-91.50s OCR] 我学",
+        "audio_context": "happy/bgm",
+        "frame_samples": [
+          {
+            "timestamp_sec": 80.0,
+            "path": "/data1/video-highlight-cache/7b454d114c4e2fdf/frames/frame_000081.jpg",
+            "change_score": 0.19023437798023224,
+            "semantic_change_score": 0.0
+          },
+          {
+            "timestamp_sec": 81.0,
+            "path": "/data1/video-highlight-cache/7b454d114c4e2fdf/frames/frame_000082.jpg",
+            "change_score": 0.11366325616836548,
+            "semantic_change_score": 1.0
+          },
+          {
+            "timestamp_sec": 83.0,
+            "path": "/data1/video-highlight-cache/7b454d114c4e2fdf/frames/frame_000084.jpg",
+            "change_score": 0.06352922320365906,
+            "semantic_change_score": 0.20607820584715447
+          },
+          {
+            "timestamp_sec": 85.0,
+            "path": "/data1/video-highlight-cache/7b454d114c4e2fdf/frames/frame_000086.jpg",
+            "change_score": 0.14090552926063538,
+            "semantic_change_score": 0.6715434325857661
+          },
+          {
+            "timestamp_sec": 86.0,
+            "path": "/data1/video-highlight-cache/7b454d114c4e2fdf/frames/frame_000087.jpg",
+            "change_score": 0.21443110704421997,
+            "semantic_change_score": 0.0
+          },
+          {
+            "timestamp_sec": 88.0,
+            "path": "/data1/video-highlight-cache/7b454d114c4e2fdf/frames/frame_000089.jpg",
+            "change_score": 0.20407475531101227,
+            "semantic_change_score": 0.12870393858269127
+          },
+          {
+            "timestamp_sec": 90.0,
+            "path": "/data1/video-highlight-cache/7b454d114c4e2fdf/frames/frame_000091.jpg",
+            "change_score": 0.07543466240167618,
+            "semantic_change_score": 1.0
+          },
+          {
+            "timestamp_sec": 92.0,
+            "path": "/data1/video-highlight-cache/7b454d114c4e2fdf/frames/frame_000093.jpg",
+            "change_score": 0.09917949885129929,
+            "semantic_change_score": 0.06052556833772142
+          }
+        ],
+        "speakers": [],
+        "face_track_ids": [],
+        "actors": [
+          "女性角色",
+          "倒地男性角色"
+        ],
+        "action": "女性角色言语羞辱倒地男性角色，男性角色在被迫压制下选择妥协（“我学”）",
+        "event_type": [
+          "conflict",
+          "powerplay"
+        ],
+        "claims": [
+          "男性角色年轻可以去要饭",
+          "男性角色的外婆要饭要不动"
+        ],
+        "state_before": "倒地男性角色处于被动劣势，女性角色占据心理与空间优势",
+        "new_evidence": "男性角色在身体被控制的情况下，被迫回答“我学”以求生存或服从",
+        "state_after": "双方权位不平等确定，男性角色选择屈从以应对当前压力",
+        "relationship_change": "女性角色处于绝对支配地位，男性角色处于绝对被支配地位",
+        "emotion": [
+          "嘲讽",
+          "屈辱",
+          "顺从"
+        ],
+        "salience": 0.95,
+        "uncertainty": 0.05,
+        "evidence": [
+          "[80.0s F01] 女性角色言语羞辱",
+          "[85.0s F03] 倒地男性角色被压制在地的特写",
+          "[90.0s F05] 男性角色回应“我学”"
+        ]
+      }
+    ],
+    "decisions": [
+      {
+        "scene": {
+          "scene_id": "scene_0001",
+          "start_sec": 0.0,
+          "end_sec": 24.28,
+          "shot_ids": [
+            "shot_0001",
+            "shot_0002",
+            "shot_0003",
+            "shot_0004",
+            "shot_0005",
+            "shot_0006",
+            "shot_0007",
+            "shot_0008",
+            "shot_0009",
+            "shot_0010",
+            "shot_0011",
+            "shot_0012",
+            "shot_0013"
+          ],
+          "local_score": 0.6744293808937072,
+          "transcript": "[0.30-1.04s ASR] 外婆\n[1.04-4.52s ASR] 那你自己去管啊\n[4.52-5.60s ASR] 我又不是你娘\n[5.60-7.00s ASR] 我是你外婆\n[6.00-7.50s OCR] 我是你外婆啊\n[7.00-9.14s ASR] 外婆是来享福的\n[9.14-10.82s ASR] 不是来给你擦屁股的\n[10.82-16.96s ASR] 我不是不想管\n[16.96-18.70s ASR] 是我管不了啊\n[18.70-21.76s ASR] 我是一个连大学毕业证都没混到的人\n[21.76-23.38s ASR] 我怎么扛起大任\n[23.38-25.26s ASR] 怎么负重前行嘛",
+          "audio_context": "happy/bgm",
+          "frame_samples": [
+            {
+              "timestamp_sec": 0.0,
+              "path": "/data1/video-highlight-cache/7b454d114c4e2fdf/frames/frame_000001.jpg",
+              "change_score": 0.0,
+              "semantic_change_score": 0.0
+            },
+            {
+              "timestamp_sec": 3.0,
+              "path": "/data1/video-highlight-cache/7b454d114c4e2fdf/frames/frame_000004.jpg",
+              "change_score": 0.16485907137393951,
+              "semantic_change_score": 0.12460655870044184
+            },
+            {
+              "timestamp_sec": 6.0,
+              "path": "/data1/video-highlight-cache/7b454d114c4e2fdf/frames/frame_000007.jpg",
+              "change_score": 0.2216184139251709,
+              "semantic_change_score": 0.10082031709586502
+            },
+            {
+              "timestamp_sec": 10.0,
+              "path": "/data1/video-highlight-cache/7b454d114c4e2fdf/frames/frame_000011.jpg",
+              "change_score": 0.046963080763816833,
+              "semantic_change_score": 0.0
+            },
+            {
+              "timestamp_sec": 13.0,
+              "path": "/data1/video-highlight-cache/7b454d114c4e2fdf/frames/frame_000014.jpg",
+              "change_score": 0.3060058653354645,
+              "semantic_change_score": 0.07877119223445739
+            },
+            {
+              "timestamp_sec": 17.0,
+              "path": "/data1/video-highlight-cache/7b454d114c4e2fdf/frames/frame_000018.jpg",
+              "change_score": 0.12268976122140884,
+              "semantic_change_score": 0.0
+            },
+            {
+              "timestamp_sec": 20.0,
+              "path": "/data1/video-highlight-cache/7b454d114c4e2fdf/frames/frame_000021.jpg",
+              "change_score": 0.23103074729442596,
+              "semantic_change_score": 0.0
+            },
+            {
+              "timestamp_sec": 24.0,
+              "path": "/data1/video-highlight-cache/7b454d114c4e2fdf/frames/frame_000025.jpg",
+              "change_score": 0.2142348289489746,
+              "semantic_change_score": 0.43218033641289033
+            }
+          ],
+          "speakers": [],
+          "face_track_ids": [],
+          "actors": [
+            "穿皮衣女子",
+            "坐在地上的年轻男子"
+          ],
+          "action": "穿皮衣女子居高临下指责年轻男子，年轻男子坐在地上进行辩解",
+          "event_type": [
+            "conflict"
+          ],
+          "claims": [
+            "男子声称自己只是个连大学毕业证都没混到的人，无法扛起大任"
+          ],
+          "state_before": "年轻男子处于被动、需要帮助的状态",
+          "new_evidence": "女子明确拒绝插手男子的烂摊子，并以长辈身份表明立场",
+          "state_after": "年轻男子明确了外婆拒绝协助的处境，双方在管理责任上存在冲突",
+          "relationship_change": "确认了两人为祖孙关系，且权力层级上女子拒绝屈从于孙辈的请求",
+          "emotion": [
+            "烦躁",
+            "委屈",
+            "无奈"
+          ],
+          "salience": 0.75,
+          "uncertainty": 0.1,
+          "evidence": [
+            "[1.04s ASR] 那你自己去管啊",
+            "[6.00s OCR] 我是你外婆啊",
+            "[10.82s ASR] 我不是不想管",
+            "[20.0s FRAME] 男子在地上哀求状",
+            "[24.0s ASR] 怎么负重前行嘛"
+          ]
+        },
+        "decision": {
+          "map_supported": true,
+          "is_highlight": true,
+          "score": 0.879,
+          "highlight_type": "conflict",
+          "description": "年轻外婆拒绝替孙子善后，孙子坐地委屈辩解自己能力不足无法担责",
+          "reason": "符合冲突与情绪兑现结构：外婆强硬拒绝孙子的求助与推诿，孙子随即坐地进行夸张的自我贬低式诉苦，形成完整的喜剧式代际冲突与情绪互动",
+          "confidence": 0.998,
+          "evidence_grounding": 0.95,
+          "narrative_impact": 0.78,
+          "standalone_clarity": 0.88,
+          "clipability": 0.92,
+          "start_sec": 1.0,
+          "end_sec": 24.28,
+          "evidence": [
+            "[1.04s ASR] 那你自己去管啊",
+            "[6.00s OCR] 我是你外婆啊",
+            "[9.14s ASR] 不是来给你擦屁股的",
+            "[17.0s F06] 是我管不了啊",
+            "[20.0s F07] 我是一个连大学毕业证都没混到的人",
+            "[24.0s F08] 怎么负重前行嘛"
+          ],
+          "setup_evidence_times_sec": [
+            1.0,
+            3.0
+          ],
+          "decisive_evidence_times_sec": [
+            6.0,
+            10.0
+          ],
+          "reaction_evidence_times_sec": [
+            17.0,
+            20.0,
+            24.0
+          ],
+          "counter_evidence": [],
+          "continue_previous_scene": false
+        },
+        "votes": [
+          {
+            "map_supported": true,
+            "is_highlight": true,
+            "score": 0.879,
+            "highlight_type": "conflict",
+            "description": "年轻外婆拒绝替孙子善后，孙子坐地委屈辩解自己能力不足无法担责",
+            "reason": "符合冲突与情绪兑现结构：外婆强硬拒绝孙子的求助与推诿，孙子随即坐地进行夸张的自我贬低式诉苦，形成完整的喜剧式代际冲突与情绪互动",
+            "confidence": 0.0,
+            "evidence_grounding": 0.95,
+            "narrative_impact": 0.78,
+            "standalone_clarity": 0.88,
+            "clipability": 0.92,
+            "start_sec": 1.0,
+            "end_sec": 24.28,
+            "evidence": [
+              "[1.04s ASR] 那你自己去管啊",
+              "[6.00s OCR] 我是你外婆啊",
+              "[9.14s ASR] 不是来给你擦屁股的",
+              "[17.0s F06] 是我管不了啊",
+              "[20.0s F07] 我是一个连大学毕业证都没混到的人",
+              "[24.0s F08] 怎么负重前行嘛"
+            ],
+            "setup_evidence_times_sec": [
+              1.0,
+              3.0
+            ],
+            "decisive_evidence_times_sec": [
+              6.0,
+              10.0
+            ],
+            "reaction_evidence_times_sec": [
+              17.0,
+              20.0,
+              24.0
+            ],
+            "counter_evidence": [],
+            "continue_previous_scene": false
+          },
+          {
+            "map_supported": true,
+            "is_highlight": true,
+            "score": 0.871,
+            "highlight_type": "conflict",
+            "description": "皮衣女子表明外婆身份并拒绝替孙子收拾烂摊子，孙子瘫坐地上耍赖辩解",
+            "reason": "具备清晰的冲突兑现与关系反差结构：孙子推卸责任求助（铺垫），外婆强势亮明身份拒绝擦屁股（决定性冲突触发），孙子随即瘫坐哭诉自己能力不足（可见后果与情绪反应），且在24秒内形成完整的喜剧反差闭环。",
+            "confidence": 0.0,
+            "evidence_grounding": 0.95,
+            "narrative_impact": 0.78,
+            "standalone_clarity": 0.88,
+            "clipability": 0.88,
+            "start_sec": 0.3,
+            "end_sec": 24.28,
+            "evidence": [
+              "[3.0s F02] 男子坐在地上要求对方去管",
+              "[6.0s F03] 穿皮衣女子直言'我是你外婆啊'",
+              "[10.0s F04] 外婆训诫'不是来给你擦屁股的'",
+              "[20.0s F07] 男子席地而坐辩解自己连大学毕业证都没混到",
+              "[24.0s F08] 男子哭丧着脸抱怨怎么负重前行"
+            ],
+            "setup_evidence_times_sec": [
+              3.0
+            ],
+            "decisive_evidence_times_sec": [
+              6.0,
+              10.0
+            ],
+            "reaction_evidence_times_sec": [
+              17.0,
+              20.0,
+              24.0
+            ],
+            "counter_evidence": [],
+            "continue_previous_scene": false
+          }
+        ]
+      },
+      {
+        "scene": {
+          "scene_id": "scene_0002",
+          "start_sec": 24.28,
+          "end_sec": 33.84,
+          "shot_ids": [
+            "shot_0014",
+            "shot_0015",
+            "shot_0016",
+            "shot_0017",
+            "shot_0018"
+          ],
+          "local_score": 0.6744293808937072,
+          "transcript": "[23.38-25.26s ASR] 怎么负重前行嘛\n[25.26-26.34s ASR] 外婆\n[26.34-28.56s ASR] 乖孙\n[28.56-30.58s ASR] 你真想扛起大任吗\n[29.00-31.50s OCR] 你真想扛起大任嘛\n[30.58-32.40s ASR] 那你就回去上大学\n[32.40-35.86s ASR] 只要你一年之内拿到毕业证",
+          "audio_context": "happy/bgm",
+          "frame_samples": [
+            {
+              "timestamp_sec": 25.0,
+              "path": "/data1/video-highlight-cache/7b454d114c4e2fdf/frames/frame_000026.jpg",
+              "change_score": 0.060452092438936234,
+              "semantic_change_score": 0.7686706712840702
+            },
+            {
+              "timestamp_sec": 26.0,
+              "path": "/data1/video-highlight-cache/7b454d114c4e2fdf/frames/frame_000027.jpg",
+              "change_score": 0.1162722110748291,
+              "semantic_change_score": 1.0
+            },
+            {
+              "timestamp_sec": 27.0,
+              "path": "/data1/video-highlight-cache/7b454d114c4e2fdf/frames/frame_000028.jpg",
+              "change_score": 0.26902955770492554,
+              "semantic_change_score": 0.9990635366219801
+            },
+            {
+              "timestamp_sec": 28.0,
+              "path": "/data1/video-highlight-cache/7b454d114c4e2fdf/frames/frame_000029.jpg",
+              "change_score": 0.20204120874404907,
+              "semantic_change_score": 0.9535600020227895
+            },
+            {
+              "timestamp_sec": 29.0,
+              "path": "/data1/video-highlight-cache/7b454d114c4e2fdf/frames/frame_000030.jpg",
+              "change_score": 0.15896044671535492,
+              "semantic_change_score": 1.0
+            },
+            {
+              "timestamp_sec": 30.0,
+              "path": "/data1/video-highlight-cache/7b454d114c4e2fdf/frames/frame_000031.jpg",
+              "change_score": 0.14513824880123138,
+              "semantic_change_score": 1.0
+            },
+            {
+              "timestamp_sec": 31.0,
+              "path": "/data1/video-highlight-cache/7b454d114c4e2fdf/frames/frame_000032.jpg",
+              "change_score": 0.21955806016921997,
+              "semantic_change_score": 0.3050364179062835
+            },
+            {
+              "timestamp_sec": 33.0,
+              "path": "/data1/video-highlight-cache/7b454d114c4e2fdf/frames/frame_000034.jpg",
+              "change_score": 0.17520584166049957,
+              "semantic_change_score": 0.22140299128733637
+            }
+          ],
+          "speakers": [],
+          "face_track_ids": [],
+          "actors": [
+            "年轻男子",
+            "年长女子"
+          ],
+          "action": "年轻男子对年长女子表现出恳求状，随后年长女子提出条件并引导其行动。",
+          "event_type": [
+            "conflict",
+            "reveal"
+          ],
+          "claims": [
+            "年轻男子询问是否真的想扛起大任",
+            "年长女子提出一年之内拿到毕业证的条件"
+          ],
+          "state_before": "年轻男子处于某种困境，似乎承担着某种责任",
+          "new_evidence": "年长女子为年轻男子设定了回归校园并取得毕业证的明确时限条件",
+          "state_after": "年轻男子的未来选择受到年长女子设定条件的约束",
+          "relationship_change": "年长女子在该场景中表现出明显的长辈决策权，地位高于年轻男子",
+          "emotion": [
+            "恳切",
+            "严肃"
+          ],
+          "salience": 0.75,
+          "uncertainty": 0.1,
+          "evidence": [
+            "[25.0s FRAME] 年轻男子面部恳求表情",
+            "[26.0s ASR] 外婆",
+            "[28.0s ASR] 乖孙",
+            "[31.0s ASR] 那你就回去上大学",
+            "[33.0s ASR] 只要你一年之内拿到毕业证"
+          ]
+        },
+        "decision": {
+          "map_supported": true,
+          "is_highlight": false,
+          "score": 0.672,
+          "highlight_type": "other",
+          "description": "年轻外婆顺应孙子诉苦提出回归大学并限期毕业的考验条件",
+          "reason": "承接前场男子以没毕业证为由的推脱，外婆反向提出重回大学的要求，但台词与反应在本场末尾未完全结束",
+          "confidence": 0.9635,
+          "evidence_grounding": 0.9,
+          "narrative_impact": 0.52,
+          "standalone_clarity": 0.65,
+          "clipability": 0.58,
+          "start_sec": 24.28,
+          "end_sec": 33.84,
+          "evidence": [
+            "[25.0s FRAME] F01 男子拉长声音委屈喊外婆",
+            "[28.0s OCR] F04 乖孙",
+            "[29.0s OCR] F05 你真想扛起大任嘛",
+            "[31.0s OCR] F07 那你就回去上大学",
+            "[33.0s OCR] F08 只要你一年之内"
+          ],
+          "setup_evidence_times_sec": [
+            25.0,
+            26.0
+          ],
+          "decisive_evidence_times_sec": [
+            31.0
+          ],
+          "reaction_evidence_times_sec": [
+            31.0
+          ],
+          "counter_evidence": [
+            "外婆提出的具体条件在33秒句中截断（只要你一年之内拿到毕业证...），戏剧闭环不完整"
+          ],
+          "continue_previous_scene": true
+        },
+        "votes": [
+          {
+            "map_supported": true,
+            "is_highlight": false,
+            "score": 0.672,
+            "highlight_type": "other",
+            "description": "年轻外婆顺应孙子诉苦提出回归大学并限期毕业的考验条件",
+            "reason": "承接前场男子以没毕业证为由的推脱，外婆反向提出重回大学的要求，但台词与反应在本场末尾未完全结束",
+            "confidence": 0.0,
+            "evidence_grounding": 0.9,
+            "narrative_impact": 0.52,
+            "standalone_clarity": 0.65,
+            "clipability": 0.58,
+            "start_sec": 24.28,
+            "end_sec": 33.84,
+            "evidence": [
+              "[25.0s FRAME] F01 男子拉长声音委屈喊外婆",
+              "[28.0s OCR] F04 乖孙",
+              "[29.0s OCR] F05 你真想扛起大任嘛",
+              "[31.0s OCR] F07 那你就回去上大学",
+              "[33.0s OCR] F08 只要你一年之内"
+            ],
+            "setup_evidence_times_sec": [
+              25.0,
+              26.0
+            ],
+            "decisive_evidence_times_sec": [
+              31.0
+            ],
+            "reaction_evidence_times_sec": [
+              31.0
+            ],
+            "counter_evidence": [
+              "外婆提出的具体条件在33秒句中截断（只要你一年之内拿到毕业证...），戏剧闭环不完整"
+            ],
+            "continue_previous_scene": true
+          },
+          {
+            "map_supported": true,
+            "is_highlight": false,
+            "score": 0.526,
+            "highlight_type": "other",
+            "description": "年轻男子向外婆求助，外婆提出让他一年内拿到大学毕业证的条件",
+            "reason": "本段仅为长辈向晚辈单向提出要求的过渡对话，条件尚未交代完毕且无明确的反应或后果闭环，未构成五种通用高光结构中的完整戏剧单元",
+            "confidence": 0.0,
+            "evidence_grounding": 0.9,
+            "narrative_impact": 0.32,
+            "standalone_clarity": 0.42,
+            "clipability": 0.38,
+            "start_sec": null,
+            "end_sec": null,
+            "evidence": [
+              "[F02 26.0s OCR] 外婆",
+              "[F06 30.0s OCR] 你真想扛起大任嘛",
+              "[F07 31.0s OCR] 那你就回去上大学",
+              "[F08 33.0s OCR] 只要你一年之内"
+            ],
+            "setup_evidence_times_sec": [],
+            "decisive_evidence_times_sec": [],
+            "reaction_evidence_times_sec": [],
+            "counter_evidence": [
+              "外婆提出条件后句子未说完且男方未给出回应，缺乏实质冲突兑现或转折结果"
+            ],
+            "continue_previous_scene": false
+          }
+        ]
+      },
+      {
+        "scene": {
+          "scene_id": "scene_0003",
+          "start_sec": 33.84,
+          "end_sec": 45.72,
+          "shot_ids": [
+            "shot_0019",
+            "shot_0020",
+            "shot_0021",
+            "shot_0022",
+            "shot_0023",
+            "shot_0024",
+            "shot_0025"
+          ],
+          "local_score": 0.5515713299978997,
+          "transcript": "[32.40-35.86s ASR] 只要你一年之内拿到毕业证\n[35.86-37.84s ASR] 外婆就为了你\n[37.84-40.52s ASR] 把这个家再撑一年\n[40.52-41.84s ASR] 如果拿不到\n[41.84-44.52s ASR] 我就把全部家产捐给百乐门\n[44.52-45.82s ASR] 你好好想想吧",
+          "audio_context": "happy/bgm",
+          "frame_samples": [
+            {
+              "timestamp_sec": 34.0,
+              "path": "/data1/video-highlight-cache/7b454d114c4e2fdf/frames/frame_000035.jpg",
+              "change_score": 0.2276587337255478,
+              "semantic_change_score": 0.59977697000681
+            },
+            {
+              "timestamp_sec": 35.0,
+              "path": "/data1/video-highlight-cache/7b454d114c4e2fdf/frames/frame_000036.jpg",
+              "change_score": 0.08418639004230499,
+              "semantic_change_score": 0.566044491319186
+            },
+            {
+              "timestamp_sec": 37.0,
+              "path": "/data1/video-highlight-cache/7b454d114c4e2fdf/frames/frame_000038.jpg",
+              "change_score": 0.16957911849021912,
+              "semantic_change_score": 0.0
+            },
+            {
+              "timestamp_sec": 38.0,
+              "path": "/data1/video-highlight-cache/7b454d114c4e2fdf/frames/frame_000039.jpg",
+              "change_score": 0.043291397392749786,
+              "semantic_change_score": 0.6170968496692912
+            },
+            {
+              "timestamp_sec": 40.0,
+              "path": "/data1/video-highlight-cache/7b454d114c4e2fdf/frames/frame_000041.jpg",
+              "change_score": 0.06348613649606705,
+              "semantic_change_score": 0.4710826222369611
+            },
+            {
+              "timestamp_sec": 41.0,
+              "path": "/data1/video-highlight-cache/7b454d114c4e2fdf/frames/frame_000042.jpg",
+              "change_score": 0.10314414650201797,
+              "semantic_change_score": 0.5019045200218731
+            },
+            {
+              "timestamp_sec": 43.0,
+              "path": "/data1/video-highlight-cache/7b454d114c4e2fdf/frames/frame_000044.jpg",
+              "change_score": 0.19190411269664764,
+              "semantic_change_score": 0.044214519095616175
+            },
+            {
+              "timestamp_sec": 45.0,
+              "path": "/data1/video-highlight-cache/7b454d114c4e2fdf/frames/frame_000046.jpg",
+              "change_score": 0.08232134580612183,
+              "semantic_change_score": 0.04421964787253726
+            }
+          ],
+          "speakers": [],
+          "face_track_ids": [],
+          "actors": [
+            "女性长辈（夫人）",
+            "年轻男性"
+          ],
+          "action": "女性长辈抓着年轻男性的手进行谈话，随后松开手并示意其思考",
+          "event_type": [
+            "conflict",
+            "action"
+          ],
+          "claims": [
+            "若年轻男性一年内拿到毕业证，长辈会把家再撑一年",
+            "若拿不到毕业证，长辈会将全部家产捐给百乐门"
+          ],
+          "state_before": "年轻男性处于被动接受长辈条件的状态",
+          "new_evidence": "女性长辈明确提出以毕业证作为家族财产继承的必要条件，并设置了时间限制",
+          "state_after": "年轻男性面临选择，处于压力之中",
+          "relationship_change": "权力重心明确向拥有家产支配权的女性长辈倾斜",
+          "emotion": [
+            "严肃",
+            "胁迫感"
+          ],
+          "salience": 0.85,
+          "uncertainty": 0.1,
+          "evidence": [
+            "[F01 34.0s] [32.40s ASR] 只要你一年之内",
+            "[F02 35.0s] [35.00s ASR] 拿到毕业证",
+            "[F03 38.0s] 年轻男性面露难色",
+            "[F05 43.0s] [41.84s ASR] 我就把全部家产捐给百乐门",
+            "[F06 45.0s] [44.52s ASR] 你好好想想吧"
+          ]
+        },
+        "decision": {
+          "map_supported": true,
+          "is_highlight": true,
+          "score": 0.709,
+          "highlight_type": "conflict",
+          "description": "外婆对孙子下达最后通牒：一年内取得毕业证，否则将全部家产捐出。",
+          "reason": "长辈提出严苛时限与财产剥夺威胁，确立主线任务与核心冲突，孙子被动承受压力。",
+          "confidence": 0.6773,
+          "evidence_grounding": 0.73,
+          "narrative_impact": 0.68,
+          "standalone_clarity": 0.71,
+          "clipability": 0.72,
+          "start_sec": 33.84,
+          "end_sec": 45.72,
+          "evidence": [
+            "[F01 34.0s] 只要你一年之内",
+            "[F02 35.0s] 拿到毕业证",
+            "[F04 38.0s] 男子面露难色",
+            "[F07 43.0s] 我就把全部家产（捐给百乐门）",
+            "[F08 45.0s] 你好好想想吧"
+          ],
+          "setup_evidence_times_sec": [
+            34.0,
+            35.0
+          ],
+          "decisive_evidence_times_sec": [
+            41.0,
+            43.0
+          ],
+          "reaction_evidence_times_sec": [
+            45.0
+          ],
+          "counter_evidence": [],
+          "continue_previous_scene": false
+        },
+        "votes": [
+          {
+            "map_supported": true,
+            "is_highlight": true,
+            "score": 0.871,
+            "highlight_type": "conflict",
+            "description": "外婆对孙子下达通牒：一年内拿到毕业证便撑起家业，否则将全部家产捐出",
+            "reason": "符合冲突与规矩建立结构，外婆明确提出严苛时限条件及极端后果作为约束，孙子面露难色被动承受压力",
+            "confidence": 0.0,
+            "evidence_grounding": 0.95,
+            "narrative_impact": 0.78,
+            "standalone_clarity": 0.86,
+            "clipability": 0.9,
+            "start_sec": 33.84,
+            "end_sec": 45.72,
+            "evidence": [
+              "[F01 34.0s] 只要你一年之内",
+              "[F02 35.0s] 拿到毕业证",
+              "[F04 38.0s] 男子面露难色与压力",
+              "[F06 41.0s] 如果拿不到",
+              "[F07 43.0s] 我就把全部家产（捐给百乐门）",
+              "[F08 45.0s] 你好好想想吧"
+            ],
+            "setup_evidence_times_sec": [
+              34.0,
+              35.0
+            ],
+            "decisive_evidence_times_sec": [
+              41.0,
+              43.0
+            ],
+            "reaction_evidence_times_sec": [
+              38.0,
+              45.0
+            ],
+            "counter_evidence": [],
+            "continue_previous_scene": false
+          },
+          {
+            "map_supported": true,
+            "is_highlight": false,
+            "score": 0.58,
+            "highlight_type": "other",
+            "description": "长辈向年轻男子提出一年内必须拿到毕业证的威胁与条件",
+            "reason": "当前场仅为长辈单方面提出任务约束与财产威胁，未出现双方实质对抗、认知逆转、即时可见后果或剧烈关系转变，不构成独立高光结构",
+            "confidence": 0.0,
+            "evidence_grounding": 0.95,
+            "narrative_impact": 0.35,
+            "standalone_clarity": 0.55,
+            "clipability": 0.4,
+            "start_sec": null,
+            "end_sec": null,
+            "evidence": [
+              "[F01 34.0s] [32.40s ASR] 只要你一年之内",
+              "[F02 35.0s] [35.00s ASR] 拿到毕业证",
+              "[F07 43.0s] [41.84s ASR] 我就把全部家产捐给百乐门",
+              "[F08 45.0s] [44.52s ASR] 你好好想想吧"
+            ],
+            "setup_evidence_times_sec": [],
+            "decisive_evidence_times_sec": [],
+            "reaction_evidence_times_sec": [],
+            "counter_evidence": [
+              "年轻男子仅坐在地上被动倾听，未发生实质性行为反应或对抗",
+              "内容仅为常规剧情目标与威胁设定，脱离全片缺乏独立高光价值"
+            ],
+            "continue_previous_scene": false
+          },
+          {
+            "map_supported": true,
+            "is_highlight": true,
+            "score": 0.709,
+            "highlight_type": "conflict",
+            "description": "外婆对孙子下达最后通牒：一年内取得毕业证，否则将全部家产捐出。",
+            "reason": "长辈提出严苛时限与财产剥夺威胁，确立主线任务与核心冲突，孙子被动承受压力。",
+            "confidence": 0.0,
+            "evidence_grounding": 0.73,
+            "narrative_impact": 0.68,
+            "standalone_clarity": 0.71,
+            "clipability": 0.72,
+            "start_sec": 33.84,
+            "end_sec": 45.72,
+            "evidence": [
+              "[F01 34.0s] 只要你一年之内",
+              "[F02 35.0s] 拿到毕业证",
+              "[F04 38.0s] 男子面露难色",
+              "[F07 43.0s] 我就把全部家产（捐给百乐门）",
+              "[F08 45.0s] 你好好想想吧"
+            ],
+            "setup_evidence_times_sec": [
+              34.0,
+              35.0
+            ],
+            "decisive_evidence_times_sec": [
+              41.0,
+              43.0
+            ],
+            "reaction_evidence_times_sec": [
+              38.0,
+              45.0
+            ],
+            "counter_evidence": [],
+            "continue_previous_scene": false
+          }
+        ]
+      },
+      {
+        "scene": {
+          "scene_id": "scene_0004",
+          "start_sec": 45.72,
+          "end_sec": 53.84,
+          "shot_ids": [
+            "shot_0026",
+            "shot_0027",
+            "shot_0028",
+            "shot_0029",
+            "shot_0030"
+          ],
+          "local_score": 0.6260990621650021,
+          "transcript": "[44.52-45.82s ASR] 你好好想想吧\n[45.82-47.54s ASR] 薛老太 看地图\n[46.00-48.50s OCR] 薛老太看镜头\n[47.54-49.48s ASR] 百乐门不行啊\n[49.48-59.42s ASR] 不是逼老虎吃素\n[50.00-51.50s OCR] 心",
+          "audio_context": "happy/bgm",
+          "frame_samples": [
+            {
+              "timestamp_sec": 46.0,
+              "path": "/data1/video-highlight-cache/7b454d114c4e2fdf/frames/frame_000047.jpg",
+              "change_score": 0.20302638411521912,
+              "semantic_change_score": 0.7671151132439071
+            },
+            {
+              "timestamp_sec": 47.0,
+              "path": "/data1/video-highlight-cache/7b454d114c4e2fdf/frames/frame_000048.jpg",
+              "change_score": 0.2221861630678177,
+              "semantic_change_score": 0.4056830233278315
+            },
+            {
+              "timestamp_sec": 48.0,
+              "path": "/data1/video-highlight-cache/7b454d114c4e2fdf/frames/frame_000049.jpg",
+              "change_score": 0.19377106428146362,
+              "semantic_change_score": 0.0
+            },
+            {
+              "timestamp_sec": 49.0,
+              "path": "/data1/video-highlight-cache/7b454d114c4e2fdf/frames/frame_000050.jpg",
+              "change_score": 0.18856656551361084,
+              "semantic_change_score": 0.0
+            },
+            {
+              "timestamp_sec": 50.0,
+              "path": "/data1/video-highlight-cache/7b454d114c4e2fdf/frames/frame_000051.jpg",
+              "change_score": 0.17792777717113495,
+              "semantic_change_score": 0.0
+            },
+            {
+              "timestamp_sec": 51.0,
+              "path": "/data1/video-highlight-cache/7b454d114c4e2fdf/frames/frame_000052.jpg",
+              "change_score": 0.16554361581802368,
+              "semantic_change_score": 1.0
+            },
+            {
+              "timestamp_sec": 52.0,
+              "path": "/data1/video-highlight-cache/7b454d114c4e2fdf/frames/frame_000053.jpg",
+              "change_score": 0.23323281109333038,
+              "semantic_change_score": 0.0
+            },
+            {
+              "timestamp_sec": 53.0,
+              "path": "/data1/video-highlight-cache/7b454d114c4e2fdf/frames/frame_000054.jpg",
+              "change_score": 0.26404812932014465,
+              "semantic_change_score": 0.7063878301098798
+            }
+          ],
+          "speakers": [],
+          "face_track_ids": [],
+          "actors": [
+            "男性摄影师",
+            "薛老太",
+            "两名伴舞女性"
+          ],
+          "action": "男性摄影师跪地拍照，薛老太在两名伴舞女性陪同下，于百乐门背景前做出时尚姿态接受拍摄，并由摄影师引导摆拍。",
+          "event_type": [
+            "action",
+            "reveal"
+          ],
+          "claims": [
+            "百乐门不行啊",
+            "不是逼老虎吃素"
+          ],
+          "state_before": "薛老太在摄影师请求下准备进入拍摄状态",
+          "new_evidence": "摄影师通过引导语言（“看镜头”）确认拍摄行为，薛老太通过穿着黑色皮衣与红裙伴舞的组合表现出与传统“老太”形象截然不同的反差感",
+          "state_after": "薛老太以时尚、自信的姿态在百乐门前完成摆拍，确立了其强势且不服老的形象",
+          "relationship_change": "摄影师处于服务拍摄的从属地位，薛老太处于被拍摄的核心地位",
+          "emotion": [
+            "自信",
+            "兴奋"
+          ],
+          "salience": 0.65,
+          "uncertainty": 0.15,
+          "evidence": [
+            "[46.0s FRAME] 摄影师跪地拍摄",
+            "[47.0s-49.0s FRAME] 薛老太着皮衣亮相",
+            "[47.54s ASR] 薛老太评论百乐门不行",
+            "[53.0s FRAME] 薛老太摆出自信姿态"
+          ]
+        },
+        "decision": {
+          "map_supported": true,
+          "is_highlight": true,
+          "score": 0.733,
+          "highlight_type": "reveal",
+          "description": "薛老太身着铆钉皮衣在红裙伴舞簇拥下高调亮相摆拍，摄影师倒地抓拍",
+          "reason": "承接前场关于百乐门与外婆身份的交代，本场薛老太以酷炫前卫的皮衣造型和伴舞阵仗登场摆拍，形成鲜明的身份反差亮相（reveal）与喜剧过场效果",
+          "confidence": 0.6997,
+          "evidence_grounding": 0.95,
+          "narrative_impact": 0.58,
+          "standalone_clarity": 0.65,
+          "clipability": 0.72,
+          "start_sec": 45.72,
+          "end_sec": 53.84,
+          "evidence": [
+            "[F01 46.0s] [46.00s OCR] 摄影师跪地引导：薛老太看镜头",
+            "[F02 47.0s] 薛老太身穿铆钉皮衣与两名红裙伴舞一同亮相",
+            "[F03 48.0s] [47.54s ASR] 薛老太走向镜头：百乐门不行啊",
+            "[F05 50.0s] 摄影师向后翻倒在红毯地面上",
+            "[F07 52.0s] 薛老太自信大笑",
+            "[F08 53.0s] 薛老太在伴舞簇拥下叉腰摆出时尚姿势定格拍摄"
+          ],
+          "setup_evidence_times_sec": [
+            46.0
+          ],
+          "decisive_evidence_times_sec": [
+            47.0,
+            48.0
+          ],
+          "reaction_evidence_times_sec": [
+            50.0,
+            52.0,
+            53.0
+          ],
+          "counter_evidence": [
+            "属于人设亮相与喜剧过场，主线剧情核心冲突推进相对有限"
+          ],
+          "continue_previous_scene": false
+        },
+        "votes": [
+          {
+            "map_supported": true,
+            "is_highlight": true,
+            "score": 0.733,
+            "highlight_type": "reveal",
+            "description": "薛老太身着皮衣在红裙伴舞簇拥下高调亮相摆拍，摄影师被气场压制跌倒",
+            "reason": "通过摄影师引导铺垫，薛老太展现出与传统长辈形象截然相反的时髦酷炫姿态，并在镜头前自信摆拍，形成鲜明的反差亮相与喜剧反应",
+            "confidence": 0.0,
+            "evidence_grounding": 0.95,
+            "narrative_impact": 0.58,
+            "standalone_clarity": 0.65,
+            "clipability": 0.72,
+            "start_sec": 45.72,
+            "end_sec": 53.84,
+            "evidence": [
+              "[F01 46.0s] 摄影师跪地引导：薛老太看镜头",
+              "[F02 47.0s] 薛老太身穿铆钉皮衣与两名红裙伴舞一同登场",
+              "[F03 48.0s ASR] 薛老太走近镜头：百乐门不行啊",
+              "[F05 50.0s] 男子跌倒在红毯地面上",
+              "[F07 52.0s] 薛老太自信大笑",
+              "[F08 53.0s] 薛老太在伴舞陪同下叉腰摆出时尚姿势定格拍摄"
+            ],
+            "setup_evidence_times_sec": [
+              46.0
+            ],
+            "decisive_evidence_times_sec": [
+              47.0,
+              48.0
+            ],
+            "reaction_evidence_times_sec": [
+              50.0,
+              52.0,
+              53.0
+            ],
+            "counter_evidence": [
+              "属于人物反差展示与喜剧过场，剧情核心主线冲突推进较弱"
+            ],
+            "continue_previous_scene": false
+          },
+          {
+            "map_supported": true,
+            "is_highlight": false,
+            "score": 0.532,
+            "highlight_type": "other",
+            "description": "薛老太身着机车皮衣在伴舞陪同下于百乐门前摆拍，摄影师倒地跟拍",
+            "reason": "该场主要为人物前卫形象展示与过渡性喜剧摆拍，缺少实质性叙事反转、冲突兑现或高风险悬念",
+            "confidence": 0.0,
+            "evidence_grounding": 0.92,
+            "narrative_impact": 0.28,
+            "standalone_clarity": 0.48,
+            "clipability": 0.38,
+            "start_sec": null,
+            "end_sec": null,
+            "evidence": [
+              "[F01 46.0s] [46.00s OCR] 薛老太看镜头，摄影师在地面指导拍摄",
+              "[F03 48.0s] [47.54s ASR] 薛老太称百乐门不行啊",
+              "[F06 51.0s] 摄影师扑倒在地抓拍",
+              "[F08 53.0s] 薛老太在红裙伴舞簇拥下叉腰大笑摆拍"
+            ],
+            "setup_evidence_times_sec": [],
+            "decisive_evidence_times_sec": [],
+            "reaction_evidence_times_sec": [],
+            "counter_evidence": [
+              "属于人设亮相与过场摆拍，脱离上下文缺乏完整叙事闭环与冲突后果"
+            ],
+            "continue_previous_scene": false
+          },
+          {
+            "map_supported": true,
+            "is_highlight": true,
+            "score": 0.733,
+            "highlight_type": "reveal",
+            "description": "薛老太身着铆钉皮衣在红裙伴舞簇拥下高调亮相摆拍，摄影师倒地抓拍",
+            "reason": "承接前场关于百乐门与外婆身份的交代，本场薛老太以酷炫前卫的皮衣造型和伴舞阵仗登场摆拍，形成鲜明的身份反差亮相（reveal）与喜剧过场效果",
+            "confidence": 0.0,
+            "evidence_grounding": 0.95,
+            "narrative_impact": 0.58,
+            "standalone_clarity": 0.65,
+            "clipability": 0.72,
+            "start_sec": 45.72,
+            "end_sec": 53.84,
+            "evidence": [
+              "[F01 46.0s] [46.00s OCR] 摄影师跪地引导：薛老太看镜头",
+              "[F02 47.0s] 薛老太身穿铆钉皮衣与两名红裙伴舞一同亮相",
+              "[F03 48.0s] [47.54s ASR] 薛老太走向镜头：百乐门不行啊",
+              "[F05 50.0s] 摄影师向后翻倒在红毯地面上",
+              "[F07 52.0s] 薛老太自信大笑",
+              "[F08 53.0s] 薛老太在伴舞簇拥下叉腰摆出时尚姿势定格拍摄"
+            ],
+            "setup_evidence_times_sec": [
+              46.0
+            ],
+            "decisive_evidence_times_sec": [
+              47.0,
+              48.0
+            ],
+            "reaction_evidence_times_sec": [
+              50.0,
+              52.0,
+              53.0
+            ],
+            "counter_evidence": [
+              "属于人设亮相与喜剧过场，主线剧情核心冲突推进相对有限"
+            ],
+            "continue_previous_scene": false
+          }
+        ]
+      },
+      {
+        "scene": {
+          "scene_id": "scene_0005",
+          "start_sec": 53.84,
+          "end_sec": 69.04,
+          "shot_ids": [
+            "shot_0031",
+            "shot_0032"
+          ],
+          "local_score": 0.6260990621650021,
+          "transcript": "[49.48-59.42s ASR] 不是逼老虎吃素\n[56.00-58.50s OCR] 要我读书\n[58.00-60.50s OCR] 那不是逼老虎吃素\n[59.42-61.50s ASR] 却老饱从粮\n[60.00-62.50s OCR] 劝老鸨从良\n[61.50-63.26s ASR] 就土匪\n[63.00-64.50s OCR] 教土匪\n[63.26-66.36s ASR] 土匪绣花嘛\n[65.00-67.50s OCR] 土匪绣花么\n[66.36-70.61s ASR] 霍南风",
+          "audio_context": "happy/bgm",
+          "frame_samples": [
+            {
+              "timestamp_sec": 54.0,
+              "path": "/data1/video-highlight-cache/7b454d114c4e2fdf/frames/frame_000055.jpg",
+              "change_score": 0.19201324880123138,
+              "semantic_change_score": 0.0
+            },
+            {
+              "timestamp_sec": 56.0,
+              "path": "/data1/video-highlight-cache/7b454d114c4e2fdf/frames/frame_000057.jpg",
+              "change_score": 0.1026194840669632,
+              "semantic_change_score": 0.755851293369835
+            },
+            {
+              "timestamp_sec": 58.0,
+              "path": "/data1/video-highlight-cache/7b454d114c4e2fdf/frames/frame_000059.jpg",
+              "change_score": 0.10061848908662796,
+              "semantic_change_score": 0.0
+            },
+            {
+              "timestamp_sec": 60.0,
+              "path": "/data1/video-highlight-cache/7b454d114c4e2fdf/frames/frame_000061.jpg",
+              "change_score": 0.14808517694473267,
+              "semantic_change_score": 0.0
+            },
+            {
+              "timestamp_sec": 62.0,
+              "path": "/data1/video-highlight-cache/7b454d114c4e2fdf/frames/frame_000063.jpg",
+              "change_score": 0.11646178364753723,
+              "semantic_change_score": 0.0
+            },
+            {
+              "timestamp_sec": 64.0,
+              "path": "/data1/video-highlight-cache/7b454d114c4e2fdf/frames/frame_000065.jpg",
+              "change_score": 0.1011967658996582,
+              "semantic_change_score": 0.0
+            },
+            {
+              "timestamp_sec": 66.0,
+              "path": "/data1/video-highlight-cache/7b454d114c4e2fdf/frames/frame_000067.jpg",
+              "change_score": 0.10293064266443253,
+              "semantic_change_score": 0.0
+            },
+            {
+              "timestamp_sec": 69.0,
+              "path": "/data1/video-highlight-cache/7b454d114c4e2fdf/frames/frame_000070.jpg",
+              "change_score": 0.17731598019599915,
+              "semantic_change_score": 0.0
+            }
+          ],
+          "speakers": [],
+          "face_track_ids": [],
+          "actors": [
+            "年轻男子",
+            "女性路人"
+          ],
+          "action": "一名身着棕色外套的年轻男子伏在地面，仰头看向女性路人，与其进行对话并做出夸张的肢体动作。",
+          "event_type": [
+            "action",
+            "conflict"
+          ],
+          "claims": [
+            "“要我读书”",
+            "“劝老鸨从良”",
+            "“教土匪绣花么”"
+          ],
+          "state_before": "年轻男子处于伏地姿态，与站立的女性路人形成明显的身体高度差和权力不对等。",
+          "new_evidence": "年轻男子不断变换语气与词汇，试图以荒谬的对比（如强迫老虎吃素、劝老鸨从良、教土匪绣花）表达不满或进行辩解。",
+          "state_after": "年轻男子依然保持伏地姿态，并未改变其与女性路人的权力从属关系，对话持续。",
+          "relationship_change": "无明显变化，维持当前的压制与被压制关系。",
+          "emotion": [
+            "窘迫",
+            "激动",
+            "防御性"
+          ],
+          "salience": 0.65,
+          "uncertainty": 0.2,
+          "evidence": [
+            "[F02 56.0s] 男子提到“要我读书”",
+            "[F03 60.0s] 男子提到“劝老鸨从良”",
+            "[F05 66.0s] 男子提到“土匪绣花么”",
+            "[F06 69.0s] 宽镜头显示女子处于站立高位，男子处于伏地低位"
+          ]
+        },
+        "decision": {
+          "map_supported": true,
+          "is_highlight": false,
+          "score": 0.587,
+          "highlight_type": "other",
+          "description": "年轻男子伏地以夸张比喻抱怨读书要求，对方未予理会维持压制态势",
+          "reason": "场景仅包含男子单方面的比喻式抱怨与情绪宣泄，未产生新的叙事推进、对抗后果或关系变化，缺乏完整的高光闭环",
+          "confidence": 0.9818,
+          "evidence_grounding": 0.95,
+          "narrative_impact": 0.32,
+          "standalone_clarity": 0.58,
+          "clipability": 0.45,
+          "start_sec": null,
+          "end_sec": null,
+          "evidence": [
+            "[F02 56.0s OCR] 要我读书",
+            "[F03 58.0s OCR] 那不是逼老虎吃素",
+            "[F04 60.0s OCR] 劝老鸨从良",
+            "[F07 66.0s OCR] 土匪绣花么",
+            "[F08 69.0s] 宽镜头显示女子高位站立不为所动，男子趴在地上"
+          ],
+          "setup_evidence_times_sec": [],
+          "decisive_evidence_times_sec": [],
+          "reaction_evidence_times_sec": [],
+          "counter_evidence": [
+            "通篇为男子的单向语言抱怨，无实质性剧情反转或行动对抗结果",
+            "脱离前序立遗嘱/逼迫拿到毕业证的背景设定后独立看点较弱"
+          ],
+          "continue_previous_scene": false
+        },
+        "votes": [
+          {
+            "map_supported": true,
+            "is_highlight": false,
+            "score": 0.587,
+            "highlight_type": "other",
+            "description": "年轻男子伏地以夸张比喻抱怨读书要求，对方未予理会维持压制态势",
+            "reason": "场景仅包含男子单方面的比喻式抱怨与情绪宣泄，未产生新的叙事推进、对抗后果或关系变化，缺乏完整的高光闭环",
+            "confidence": 0.0,
+            "evidence_grounding": 0.95,
+            "narrative_impact": 0.32,
+            "standalone_clarity": 0.58,
+            "clipability": 0.45,
+            "start_sec": null,
+            "end_sec": null,
+            "evidence": [
+              "[F02 56.0s OCR] 要我读书",
+              "[F03 58.0s OCR] 那不是逼老虎吃素",
+              "[F04 60.0s OCR] 劝老鸨从良",
+              "[F07 66.0s OCR] 土匪绣花么",
+              "[F08 69.0s] 宽镜头显示女子高位站立不为所动，男子趴在地上"
+            ],
+            "setup_evidence_times_sec": [],
+            "decisive_evidence_times_sec": [],
+            "reaction_evidence_times_sec": [],
+            "counter_evidence": [
+              "通篇为男子的单向语言抱怨，无实质性剧情反转或行动对抗结果",
+              "脱离前序立遗嘱/逼迫拿到毕业证的背景设定后独立看点较弱"
+            ],
+            "continue_previous_scene": false
+          },
+          {
+            "map_supported": true,
+            "is_highlight": false,
+            "score": 0.514,
+            "highlight_type": "other",
+            "description": "年轻男子伏地以夸张比喻抱怨被逼读书的要求",
+            "reason": "当前场仅为年轻男子单方面的言语宣泄与比喻吐槽，没有出现推翻认知的决定性证据、冲突的实质后果或关系状态变化，未构成完整高光结构",
+            "confidence": 0.0,
+            "evidence_grounding": 0.92,
+            "narrative_impact": 0.28,
+            "standalone_clarity": 0.42,
+            "clipability": 0.35,
+            "start_sec": null,
+            "end_sec": null,
+            "evidence": [
+              "[F02 56.0s] 男子伏地喊出“要我读书”",
+              "[F03 58.0s] 男子称“那不是逼老虎吃素”",
+              "[F04 60.0s] 男子称“劝老鸨从良”",
+              "[F07 66.0s] 男子称“土匪绣花么”",
+              "[F08 69.0s] 全景显示男子趴在地面，女子居高临下站立，无进一步反应或状态变化"
+            ],
+            "setup_evidence_times_sec": [],
+            "decisive_evidence_times_sec": [],
+            "reaction_evidence_times_sec": [],
+            "counter_evidence": [
+              "场内只有夸张台词与情绪宣泄，未产生实质剧情推进或可见后果"
+            ],
+            "continue_previous_scene": false
+          }
+        ]
+      },
+      {
+        "scene": {
+          "scene_id": "scene_0006",
+          "start_sec": 69.04,
+          "end_sec": 80.0,
+          "shot_ids": [
+            "shot_0033",
+            "shot_0034",
+            "shot_0035",
+            "shot_0036",
+            "shot_0037",
+            "shot_0038"
+          ],
+          "local_score": 0.5083535193783699,
+          "transcript": "[66.36-70.61s ASR] 霍南风\n[70.61-72.55s ASR] 我看了你家的账\n[72.55-75.01s ASR] 如果再没人管的话\n[75.01-77.45s ASR] 最多三个月就要破产\n[76.00-78.50s OCR] 最多三个月就要破产了\n[77.45-80.81s ASR] 你年轻倒是可以要饭",
+          "audio_context": "happy/bgm",
+          "frame_samples": [
+            {
+              "timestamp_sec": 70.0,
+              "path": "/data1/video-highlight-cache/7b454d114c4e2fdf/frames/frame_000071.jpg",
+              "change_score": 0.052838731557130814,
+              "semantic_change_score": 0.713080883991887
+            },
+            {
+              "timestamp_sec": 71.0,
+              "path": "/data1/video-highlight-cache/7b454d114c4e2fdf/frames/frame_000072.jpg",
+              "change_score": 0.17366153001785278,
+              "semantic_change_score": 0.6943762345607145
+            },
+            {
+              "timestamp_sec": 72.0,
+              "path": "/data1/video-highlight-cache/7b454d114c4e2fdf/frames/frame_000073.jpg",
+              "change_score": 0.07439299672842026,
+              "semantic_change_score": 0.5762343453059843
+            },
+            {
+              "timestamp_sec": 74.0,
+              "path": "/data1/video-highlight-cache/7b454d114c4e2fdf/frames/frame_000075.jpg",
+              "change_score": 0.09447859227657318,
+              "semantic_change_score": 0.4428979415448676
+            },
+            {
+              "timestamp_sec": 75.0,
+              "path": "/data1/video-highlight-cache/7b454d114c4e2fdf/frames/frame_000076.jpg",
+              "change_score": 0.1903684139251709,
+              "semantic_change_score": 0.6546194945015921
+            },
+            {
+              "timestamp_sec": 77.0,
+              "path": "/data1/video-highlight-cache/7b454d114c4e2fdf/frames/frame_000078.jpg",
+              "change_score": 0.05738070607185364,
+              "semantic_change_score": 0.0
+            },
+            {
+              "timestamp_sec": 78.0,
+              "path": "/data1/video-highlight-cache/7b454d114c4e2fdf/frames/frame_000079.jpg",
+              "change_score": 0.19044117629528046,
+              "semantic_change_score": 0.0
+            },
+            {
+              "timestamp_sec": 80.0,
+              "path": "/data1/video-highlight-cache/7b454d114c4e2fdf/frames/frame_000081.jpg",
+              "change_score": 0.19023437798023224,
+              "semantic_change_score": 0.0
+            }
+          ],
+          "speakers": [],
+          "face_track_ids": [],
+          "actors": [
+            "女性角色",
+            "霍南风"
+          ],
+          "action": "女性角色站在霍南风面前俯视，霍南风趴在地面上，女性角色对霍南风发表言论",
+          "event_type": [
+            "conflict",
+            "reveal"
+          ],
+          "claims": [
+            "霍南风家账目显示最多三个月就会破产",
+            "霍南风年轻可以去要饭"
+          ],
+          "state_before": "霍南风趴在地面处于低位，女性角色站立于高位，双方关系不明",
+          "new_evidence": "女性角色查阅了霍南风家账目，明确指出其破产风险",
+          "state_after": "女性角色掌握了霍南风的财务危机信息并以此嘲讽，霍南风在经济与处境上处于绝对劣势",
+          "relationship_change": "女性角色展现出对比霍南风明显的支配地位",
+          "emotion": [
+            "轻蔑",
+            "冷漠"
+          ],
+          "salience": 0.9,
+          "uncertainty": 0.1,
+          "evidence": [
+            "[F01 70.0s] 霍南风趴在地面，女性角色站立于其身前",
+            "[70.61-75.01s ASR] 女性角色主张霍家账目三个月内将破产",
+            "[77.45-80.81s ASR] 女性角色嘲讽霍南风可以去要饭"
+          ]
+        },
+        "decision": {
+          "map_supported": true,
+          "is_highlight": true,
+          "score": 0.859,
+          "highlight_type": "reveal",
+          "description": "女性角色居高临下点破霍家三个月内将破产的财务危机，并对伏地的霍南风进行言语嘲讽",
+          "reason": "符合信息揭示与冲突兑现结构：女性角色亮出查账事实，指出家族即将破产的严峻危机，形成高压现实与嘲讽，促成霍南风神情隐忍的受挫反应",
+          "confidence": 0.9928,
+          "evidence_grounding": 0.95,
+          "narrative_impact": 0.76,
+          "standalone_clarity": 0.85,
+          "clipability": 0.88,
+          "start_sec": 69.04,
+          "end_sec": 80.0,
+          "evidence": [
+            "[F01 70.0s] 霍南风伏在地面，女性角色站立俯视",
+            "[F03 72.0s OCR] 我看了你家的账",
+            "[F06 77.0s OCR] 最多三个月就要破产了",
+            "[F07 78.0s] 霍南风趴在地上神情隐忍",
+            "[F08 80.0s OCR] 你年轻 倒是可以要饭"
+          ],
+          "setup_evidence_times_sec": [
+            70.0
+          ],
+          "decisive_evidence_times_sec": [
+            72.0,
+            77.0
+          ],
+          "reaction_evidence_times_sec": [
+            78.0,
+            80.0
+          ],
+          "counter_evidence": [],
+          "continue_previous_scene": false
+        },
+        "votes": [
+          {
+            "map_supported": true,
+            "is_highlight": true,
+            "score": 0.83,
+            "highlight_type": "reveal",
+            "description": "女子当面揭露霍家账目危机并预言其三个月内破产嘲讽霍南风",
+            "reason": "符合信息揭露与悬念钩子结构：女子掌握账目实情并当众指出霍家三个月内破产的高风险危机，霍南风伏地呈现受挫与凝重反应",
+            "confidence": 0.0,
+            "evidence_grounding": 0.95,
+            "narrative_impact": 0.75,
+            "standalone_clarity": 0.78,
+            "clipability": 0.82,
+            "start_sec": 70.0,
+            "end_sec": 80.8,
+            "evidence": [
+              "[F01 70.0s] 霍南风趴在地面，女子站立于其身前居高临下",
+              "[70.61-72.55s ASR] 我看了你家的账",
+              "[75.01-77.45s ASR] 最多三个月就要破产",
+              "[F07 78.0s] 霍南风伏在地面眼神凝重、手紧握衣角",
+              "[77.45-80.81s ASR] 你年轻倒是可以要饭"
+            ],
+            "setup_evidence_times_sec": [
+              70.0
+            ],
+            "decisive_evidence_times_sec": [
+              72.0,
+              77.0
+            ],
+            "reaction_evidence_times_sec": [
+              78.0
+            ],
+            "counter_evidence": [],
+            "continue_previous_scene": false
+          },
+          {
+            "map_supported": true,
+            "is_highlight": true,
+            "score": 0.859,
+            "highlight_type": "reveal",
+            "description": "女性角色居高临下点破霍家三个月内将破产的财务危机，并对伏地的霍南风进行言语嘲讽",
+            "reason": "符合信息揭示与冲突兑现结构：女性角色亮出查账事实，指出家族即将破产的严峻危机，形成高压现实与嘲讽，促成霍南风神情隐忍的受挫反应",
+            "confidence": 0.0,
+            "evidence_grounding": 0.95,
+            "narrative_impact": 0.76,
+            "standalone_clarity": 0.85,
+            "clipability": 0.88,
+            "start_sec": 69.04,
+            "end_sec": 80.0,
+            "evidence": [
+              "[F01 70.0s] 霍南风伏在地面，女性角色站立俯视",
+              "[F03 72.0s OCR] 我看了你家的账",
+              "[F06 77.0s OCR] 最多三个月就要破产了",
+              "[F07 78.0s] 霍南风趴在地上神情隐忍",
+              "[F08 80.0s OCR] 你年轻 倒是可以要饭"
+            ],
+            "setup_evidence_times_sec": [
+              70.0
+            ],
+            "decisive_evidence_times_sec": [
+              72.0,
+              77.0
+            ],
+            "reaction_evidence_times_sec": [
+              78.0,
+              80.0
+            ],
+            "counter_evidence": [],
+            "continue_previous_scene": false
+          }
+        ]
+      },
+      {
+        "scene": {
+          "scene_id": "scene_0007",
+          "start_sec": 80.0,
+          "end_sec": 93.320998,
+          "shot_ids": [
+            "shot_0039",
+            "shot_0040",
+            "shot_0041",
+            "shot_0042",
+            "shot_0043",
+            "shot_0044"
+          ],
+          "local_score": 0.22571656653349403,
+          "transcript": "[77.45-80.81s ASR] 你年轻倒是可以要饭\n[80.81-83.19s ASR] 就是不知道你外婆\n[83.00-85.50s OCR] 要不要的动哦\n[83.19-84.31s ASR] 要不要的动物\n[89.00-91.50s OCR] 我学",
+          "audio_context": "happy/bgm",
+          "frame_samples": [
+            {
+              "timestamp_sec": 80.0,
+              "path": "/data1/video-highlight-cache/7b454d114c4e2fdf/frames/frame_000081.jpg",
+              "change_score": 0.19023437798023224,
+              "semantic_change_score": 0.0
+            },
+            {
+              "timestamp_sec": 81.0,
+              "path": "/data1/video-highlight-cache/7b454d114c4e2fdf/frames/frame_000082.jpg",
+              "change_score": 0.11366325616836548,
+              "semantic_change_score": 1.0
+            },
+            {
+              "timestamp_sec": 83.0,
+              "path": "/data1/video-highlight-cache/7b454d114c4e2fdf/frames/frame_000084.jpg",
+              "change_score": 0.06352922320365906,
+              "semantic_change_score": 0.20607820584715447
+            },
+            {
+              "timestamp_sec": 85.0,
+              "path": "/data1/video-highlight-cache/7b454d114c4e2fdf/frames/frame_000086.jpg",
+              "change_score": 0.14090552926063538,
+              "semantic_change_score": 0.6715434325857661
+            },
+            {
+              "timestamp_sec": 86.0,
+              "path": "/data1/video-highlight-cache/7b454d114c4e2fdf/frames/frame_000087.jpg",
+              "change_score": 0.21443110704421997,
+              "semantic_change_score": 0.0
+            },
+            {
+              "timestamp_sec": 88.0,
+              "path": "/data1/video-highlight-cache/7b454d114c4e2fdf/frames/frame_000089.jpg",
+              "change_score": 0.20407475531101227,
+              "semantic_change_score": 0.12870393858269127
+            },
+            {
+              "timestamp_sec": 90.0,
+              "path": "/data1/video-highlight-cache/7b454d114c4e2fdf/frames/frame_000091.jpg",
+              "change_score": 0.07543466240167618,
+              "semantic_change_score": 1.0
+            },
+            {
+              "timestamp_sec": 92.0,
+              "path": "/data1/video-highlight-cache/7b454d114c4e2fdf/frames/frame_000093.jpg",
+              "change_score": 0.09917949885129929,
+              "semantic_change_score": 0.06052556833772142
+            }
+          ],
+          "speakers": [],
+          "face_track_ids": [],
+          "actors": [
+            "女性角色",
+            "倒地男性角色"
+          ],
+          "action": "女性角色言语羞辱倒地男性角色，男性角色在被迫压制下选择妥协（“我学”）",
+          "event_type": [
+            "conflict",
+            "powerplay"
+          ],
+          "claims": [
+            "男性角色年轻可以去要饭",
+            "男性角色的外婆要饭要不动"
+          ],
+          "state_before": "倒地男性角色处于被动劣势，女性角色占据心理与空间优势",
+          "new_evidence": "男性角色在身体被控制的情况下，被迫回答“我学”以求生存或服从",
+          "state_after": "双方权位不平等确定，男性角色选择屈从以应对当前压力",
+          "relationship_change": "女性角色处于绝对支配地位，男性角色处于绝对被支配地位",
+          "emotion": [
+            "嘲讽",
+            "屈辱",
+            "顺从"
+          ],
+          "salience": 0.95,
+          "uncertainty": 0.05,
+          "evidence": [
+            "[80.0s F01] 女性角色言语羞辱",
+            "[85.0s F03] 倒地男性角色被压制在地的特写",
+            "[90.0s F05] 男性角色回应“我学”"
+          ]
+        },
+        "decision": {
+          "map_supported": true,
+          "is_highlight": true,
+          "score": 0.867,
+          "highlight_type": "payoff",
+          "description": "女性角色以外婆生计威胁施压，倒地受制的男子最终放弃抵抗妥协认输并表态同意学习",
+          "reason": "符合冲突兑现结构：女性角色以家族破产与年迈外婆为筹码进行言语和空间压制，男子在身体受制下心理防线崩溃，做出明确屈服反应（回答“我学”），完成了从抗拒到服从的状态转变。",
+          "confidence": 0.999,
+          "evidence_grounding": 0.95,
+          "narrative_impact": 0.82,
+          "standalone_clarity": 0.8,
+          "clipability": 0.88,
+          "start_sec": 80.0,
+          "end_sec": 93.32,
+          "evidence": [
+            "[80.0s F01] 女性角色嘲讽男子年轻可以去要饭",
+            "[83.0s F03] 女性角色施压质问“就是不知道你外婆要不要的动哦”",
+            "[85.0s F04] 男子趴在地面拉住女性角色长靴受制",
+            "[90.0s F07] 男子仰头妥协回答“我学”"
+          ],
+          "setup_evidence_times_sec": [
+            80.0,
+            83.0
+          ],
+          "decisive_evidence_times_sec": [
+            85.0
+          ],
+          "reaction_evidence_times_sec": [
+            90.0
+          ],
+          "counter_evidence": [],
+          "continue_previous_scene": true
+        },
+        "votes": [
+          {
+            "map_supported": true,
+            "is_highlight": true,
+            "score": 0.867,
+            "highlight_type": "payoff",
+            "description": "女性角色以外婆生计威胁施压，倒地受制的男子最终放弃抵抗妥协认输并表态同意学习",
+            "reason": "符合冲突兑现结构：女性角色以家族破产与年迈外婆为筹码进行言语和空间压制，男子在身体受制下心理防线崩溃，做出明确屈服反应（回答“我学”），完成了从抗拒到服从的状态转变。",
+            "confidence": 0.0,
+            "evidence_grounding": 0.95,
+            "narrative_impact": 0.82,
+            "standalone_clarity": 0.8,
+            "clipability": 0.88,
+            "start_sec": 80.0,
+            "end_sec": 93.32,
+            "evidence": [
+              "[80.0s F01] 女性角色嘲讽男子年轻可以去要饭",
+              "[83.0s F03] 女性角色施压质问“就是不知道你外婆要不要的动哦”",
+              "[85.0s F04] 男子趴在地面拉住女性角色长靴受制",
+              "[90.0s F07] 男子仰头妥协回答“我学”"
+            ],
+            "setup_evidence_times_sec": [
+              80.0,
+              83.0
+            ],
+            "decisive_evidence_times_sec": [
+              85.0
+            ],
+            "reaction_evidence_times_sec": [
+              90.0
+            ],
+            "counter_evidence": [],
+            "continue_previous_scene": true
+          },
+          {
+            "map_supported": true,
+            "is_highlight": true,
+            "score": 0.871,
+            "highlight_type": "payoff",
+            "description": "女性角色以家族破产和外婆处境进行现实施压，趴在地上的霍南风最终放弃抵抗屈从表态“我学”",
+            "reason": "形成从现实困境施压、肢体控制到当事人心理防线崩溃并明确屈服（“我学”）的完整冲突兑现与状态变化",
+            "confidence": 0.0,
+            "evidence_grounding": 0.92,
+            "narrative_impact": 0.85,
+            "standalone_clarity": 0.82,
+            "clipability": 0.88,
+            "start_sec": 75.0,
+            "end_sec": 92.5,
+            "evidence": [
+              "[75.01-77.45s ASR] 如果再没人管的话最多三个月就要破产",
+              "[80.0s F01] 女性角色嘲讽“你年轻倒是可以要饭”",
+              "[83.0s F03] 女性角色质问其外婆能否要得动饭",
+              "[85.0s F04] 霍南风趴在地面抓住女性长靴",
+              "[90.0s F07] 霍南风仰头妥协回应“我学”",
+              "[92.0s F08] 女性角色低头注视妥协的霍南风"
+            ],
+            "setup_evidence_times_sec": [
+              75.0,
+              80.0,
+              83.0
+            ],
+            "decisive_evidence_times_sec": [
+              85.0,
+              90.0
+            ],
+            "reaction_evidence_times_sec": [
+              90.0,
+              92.0
+            ],
+            "counter_evidence": [],
+            "continue_previous_scene": true
+          }
+        ]
+      }
+    ],
+    "ranking": {
+      "ranked_highlight_ids": [
+        "hl_7c13b3249931",
+        "hl_f17607bd3b48",
+        "hl_cde36da06731",
+        "hl_3d68e8b55fe0"
+      ],
+      "selected_highlight_ids": [
+        "hl_7c13b3249931",
+        "hl_f17607bd3b48"
+      ],
+      "rationale": "hl_7c13b3249931 呈现了开场外婆与孙子精彩的喜剧代际冲突，独立完整且证据充分；hl_f17607bd3b48 则覆盖了全片高潮与戏剧转折（家族破产施压与男主屈服妥协），叙事影响与情绪兑现极强。二者叙事功能互补且无重叠，构成最强组合。"
+    }
+  },
+  "stats": {
+    "sampled_frames": 93,
+    "detected_scenes": 44,
+    "transcript_segments": 46,
+    "ocr_segments": 12,
+    "audio_events": 6,
+    "local_candidate_windows": 8,
+    "scene_map_calls": 7,
+    "judge_calls": 16,
+    "listwise_calls": 1
+  },
+  "notes": []
+}
