@@ -85,7 +85,7 @@ runtime/
 - `POST /api/jobs/{job_id}/messages/stream`：以 NDJSON 流式返回对话回复与最终任务结果。
 - `DELETE /api/jobs/{job_id}`：删除已完成或失败的任务；仅接受用户确认后发送的 `{"confirmed": true, "job_id": "<job_id>"}`，任务号不匹配或缺少确认时不会删除。
 
-任务状态为 `queued → processing → completed`，失败时为 `failed`。检测失败会自动重试，默认最多执行 3 次；公开任务响应中的 `attempt` 和 `max_attempts` 用于展示当前尝试次数。当前使用单检测工作线程，避免多个 GPU 任务并发争用显存。结果和编辑对话没有有效期限制；结果修改仍使用乐观版本号，版本冲突返回 `409`。
+任务状态为 `queued → processing → completed`，失败时为 `failed`。公开任务响应中的 `current_stage` 依据 Agent 已落盘的阶段产物在 `orchestration → preprocessing → perception → fusion → reasoning → delivery` 之间推进，不暴露缓存路径或内部 trace。检测失败会自动重试，默认最多执行 3 次；`attempt` 和 `max_attempts` 用于展示当前尝试次数。当前使用单检测工作线程，避免多个 GPU 任务并发争用显存。结果和编辑对话没有有效期限制；结果修改仍使用乐观版本号，版本冲突返回 `409`。
 
 ## 配置
 

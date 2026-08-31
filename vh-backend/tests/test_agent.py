@@ -1,6 +1,6 @@
 from types import SimpleNamespace
 
-from app.agent import AgentInvoker, AgentJobRunner
+from app.agent import AgentInvoker, AgentJobRunner, detect_agent_stage
 from app.config import Settings
 from app.models import AgentDetectionResult
 from app.repository import JobRepository
@@ -39,6 +39,26 @@ def test_agent_invocation_does_not_leak_backend_virtualenv(tmp_path, monkeypatch
     assert result.job_id == "job_abcdefgh"
     assert "VIRTUAL_ENV" not in captured["env"]
     assert captured["cwd"] == settings.agent_root
+
+
+def test_agent_stage_follows_durable_pipeline_artifacts(tmp_path) -> None:
+    job_dir = tmp_path / "job_abcdefgh"
+    cache_dir = job_dir / "cache" / "fingerprint"
+    cache_dir.mkdir(parents=True)
+
+    assert detect_agent_stage(job_dir) == "preprocessing"
+
+    frames_dir = cache_dir / "frames"
+    frames_dir.mkdir()
+    (frames_dir / ".complete").write_text("done", encoding="utf-8")
+    (cache_dir / "audio.wav").write_bytes(b"audio")
+    assert detect_agent_stage(job_dir) == "perception"
+
+    (cache_dir / "preprocess.json").write_text("{}", encoding="utf-8")
+    assert detect_agent_stage(job_dir) == "fusion"
+
+    (cache_dir / "scene_map").mkdir()
+    assert detect_agent_stage(job_dir) == "reasoning"
 
 
 class FlakyInvoker:
@@ -95,6 +115,7 @@ def test_agent_job_retries_until_third_attempt_succeeds(tmp_path) -> None:
     job = repository.get("job_abcdefgh")
     assert invoker.calls == 3
     assert job["status"] == "completed"
+    assert job["current_stage"] == "delivery"
     assert job["attempt"] == 3
     assert job["error_message"] is None
 
@@ -109,5 +130,6 @@ def test_agent_job_stops_after_three_failed_attempts(tmp_path) -> None:
     job = repository.get("job_abcdefgh")
     assert invoker.calls == 3
     assert job["status"] == "failed"
+    assert job["current_stage"] == "preprocessing"
     assert job["attempt"] == 3
     assert "3/3" in job["error_message"]

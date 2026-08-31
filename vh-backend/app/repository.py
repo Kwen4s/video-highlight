@@ -34,6 +34,7 @@ class JobRepository:
                     revision INTEGER NOT NULL DEFAULT 0,
                     attempt INTEGER NOT NULL DEFAULT 0,
                     max_attempts INTEGER NOT NULL DEFAULT 3,
+                    current_stage TEXT NOT NULL DEFAULT 'orchestration',
                     history_json TEXT NOT NULL DEFAULT '[]',
                     conversation_json TEXT NOT NULL DEFAULT '[]',
                     error_message TEXT,
@@ -49,12 +50,31 @@ class JobRepository:
                 "revision": "INTEGER NOT NULL DEFAULT 0",
                 "attempt": "INTEGER NOT NULL DEFAULT 0",
                 "max_attempts": "INTEGER NOT NULL DEFAULT 3",
+                "current_stage": "TEXT NOT NULL DEFAULT 'orchestration'",
                 "history_json": "TEXT NOT NULL DEFAULT '[]'",
                 "conversation_json": "TEXT NOT NULL DEFAULT '[]'",
             }
             for name, declaration in additions.items():
                 if name not in columns:
                     connection.execute(f"ALTER TABLE jobs ADD COLUMN {name} {declaration}")
+            connection.execute(
+                """
+                UPDATE jobs
+                SET current_stage = CASE status
+                    WHEN 'completed' THEN 'delivery'
+                    WHEN 'processing' THEN 'preprocessing'
+                    WHEN 'failed' THEN 'preprocessing'
+                    ELSE 'orchestration'
+                END
+                WHERE current_stage IS NULL
+                   OR current_stage NOT IN (
+                       'orchestration', 'preprocessing', 'perception',
+                       'fusion', 'reasoning', 'delivery'
+                   )
+                   OR (status = 'completed' AND current_stage != 'delivery')
+                   OR (status IN ('processing', 'failed') AND current_stage = 'orchestration')
+                """
+            )
 
     def create(
         self,
@@ -131,10 +151,22 @@ class JobRepository:
             connection.execute(
                 """
                 UPDATE jobs
-                SET status = ?, attempt = ?, error_message = ?, updated_at = ?
+                SET status = ?, attempt = ?, current_stage = 'preprocessing',
+                    error_message = ?, updated_at = ?
                 WHERE job_id = ?
                 """,
                 (status, attempt, error_message, utc_now(), job_id),
+            )
+
+    def set_current_stage(self, job_id: str, current_stage: str) -> None:
+        with self._connect() as connection:
+            connection.execute(
+                """
+                UPDATE jobs
+                SET current_stage = ?, updated_at = ?
+                WHERE job_id = ? AND status = 'processing' AND current_stage != ?
+                """,
+                (current_stage, utc_now(), job_id, current_stage),
             )
 
     def save_result(
@@ -146,7 +178,8 @@ class JobRepository:
             connection.execute(
                 """
                 UPDATE jobs
-                SET status = 'completed', result_json = ?, error_message = NULL,
+                SET status = 'completed', current_stage = 'delivery',
+                    result_json = ?, error_message = NULL,
                     revision = 0, history_json = '[]', conversation_json = '[]',
                     updated_at = ?
                 WHERE job_id = ?
@@ -174,10 +207,15 @@ class JobRepository:
                 INSERT INTO jobs (
                     job_id, status, original_name, stored_name, content_type,
                     size_bytes, language, created_at, updated_at,
-                    revision, history_json, conversation_json, error_message, result_json
-                ) VALUES (?, 'completed', ?, '', 'video/mp4', ?, ?, ?, ?, 0, '[]', '[]', NULL, ?)
+                    revision, current_stage, history_json, conversation_json,
+                    error_message, result_json
+                ) VALUES (
+                    ?, 'completed', ?, '', 'video/mp4', ?, ?, ?, ?,
+                    0, 'delivery', '[]', '[]', NULL, ?
+                )
                 ON CONFLICT(job_id) DO UPDATE SET
                     status = 'completed',
+                    current_stage = 'delivery',
                     original_name = excluded.original_name,
                     stored_name = '',
                     content_type = 'video/mp4',

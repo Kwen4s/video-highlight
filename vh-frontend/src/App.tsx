@@ -10,6 +10,7 @@ const MESSAGE_CHUNK_DELAY_MS = 20
 type View = 'workspace' | 'library' | 'ads'
 type Theme = 'dark' | 'light'
 type JobStatus = 'queued' | 'processing' | 'completed' | 'failed'
+type JobStage = 'orchestration' | 'preprocessing' | 'perception' | 'fusion' | 'reasoning' | 'delivery'
 type ReviewStatus = 'pending' | 'accepted' | 'rejected' | 'revised'
 type AdPresetId = 'cinema-cliffhanger' | 'neon-app' | 'velvet-qr'
 
@@ -34,6 +35,7 @@ type DetectionResult = {
 type Job = {
   job_id: string
   status: JobStatus
+  current_stage: JobStage
   original_name: string
   content_type: string
   size_bytes: number
@@ -138,7 +140,16 @@ function adAssignmentKey(jobId: string, highlightId: string) {
   return `${jobId}:${highlightId}`
 }
 
-type RemoteJob = Omit<Job, 'source_url' | 'messages'> & { source_url?: string | null }
+type RemoteJob = Omit<Job, 'source_url' | 'messages' | 'current_stage'> & {
+  source_url?: string | null
+  current_stage?: JobStage
+}
+
+function fallbackJobStage(status: JobStatus): JobStage {
+  if (status === 'queued') return 'orchestration'
+  if (status === 'completed') return 'delivery'
+  return 'preprocessing'
+}
 
 function resolveSourceUrl(sourceUrl: string | null | undefined) {
   return sourceUrl ? new URL(sourceUrl, `${API_BASE}/`).toString() : null
@@ -149,6 +160,7 @@ function withSourceUrl(job: RemoteJob): Job {
     ...job,
     attempt: job.attempt ?? 0,
     max_attempts: job.max_attempts ?? 3,
+    current_stage: job.current_stage ?? fallbackJobStage(job.status),
     source_url: resolveSourceUrl(job.source_url),
     messages: [],
   }
@@ -292,6 +304,15 @@ const WORKFLOW_STAGES: WorkflowStage[] = [
     ],
   },
 ]
+
+const JOB_STAGE_INDEX: Record<JobStage, number> = {
+  orchestration: 1,
+  preprocessing: 2,
+  perception: 3,
+  fusion: 4,
+  reasoning: 5,
+  delivery: 6,
+}
 
 const WORKFLOW_EVENT_ROUTES = [
   ['media.probe.requested', 'ffprobe → duration / streams / codec / has_audio'],
@@ -497,6 +518,7 @@ function mergeRemoteJob(local: Job, remote: RemoteJob): Job {
     ...remote,
     attempt: remote.attempt ?? local.attempt ?? 0,
     max_attempts: remote.max_attempts ?? local.max_attempts ?? 3,
+    current_stage: remote.current_stage ?? local.current_stage ?? fallbackJobStage(remote.status),
     result,
     source_url: resolveSourceUrl(remote.source_url),
     messages: local.messages,
@@ -650,21 +672,22 @@ function ProgressPanel({ upload, job, onCancel }: { upload: UploadState; job: Jo
   const number = upload.phase === 'uploading' ? upload.progress : job?.status === 'completed' ? 100 : null
   const internalPipelineActive = job?.status === 'processing'
   const workflowNodeCount = WORKFLOW_STAGES.reduce((total, stage) => total + stage.nodes.length, 0)
-  const automaticStageIndex = uploading ? 0 : job?.status === 'queued' ? 1 : job?.status === 'processing' || job?.status === 'failed' ? 2 : job?.status === 'completed' ? 6 : 0
+  const activeJobStageIndex = job ? JOB_STAGE_INDEX[job.current_stage] : 0
+  const automaticStageIndex = uploading ? 0 : activeJobStageIndex
   const [selectedWorkflowStageIndex, setSelectedWorkflowStageIndex] = useState(automaticStageIndex)
-  useEffect(() => setSelectedWorkflowStageIndex(automaticStageIndex), [upload.phase, job?.status])
+  useEffect(() => setSelectedWorkflowStageIndex(automaticStageIndex), [upload.phase, job?.status, job?.current_stage])
   const stageState = (stageIndex: number): WorkflowState => {
     if (uploading) return stageIndex === 0 ? 'current' : 'waiting'
     if (!job) return 'waiting'
     if (job.status === 'queued') return stageIndex === 0 ? 'done' : stageIndex === 1 ? 'current' : 'waiting'
-    if (job.status === 'processing') return stageIndex < 2 ? 'done' : stageIndex === 2 ? 'current' : stageIndex < 6 ? 'unknown' : 'waiting'
+    if (job.status === 'processing') return stageIndex < activeJobStageIndex ? 'done' : stageIndex === activeJobStageIndex ? 'current' : 'waiting'
     if (job.status === 'completed') return 'done'
-    if (job.status === 'failed') return stageIndex < 2 ? 'done' : stageIndex === 2 ? 'failed' : 'waiting'
+    if (job.status === 'failed') return stageIndex < activeJobStageIndex ? 'done' : stageIndex === activeJobStageIndex ? 'failed' : 'waiting'
     return 'waiting'
   }
   const selectedWorkflowStage = WORKFLOW_STAGES[selectedWorkflowStageIndex]
   const selectedWorkflowState = stageState(selectedWorkflowStageIndex)
-  const confirmedStageCount = uploading ? 0 : job?.status === 'completed' ? WORKFLOW_STAGES.length : job?.status === 'queued' ? 1 : job ? 2 : 0
+  const confirmedStageCount = uploading ? 0 : job?.status === 'completed' ? WORKFLOW_STAGES.length : job ? activeJobStageIndex : 0
   const confirmedPercent = uploading ? upload.progress : Math.round((confirmedStageCount / WORKFLOW_STAGES.length) * 100)
   const publicProgressLabel = uploading
     ? `${upload.progress}%`
@@ -708,8 +731,8 @@ function ProgressPanel({ upload, job, onCancel }: { upload: UploadState; job: Jo
     }
     if (selectedWorkflowState === 'current') return {
       state: 'current',
-      label: '状态未回传',
-      detail: '任务整体正在处理，后端暂未回传此子步骤的独立状态。',
+      label: '阶段已确认',
+      detail: '后端已从 Agent 的阶段产物确认任务进入此阶段；阶段内节点仍按整体状态展示。',
     }
     if (selectedWorkflowState === 'unknown') return {
       state: 'unknown',
@@ -726,7 +749,7 @@ function ProgressPanel({ upload, job, onCancel }: { upload: UploadState; job: Jo
     ...(uploading ? [{ kind: 'observed', topic: 'upload.stream.active', payload: `progress=${upload.progress}% · transport=multipart/form-data` }] : []),
     ...(job ? [
       { kind: 'observed', topic: 'job.created', payload: `job_id=${job.job_id} · language=${job.language} · revision=${job.revision}` },
-      { kind: 'observed', topic: 'job.state.changed', payload: `status=${job.status} · updated_at=${formatDate(job.updated_at)}` },
+      { kind: 'observed', topic: 'job.state.changed', payload: `status=${job.status} · current_stage=${job.current_stage} · updated_at=${formatDate(job.updated_at)}` },
     ] : []),
     ...(internalPipelineActive ? [{ kind: 'observed', topic: 'analysis.worker.active', payload: '后端已确认 processing · Agent 内部节点按拓扑展示' }] : []),
     ...WORKFLOW_EVENT_ROUTES.map(([topic, payload]) => ({ kind: 'route', topic, payload })),
@@ -807,7 +830,7 @@ function ProgressPanel({ upload, job, onCancel }: { upload: UploadState; job: Jo
         </ol>
       </aside>
     </div>
-    <p className="workflow-disclosure"><span>STATUS SOURCE</span> 顶部状态来自后端公开任务 API；Agent 内部节点与事件展示的是当前编排拓扑，不读取 trace 或服务端日志，也不伪装成逐节点完成回执。</p>
+    <p className="workflow-disclosure"><span>STATUS SOURCE</span> 顶部状态和当前阶段来自后端公开任务 API；阶段内节点与事件展示的是当前编排拓扑，不读取 trace 或服务端日志，也不伪装成逐节点完成回执。</p>
   </section>
 }
 

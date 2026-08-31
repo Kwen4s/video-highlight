@@ -3,6 +3,14 @@ from typing import Literal
 from pydantic import BaseModel, Field
 
 JobStatus = Literal["queued", "processing", "completed", "failed"]
+JobStage = Literal[
+    "orchestration",
+    "preprocessing",
+    "perception",
+    "fusion",
+    "reasoning",
+    "delivery",
+]
 ReviewStatus = Literal["pending", "accepted", "rejected", "revised"]
 
 
@@ -55,6 +63,7 @@ class AgentDetectionResult(BaseModel):
 class JobResponse(BaseModel):
     job_id: str
     status: JobStatus
+    current_stage: JobStage
     original_name: str
     content_type: str
     size_bytes: int

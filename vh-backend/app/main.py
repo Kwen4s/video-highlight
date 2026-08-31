@@ -457,6 +457,10 @@ def serialize_job(row: dict[str, Any]) -> JobResponse:
     return JobResponse(
         job_id=row["job_id"],
         status=row["status"],
+        current_stage=row.get(
+            "current_stage",
+            "delivery" if row["status"] == "completed" else "orchestration",
+        ),
         original_name=row["original_name"],
         content_type=row["content_type"],
         size_bytes=row["size_bytes"],

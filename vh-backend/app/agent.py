@@ -3,10 +3,36 @@ import subprocess
 import time
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
+from threading import Event, Thread
 
 from .config import Settings
 from .models import AgentDetectionResult
 from .repository import JobRepository
+
+AGENT_STAGE_ORDER = {
+    "preprocessing": 0,
+    "perception": 1,
+    "fusion": 2,
+    "reasoning": 3,
+}
+
+
+def detect_agent_stage(job_dir: Path) -> str:
+    """Infer a public stage from durable artifacts without exposing Agent internals."""
+    cache_root = job_dir / "cache"
+    if not cache_root.is_dir():
+        return "preprocessing"
+    cache_dirs = [path for path in cache_root.iterdir() if path.is_dir()]
+    if any((path / "scene_map").is_dir() for path in cache_dirs):
+        return "reasoning"
+    if any((path / "preprocess.json").is_file() for path in cache_dirs):
+        return "fusion"
+    if any(
+        (path / "frames" / ".complete").is_file() and (path / "audio.wav").is_file()
+        for path in cache_dirs
+    ):
+        return "perception"
+    return "preprocessing"
 
 
 class AgentInvoker:
@@ -91,6 +117,16 @@ class AgentJobRunner:
     def enqueue(self, job_id: str) -> None:
         self.executor.submit(self._execute, job_id)
 
+    def _observe_progress(self, job_id: str, stop: Event) -> None:
+        job_dir = self.settings.jobs_dir / job_id
+        current_stage = "preprocessing"
+        while not stop.wait(0.5):
+            observed_stage = detect_agent_stage(job_dir)
+            if AGENT_STAGE_ORDER[observed_stage] <= AGENT_STAGE_ORDER[current_stage]:
+                continue
+            current_stage = observed_stage
+            self.repository.set_current_stage(job_id, current_stage)
+
     def _execute(self, job_id: str) -> None:
         job = self.repository.get(job_id)
         if job is None:
@@ -102,11 +138,23 @@ class AgentJobRunner:
         )
         for attempt in range(1, max_attempts + 1):
             self.repository.set_attempt(job_id, attempt)
+            progress_stop = Event()
+            progress_thread = Thread(
+                target=self._observe_progress,
+                args=(job_id, progress_stop),
+                name=f"vh-progress-{job_id}",
+                daemon=True,
+            )
+            progress_thread.start()
             try:
                 result = self.invoker.run(
                     job_id=job_id,
                     video_path=video_path,
                     language=job["language"],
+                )
+                self.repository.set_current_stage(
+                    job_id,
+                    detect_agent_stage(self.settings.jobs_dir / job_id),
                 )
                 self.repository.save_result(
                     job_id,
@@ -135,6 +183,9 @@ class AgentJobRunner:
                 )
                 if self.settings.agent_retry_delay_sec:
                     time.sleep(self.settings.agent_retry_delay_sec)
+            finally:
+                progress_stop.set()
+                progress_thread.join(timeout=1)
 
     def shutdown(self) -> None:
         self.executor.shutdown(wait=False, cancel_futures=True)

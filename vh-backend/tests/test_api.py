@@ -78,6 +78,7 @@ def test_upload_returns_public_media_url_without_exposing_server_path(tmp_path) 
         assert response.status_code == 202
         body = response.json()
         assert body["status"] == "queued"
+        assert body["current_stage"] == "orchestration"
         assert body["attempt"] == 0
         assert body["max_attempts"] == 3
         assert body["source_url"] == "/api/jobs/job_12345678/source"
@@ -144,6 +145,7 @@ def test_demo_job_can_open_a_conversation_session(tmp_path) -> None:
         assert opened.status_code == 200
         body = opened.json()
         assert body["status"] == "completed"
+        assert body["current_stage"] == "delivery"
         assert body["source_url"] is None
         assert body["revision"] == 0
         assert "session_expires_at" not in body
