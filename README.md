@@ -61,15 +61,14 @@ uv sync --group dev
 mkdir -p runtime
 ```
 
-启动后端并保存 PID 和日志：
+日常启动或重启直接运行脚本，不会执行 `uv sync`，也不会重新下载环境：
 
 ```bash
 cd /home/tnx/video-highlight/vh-backend
-nohup uv run --no-sync uvicorn app.main:app --host 0.0.0.0 --port 8777 \
-  > runtime/backend.log 2>&1 &
-echo $! > runtime/backend.pid
-curl -fsS http://127.0.0.1:8777/health
+./scripts/restart_backend.sh
 ```
+
+脚本会同时检查 PID 文件和 8777 实际监听进程：先优雅停止旧进程，15 秒未退出时强制结束；确认端口释放后，直接使用现有 `.venv/bin/python` 启动。只有新 PID 确实监听 8777 且健康检查成功，才会写入 `runtime/backend.pid`。
 
 正常时健康检查返回：
 
@@ -83,38 +82,22 @@ curl -fsS http://127.0.0.1:8777/health
 tail -f /home/tnx/video-highlight/vh-backend/runtime/backend.log
 ```
 
-停止后端：
+完全停止后端：
 
 ```bash
 cd /home/tnx/video-highlight/vh-backend
-if [ -f runtime/backend.pid ]; then
-  pid=$(cat runtime/backend.pid)
-  kill "$pid" 2>/dev/null || true
-  rm -f runtime/backend.pid
-fi
+./scripts/stop_backend.sh
 ```
 
-如果服务是前台启动的，直接在对应终端按 `Ctrl+C`；如果没有 PID 文件，可先通过 `ss -ltnp | grep ':8777'` 找到进程后停止该进程。
+停止脚本会同时查找当前项目的 Uvicorn 进程、PID 文件记录和 8777 实际监听者，确认端口释放后才返回成功。重复执行是安全的，不会删除任务目录、数据库、日志或 `.venv`。
 
 ### 重新部署/重启后端
 
-代码和配置更新后，按以下顺序执行。重启只会停止并重新启动 API 服务，不会删除 `vh-backend/runtime` 中的任务数据。
+代码或配置更新后仍运行同一个脚本。它只会重启 API 服务，不会删除 `vh-backend/runtime` 中的任务数据；只有依赖文件变化时才需要重新执行 `uv sync`。
 
 ```bash
 cd /home/tnx/video-highlight/vh-backend
-if [ -f runtime/backend.pid ]; then
-  kill "$(cat runtime/backend.pid)" 2>/dev/null || true
-  rm -f runtime/backend.pid
-fi
-
-cd /home/tnx/video-highlight/vh-backend
-unset VIRTUAL_ENV
-mkdir -p runtime
-nohup .venv/bin/python -m uvicorn app.main:app \
-  --host 0.0.0.0 --port 8777 \
-  > runtime/backend.log 2>&1 &
-echo $! > runtime/backend.pid
-curl -fsS http://127.0.0.1:8777/health
+./scripts/restart_backend.sh
 ```
 
 若重启后任务仍失败，查看对应任务目录中的 `agent.log`，或先查看最新后端日志：
