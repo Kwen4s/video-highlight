@@ -25,6 +25,20 @@ npm install
 npm run dev
 ```
 
+## Windows 便携版
+
+生成单文件 Windows x64 便携 EXE：
+
+```powershell
+nvm use 24.14.1
+npm install
+npm run build:win
+```
+
+产物位于 `release/Video Highlight-0.1.0-portable-x64.exe`。将 EXE 放在普通可写目录中运行；应用会在 EXE 同级自动创建 `video-data/`，其中 `jobs/` 保存导入的原片与任务记录，`ad-assets/` 保存广告素材。移动时将 EXE 和 `video-data/` 一起移动即可保留本地数据。
+
+构建只包含 Windows x64 的媒体工具和两个内置演示任务，不会把开发目录中的其他视频、缓存或任务数据打入 EXE。
+
 复制 `.env.example` 为相应环境配置，并设置不带末尾斜杠的后端地址：
 
 ```dotenv

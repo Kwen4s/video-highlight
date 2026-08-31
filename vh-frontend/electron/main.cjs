@@ -29,12 +29,18 @@ function requireJobId(value) {
   return value
 }
 
-function getJobsRoot() {
-  return path.join(app.getPath('userData'), 'video-library', 'jobs')
+function getLibraryRoot() {
+  if (!app.isPackaged) return path.join(app.getPath('userData'), 'video-library')
+
+  const portableDirectory = process.env.PORTABLE_EXECUTABLE_DIR
+  const executableDirectory = portableDirectory && path.isAbsolute(portableDirectory)
+    ? portableDirectory
+    : path.dirname(process.execPath)
+  return path.join(executableDirectory, 'video-data')
 }
 
-function getLibraryRoot() {
-  return path.dirname(getJobsRoot())
+function getJobsRoot() {
+  return path.join(getLibraryRoot(), 'jobs')
 }
 
 function getAdAssetsRoot() {
@@ -50,6 +56,7 @@ function getDemoMarkerPath() {
 }
 
 function getBundledDemoJobsRoot() {
+  if (app.isPackaged) return path.join(process.resourcesPath, 'demo-jobs')
   return path.resolve(__dirname, '..', 'video-data', 'jobs')
 }
 

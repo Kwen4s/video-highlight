@@ -573,7 +573,7 @@ function Sidebar({ view, onView, online, jobs }: { view: View; onView: (view: Vi
       <button className={view === 'ads' ? 'active' : ''} onClick={() => onView('ads')}><Icon name="ad" /><span>广告编排</span><b>03</b></button>
     </nav>
     <div className="sidebar-metric"><span>服务端任务</span><strong>{String(jobs.length).padStart(2, '0')}</strong><small>{completed} 个已完成 · {accepted} 段已采用</small></div>
-    <div className={`service-state ${online ? 'online' : ''}`}><i /><div><b>{online ? '后端服务在线' : '后端服务离线'}</b><span>API · {API_ADDRESS}</span></div></div>
+    <div className={`service-state ${online ? 'online' : ''}`}><i /><div><b>{online ? '后端服务在线' : '后端服务离线'}</b></div></div>
   </aside>
 }
 
