@@ -59,18 +59,12 @@ class WindowAttentionBlock(nn.Module):
         )
         memory, valid, _ = _window_memory(normalized, offsets)
         query = self.query(normalized).view(len(sequence), self.heads, self.head_dim)
-        key = self.key(memory).view(
-            len(sequence), len(offsets), self.heads, self.head_dim
-        )
-        value = self.value(memory).view(
-            len(sequence), len(offsets), self.heads, self.head_dim
-        )
+        key = self.key(memory).view(len(sequence), len(offsets), self.heads, self.head_dim)
+        value = self.value(memory).view(len(sequence), len(offsets), self.heads, self.head_dim)
         scores = torch.einsum("thd,tlhd->thl", query, key) / math.sqrt(self.head_dim)
         scores = scores.masked_fill(~valid[:, None, :], -torch.inf)
         weights = torch.softmax(scores, dim=-1)
-        attended = torch.einsum("thl,tlhd->thd", weights, value).reshape(
-            len(sequence), -1
-        )
+        attended = torch.einsum("thl,tlhd->thd", weights, value).reshape(len(sequence), -1)
         sequence = sequence + self.dropout(self.output(attended))
         return sequence + self.dropout(self.feed_forward(self.norm2(sequence)))
 
@@ -86,8 +80,7 @@ class TemporalLevel(nn.Module):
     ) -> None:
         super().__init__()
         self.blocks = nn.ModuleList(
-            WindowAttentionBlock(dim, heads, radius, dropout)
-            for _ in range(layers)
+            WindowAttentionBlock(dim, heads, radius, dropout) for _ in range(layers)
         )
 
     def forward(self, sequence: Tensor) -> Tensor:
@@ -135,9 +128,7 @@ class SceneMemoryPool(nn.Module):
     def forward(self, sequence: Tensor, bounds: Tensor) -> tuple[Tensor, Tensor]:
         length = len(sequence)
         time = torch.arange(length, device=sequence.device)
-        membership = (time[None, :] >= bounds[:, :1]) & (
-            time[None, :] < bounds[:, 1:2]
-        )
+        membership = (time[None, :] >= bounds[:, :1]) & (time[None, :] < bounds[:, 1:2])
         scores = self.score(sequence).squeeze(-1)[None, :].expand(len(bounds), -1)
         weights = torch.softmax(scores.masked_fill(~membership, -torch.inf), dim=1)
         scenes = weights @ sequence
@@ -190,9 +181,7 @@ class MaskedMemoryAttention(nn.Module):
         )
         query = self.query(queries).view(length, self.heads, self.head_dim)
         key = self.key(memory).view(length, len(memory[0]), self.heads, self.head_dim)
-        value = self.value(memory).view(
-            length, len(memory[0]), self.heads, self.head_dim
-        )
+        value = self.value(memory).view(length, len(memory[0]), self.heads, self.head_dim)
         scores = torch.einsum("thd,tlhd->thl", query, key) / math.sqrt(self.head_dim)
         scores = scores.masked_fill(~valid[:, None, :], -torch.inf)
         weights = torch.softmax(scores, dim=-1)
@@ -200,10 +189,7 @@ class MaskedMemoryAttention(nn.Module):
         context = self.norm(queries + self.dropout(self.output(attended)))
         mean_weights = weights.mean(dim=1)
         nonempty = mean_weights[:, :-1].sum(dim=1)
-        expected = (
-            (mean_weights[:, :-1] * positions[:, :-1]).sum(dim=1)
-            / nonempty.clamp_min(1e-6)
-        )
+        expected = (mean_weights[:, :-1] * positions[:, :-1]).sum(dim=1) / nonempty.clamp_min(1e-6)
         return context, expected, nonempty
 
 
@@ -245,13 +231,11 @@ class NarrativeTransitionDecoder(nn.Module):
             0,
             device=sequence.device,
         )
-        local_before, before_valid, before_positions = _window_memory(
-            sequence, before_offsets
-        )
+        local_before, before_valid, before_positions = _window_memory(sequence, before_offsets)
         scene_memory = scenes[None, :, :].expand(length, -1, -1)
-        scene_valid = scene_bounds[:, 1][None, :] <= torch.arange(
-            length, device=sequence.device
-        )[:, None]
+        scene_valid = (
+            scene_bounds[:, 1][None, :] <= torch.arange(length, device=sequence.device)[:, None]
+        )
         expanded_scene_positions = scene_positions[None, :].expand(length, -1)
         before_memory = torch.cat([local_before, scene_memory], dim=1)
         before_mask = torch.cat([before_valid, scene_valid], dim=1)
@@ -267,9 +251,7 @@ class NarrativeTransitionDecoder(nn.Module):
         )
 
         event_offsets = torch.arange(-2, 3, device=sequence.device)
-        event_memory, event_valid, event_positions = _window_memory(
-            sequence, event_offsets
-        )
+        event_memory, event_valid, event_positions = _window_memory(sequence, event_offsets)
         event_state, event_time, event_presence = self.event(
             sequence,
             event_memory,
@@ -282,9 +264,7 @@ class NarrativeTransitionDecoder(nn.Module):
             self.max_after_sec + 1,
             device=sequence.device,
         )
-        after_memory, after_valid, after_positions = _window_memory(
-            sequence, after_offsets
-        )
+        after_memory, after_valid, after_positions = _window_memory(sequence, after_offsets)
         after_state, after_time, after_presence = self.after(
             sequence,
             after_memory,
@@ -397,9 +377,7 @@ class NarrativeTransitionLocalizer(nn.Module):
     ) -> TransitionOutput:
         visual = self.vision_projection(vision)
         acoustic = self.audio_projection(torch.cat([audio, audio_prior], dim=1))
-        visual_weight = torch.sigmoid(
-            self.gate(torch.cat([visual, acoustic, availability], dim=1))
-        )
+        visual_weight = torch.sigmoid(self.gate(torch.cat([visual, acoustic, availability], dim=1)))
         visual_weight = torch.where(
             availability[:, 1:2] == 0,
             torch.ones_like(visual_weight),
@@ -432,9 +410,9 @@ class NarrativeTransitionLocalizer(nn.Module):
         )
         distances = F.softplus(self.offset_head(transition))
         offsets = torch.stack([-distances[:, 0], distances[:, 1]], dim=1)
-        centers = torch.arange(
-            len(transition), device=transition.device, dtype=transition.dtype
-        )[:, None]
+        centers = torch.arange(len(transition), device=transition.device, dtype=transition.dtype)[
+            :, None
+        ]
         anchor_scale = transition.new_tensor(
             [max(1, self.decoder.max_before_sec), 2, max(1, self.decoder.max_after_sec)]
         )
@@ -477,11 +455,15 @@ def _adjacent_change(sequence: Tensor) -> Tensor:
 def _downsample(sequence: Tensor, factor: int) -> Tensor:
     # Each coarse token at index j summarizes only moments up to j * factor.
     padded = F.pad(sequence.T.unsqueeze(0), (factor - 1, 0))
-    return F.avg_pool1d(
-        padded,
-        kernel_size=factor,
-        stride=factor,
-    ).squeeze(0).T
+    return (
+        F.avg_pool1d(
+            padded,
+            kernel_size=factor,
+            stride=factor,
+        )
+        .squeeze(0)
+        .T
+    )
 
 
 def _upsample(sequence: Tensor, length: int, factor: int) -> Tensor:

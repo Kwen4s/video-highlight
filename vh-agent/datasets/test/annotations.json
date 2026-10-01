@@ -1,122 +1,391 @@
 [
   {
     "video_id": "vid_77020431396e89ed",
-    "annotation_method": "manual_multimodal_review",
+    "annotation_version": "ai_review_v2_20260929",
+    "annotation_method": "codex_source_frames_subtitles_asr_reannotation",
     "annotation_status": "labeled",
+    "annotation_tier": "ai_reviewed",
     "annotator_ids": [
       "codex"
     ],
-    "notes": "逐帧接触表、ASR、OCR 和声音事件联合复核。",
+    "human_verified": false,
+    "review_status": "pending_human_review",
+    "prediction_exposure": true,
     "highlights": [
       {
-        "start_sec": 4.24,
-        "end_sec": 18.5,
-        "highlight_type": "conflict",
-        "description": "女子继续殴打倒地老人，并以对方冒充未来公公为由拒绝停手。",
-        "reason": "直接人身冲突和人物傲慢立场集中爆发。",
-        "confidence": 0.88
-      },
-      {
-        "start_sec": 22.64,
-        "end_sec": 30.8,
+        "event_id": "hospital_identity_doubt",
+        "start_sec": 13.7,
+        "end_sec": 32.0,
         "highlight_type": "reveal",
-        "description": "药瓶被认出是董事长从医院购买的特效药，众人开始怀疑老人确是首富父亲。",
-        "reason": "新物证推翻了老人冒充身份的既有判断。",
-        "confidence": 0.94
+        "description": "女子以老人冒充未来公公为由为自己的行为辩解；男子认出药瓶是董事长从医院买的特效药，怀疑老人真是首富父亲，女子追问并露出惊疑。",
+        "reason": "指控与新物证发生直接冲突，形成身份疑点和人物反应；只标怀疑，不把角色的疑问写成身份已证实。",
+        "evidence": [
+          {
+            "start_sec": 13.9,
+            "end_sec": 17.3,
+            "role": "setup",
+            "observation": "女子说老人冒充未来公公，并反问教训他怎么了。"
+          },
+          {
+            "start_sec": 21.8,
+            "end_sec": 26.6,
+            "role": "evidence",
+            "observation": "男子捡起/查看药瓶，说明是董事长从医院买的特效药。"
+          },
+          {
+            "start_sec": 26.6,
+            "end_sec": 29.4,
+            "role": "decisive",
+            "observation": "男子提出“难道他真是首富的亲爹”。"
+          },
+          {
+            "start_sec": 29.4,
+            "end_sec": 32.0,
+            "role": "reaction",
+            "observation": "女子追问并显露惊疑。"
+          }
+        ],
+        "boundary_status": "provisional_sentence_and_reaction_bounds"
       }
-    ]
+    ],
+    "optional_highlights": [],
+    "context_events": [
+      {
+        "start_sec": 7.5,
+        "end_sec": 17.5,
+        "description": "旁人劝阻继续踢打，女子以冒充公公为由辩解。",
+        "relation": "setup_for",
+        "event_id": "hospital_identity_doubt",
+        "selection_note": "作为同一因果链的前文；本版不把它和揭示强制计为两个必须输出的片段。"
+      }
+    ],
+    "excluded_intervals": [],
+    "notes": "原来的两个标签改为一个连续身份疑点事件；核心证据与成片边界分开。",
+    "source_video_sha256": "cc4ed64a275f1d3c3dbb408c5fea37288e7dfe9a77bdf96cad4f9ecba2add47f",
+    "evidence_reference": "../../outputs/annotation_audit_20260929/vid_77020431396e89ed/",
+    "precision_note": "边界为视觉字幕与已有 ASR 核对后的建议值；未直接听审音轨，人工仍需核验词尾。非逐帧精确金标。"
   },
   {
     "video_id": "vid_12d940df0d3a370c",
-    "annotation_method": "manual_multimodal_review",
+    "annotation_version": "ai_review_v2_20260929",
+    "annotation_method": "codex_source_frames_subtitles_asr_reannotation",
     "annotation_status": "labeled",
+    "annotation_tier": "ai_reviewed",
     "annotator_ids": [
       "codex"
     ],
-    "notes": "逐帧接触表、ASR、OCR 和声音事件联合复核。",
+    "human_verified": false,
+    "review_status": "pending_human_review",
+    "prediction_exposure": true,
     "highlights": [
       {
+        "event_id": "jewels_comeback",
+        "start_sec": 5.5,
+        "end_sec": 21.5,
+        "highlight_type": "payoff",
+        "description": "妹妹指责姐姐偷妈妈的珠宝，以价值十亿和追责后果施压；姐姐回答“意味着我拥有了十个亿”，旁边男子露出笑意。",
+        "reason": "完整的指责、反讽回怼与反应，构成可独立理解的喜剧回击；不把回怼当作承认实际偷窃。",
+        "evidence": [
+          {
+            "start_sec": 5.8,
+            "end_sec": 8.4,
+            "role": "setup",
+            "observation": "妹妹指责偷妈妈的珠宝。"
+          },
+          {
+            "start_sec": 9.8,
+            "end_sec": 16.2,
+            "role": "setup",
+            "observation": "妹妹说明珠宝价值十亿，问证实在姐姐手上意味着什么。"
+          },
+          {
+            "start_sec": 16.2,
+            "end_sec": 19.1,
+            "role": "decisive",
+            "observation": "姐姐回答“意味着我拥有了十个亿”。"
+          },
+          {
+            "start_sec": 19.1,
+            "end_sec": 21.5,
+            "role": "reaction",
+            "observation": "男子微笑，并出现“昭昭真可爱啊”的字幕。"
+          }
+        ],
+        "boundary_status": "provisional_sentence_and_reaction_bounds"
+      },
+      {
+        "event_id": "jewels_frameup_reveal",
         "start_sec": 21.6,
-        "end_sec": 38.5,
+        "end_sec": 39.0,
         "highlight_type": "reveal",
-        "description": "妹妹指控昭昭偷走十亿珠宝，内心独白却暴露珠宝是她亲手栽赃放入床上的。",
-        "reason": "公开指控与隐藏真相形成强反差，揭露陷害计划。",
-        "confidence": 0.97
+        "description": "男子询问是否确定姐姐偷了珠宝；妹妹声称亲眼所见珠宝在姐姐床上，随后内心独白透露是自己放进去的，企图坐实偷窃并让父母赶走姐姐。",
+        "reason": "公开指控与内心承认栽赃相矛盾，向观众揭露陷害计划。此片段没有实际搜出珠宝或完成公开揭穿。",
+        "evidence": [
+          {
+            "start_sec": 21.6,
+            "end_sec": 25.2,
+            "role": "setup",
+            "observation": "男子质问是否确定姐姐偷了珠宝。"
+          },
+          {
+            "start_sec": 25.2,
+            "end_sec": 30.1,
+            "role": "setup",
+            "observation": "妹妹声称亲眼所见，珠宝就在姐姐床上。"
+          },
+          {
+            "start_sec": 30.1,
+            "end_sec": 33.1,
+            "role": "decisive",
+            "observation": "内心独白“珠宝是我亲手放进去的”。"
+          },
+          {
+            "start_sec": 33.1,
+            "end_sec": 38.2,
+            "role": "consequence",
+            "observation": "内心独白说明坐实罪名、赶出霍家的目的。"
+          },
+          {
+            "start_sec": 38.2,
+            "end_sec": 39.0,
+            "role": "reaction",
+            "observation": "妹妹露出得意神情。"
+          }
+        ],
+        "boundary_status": "provisional_sentence_and_reaction_bounds"
       }
-    ]
+    ],
+    "optional_highlights": [],
+    "context_events": [],
+    "excluded_intervals": [
+      {
+        "start_sec": 39.0,
+        "end_sec": 53.9,
+        "reason": "继续威胁和多人反应延续栽赃情节，未核实有另一项独立的新事件；不再拆一个重复高光。"
+      }
+    ],
+    "notes": "补上旧版遗漏的喜剧回怼；保留栽赃揭示为另一个事件。",
+    "source_video_sha256": "9e8e5f2ce0244327ea599f8f6ffe2039695186d83397180944bcafc8d2690117",
+    "evidence_reference": "../../outputs/annotation_audit_20260929/vid_12d940df0d3a370c/",
+    "precision_note": "边界为视觉字幕与已有 ASR 核对后的建议值；未直接听审音轨，人工仍需核验词尾。非逐帧精确金标。"
   },
   {
     "video_id": "vid_6478f31e6ed6dd2e",
-    "annotation_method": "manual_multimodal_review",
+    "annotation_version": "ai_review_v2_20260929",
+    "annotation_method": "codex_source_frames_subtitles_asr_reannotation",
     "annotation_status": "labeled",
+    "annotation_tier": "ai_reviewed",
     "annotator_ids": [
       "codex"
     ],
-    "notes": "逐帧接触表、ASR、OCR 和声音事件联合复核；本地阈值未检出该视频高光。",
-    "highlights": [
+    "human_verified": false,
+    "review_status": "pending_human_review",
+    "prediction_exposure": true,
+    "highlights": [],
+    "optional_highlights": [
       {
-        "start_sec": 8.13,
-        "end_sec": 30.18,
+        "event_id": "search_overruled",
+        "start_sec": 8.0,
+        "end_sec": 31.5,
         "highlight_type": "conflict",
-        "description": "男子进门被要求全身搜查，林溪出面打破规矩让他进入。",
-        "reason": "羞辱性阻拦被关键人物直接终止，体现权力介入。",
-        "confidence": 0.78
+        "description": "女保镖林溪拦住男子并进行搜身；男子表示没必要，林溪坚持规矩，坐在沙发上的许梦娇叫停并让他进来。",
+        "reason": "有完整的阻拦与放行，但主要是入场互动；是否具有独立高光价值有争议，列为可选，不强制输出。",
+        "evidence": [
+          {
+            "start_sec": 8.5,
+            "end_sec": 10.5,
+            "role": "setup",
+            "observation": "人物卡标明林溪是许梦娇保镖；要求全身搜查。"
+          },
+          {
+            "start_sec": 20.5,
+            "end_sec": 24.8,
+            "role": "conflict",
+            "observation": "男子表示没必要，林溪坚持全身搜查。"
+          },
+          {
+            "start_sec": 27.5,
+            "end_sec": 30.5,
+            "role": "resolution",
+            "observation": "许梦娇叫林溪并说让他进来。"
+          },
+          {
+            "start_sec": 30.5,
+            "end_sec": 31.5,
+            "role": "reaction",
+            "observation": "搜身停止，男子准备进入。"
+          }
+        ],
+        "boundary_status": "provisional_sentence_and_reaction_bounds"
       },
       {
-        "start_sec": 40.66,
-        "end_sec": 44.4,
-        "highlight_type": "reveal",
-        "description": "女子追问男子为何不像其他人一样称她为大小姐。",
-        "reason": "一句称谓问题揭示双方关系和身份权力并不寻常。",
-        "confidence": 0.72
+        "event_id": "address_question",
+        "start_sec": 40.0,
+        "end_sec": 45.5,
+        "highlight_type": "other",
+        "description": "男子称呼女子为许总；女子问他为何不像其他人一样叫她大小姐，男子看向她。",
+        "reason": "关系互动与轻悬念，可按人物关系类目标选用；没有揭示新的身份事实，不再标为 reveal。",
+        "evidence": [
+          {
+            "start_sec": 40.0,
+            "end_sec": 41.5,
+            "role": "setup",
+            "observation": "男子称呼许总。"
+          },
+          {
+            "start_sec": 41.5,
+            "end_sec": 44.8,
+            "role": "decisive",
+            "observation": "女子问为何不叫大小姐。"
+          },
+          {
+            "start_sec": 44.8,
+            "end_sec": 45.5,
+            "role": "reaction",
+            "observation": "男子看向女子。"
+          }
+        ],
+        "boundary_status": "provisional_sentence_and_reaction_bounds"
       }
-    ]
+    ],
+    "context_events": [],
+    "excluded_intervals": [],
+    "notes": "修正林溪身份；不将普通入场、称谓互动规定为必选高光。highlights 为空不表示该视频已确认没有可用片段，两个候选仍待人工裁定。",
+    "source_video_sha256": "983601c2cf4058ce98f8be7bcd9bb820362104efa3fb5a576feb13e96d2e189b",
+    "evidence_reference": "../../outputs/annotation_audit_20260929/vid_6478f31e6ed6dd2e/",
+    "precision_note": "边界为视觉字幕与已有 ASR 核对后的建议值；未直接听审音轨，人工仍需核验词尾。非逐帧精确金标。"
   },
   {
     "video_id": "vid_59aacb337d4b60bb",
-    "annotation_method": "manual_multimodal_review",
+    "annotation_version": "ai_review_v2_20260929",
+    "annotation_method": "codex_source_frames_subtitles_asr_reannotation",
     "annotation_status": "labeled",
+    "annotation_tier": "ai_reviewed",
     "annotator_ids": [
       "codex"
     ],
-    "notes": "逐帧接触表、ASR、OCR 和声音事件联合复核；属于中等强度人物冲突。",
-    "highlights": [
+    "human_verified": false,
+    "review_status": "pending_human_review",
+    "prediction_exposure": true,
+    "highlights": [],
+    "optional_highlights": [
       {
-        "start_sec": 26.68,
-        "end_sec": 45.66,
+        "event_id": "career_belittlement",
+        "start_sec": 26.5,
+        "end_sec": 46.5,
         "highlight_type": "conflict",
-        "description": "饭局上有人以外交司翻译没有技术含量为由挖苦宋知意，她平静说明还承担协调工作。",
-        "reason": "围绕职业地位的公开贬低建立人物对立，但尚未出现强反转。",
-        "confidence": 0.66
+        "description": "饭局上女子质疑宋知意在外交司当翻译没技术含量、翻译文件枯燥；宋知意说明还承担协调工作，随后有人肯定外交司是好地方、铁饭碗。",
+        "reason": "职业贬低与从容回应有事实依据，但片内冲突较弱，没有明显关系逆转或强烈结果；列为可选社交冲突，不要求必须选用，也不因没有反转一概判无价值。",
+        "evidence": [
+          {
+            "start_sec": 26.5,
+            "end_sec": 30.5,
+            "role": "setup",
+            "observation": "询问在外交司当翻译的工作。"
+          },
+          {
+            "start_sec": 30.5,
+            "end_sec": 36.5,
+            "role": "conflict",
+            "observation": "质疑没技术含量、翻译文件枯燥。"
+          },
+          {
+            "start_sec": 36.5,
+            "end_sec": 41.5,
+            "role": "response",
+            "observation": "宋知意解释还要负责协调工作。"
+          },
+          {
+            "start_sec": 42.0,
+            "end_sec": 46.0,
+            "role": "reaction",
+            "observation": "在座者称外交司是好地方、铁饭碗。"
+          }
+        ],
+        "boundary_status": "provisional_sentence_and_reaction_bounds"
       }
-    ]
+    ],
+    "context_events": [],
+    "excluded_intervals": [
+      {
+        "start_sec": 0,
+        "end_sec": 26.5,
+        "reason": "到场道歉、邀请入座、座次及人物展示，作为饭局背景，不另立高光。"
+      }
+    ],
+    "notes": "保留职业冲突的事实，降低为可选候选；不虚构当众打脸或反转。",
+    "source_video_sha256": "67cae9f78ef43464f19b547fb318571d3f1017a8060ef10c8e797d8843caf878",
+    "evidence_reference": "../../outputs/annotation_audit_20260929/vid_59aacb337d4b60bb/",
+    "precision_note": "边界为视觉字幕与已有 ASR 核对后的建议值；未直接听审音轨，人工仍需核验词尾。非逐帧精确金标。"
   },
   {
     "video_id": "vid_d3431501c9bf32ef",
-    "annotation_method": "manual_multimodal_review",
+    "annotation_version": "ai_review_v2_20260929",
+    "annotation_method": "codex_source_frames_subtitles_asr_reannotation",
     "annotation_status": "labeled",
+    "annotation_tier": "ai_reviewed",
     "annotator_ids": [
       "codex"
     ],
-    "notes": "逐帧接触表、ASR、OCR 和声音事件联合复核。",
+    "human_verified": false,
+    "review_status": "pending_human_review",
+    "prediction_exposure": true,
     "highlights": [
       {
-        "start_sec": 15.47,
-        "end_sec": 40.77,
+        "event_id": "rebirth_realization",
+        "start_sec": 41.5,
+        "end_sec": 52.0,
         "highlight_type": "reveal",
-        "description": "罗峰意识到自己回到三年前，并回忆妻弟掏空公司、妻子背叛导致自己一无所有。",
-        "reason": "完整交代重生前的失败因果和人物真实动机。",
-        "confidence": 0.95
-      },
-      {
-        "start_sec": 42.23,
-        "end_sec": 50.85,
-        "highlight_type": "reversal",
-        "description": "面对升任妻弟或离婚的逼迫，罗峰确认自己重生回到三年前，一切仍来得及改变。",
-        "reason": "从被迫妥协的旧命运切换为掌握未来信息的新认知。",
-        "confidence": 0.98
+        "description": "妻子要求罗峰在提拔她弟弟当副总和离婚之间选择；罗峰在内心确认重生回三年前，意识到一切仍来得及改变。",
+        "reason": "外部逼迫与主角认知转变组成短而明确的重生钩子。这里是觉醒与转机，不是已经复仇或改变命运。",
+        "evidence": [
+          {
+            "start_sec": 42.0,
+            "end_sec": 47.8,
+            "role": "setup",
+            "observation": "妻子再次提出提弟弟当副总或离婚，让他选择。"
+          },
+          {
+            "start_sec": 47.8,
+            "end_sec": 51.5,
+            "role": "decisive",
+            "observation": "罗峰内心确认回到三年前，认为一切还来得及。"
+          },
+          {
+            "start_sec": 51.5,
+            "end_sec": 52.0,
+            "role": "reaction",
+            "observation": "画面转场与男主神态收束。"
+          }
+        ],
+        "boundary_status": "provisional_sentence_and_reaction_bounds",
+        "alternative_clips": [
+          {
+            "start_sec": 21.0,
+            "end_sec": 52.0,
+            "purpose": "较完整的因果版本：触发三年前记忆、前世妥协与损失、当前逼迫和重生确认。",
+            "same_event": true,
+            "note": "31 秒，不为适配之前的 30 秒评测上限强行裁断。与短版二选一，不计作第二个命中。"
+          }
+        ]
       }
-    ]
+    ],
+    "optional_highlights": [],
+    "context_events": [
+      {
+        "start_sec": 15.0,
+        "end_sec": 41.5,
+        "description": "罗峰察觉房屋与当前情境异常，联想到三年前提副总的要求，回忆因妥协被掏空公司和遭背叛。",
+        "relation": "background_for",
+        "event_id": "rebirth_realization",
+        "selection_note": "前世因果为重生事件的背景；不把这一段写成已明确说出重生确认，也不强制单独输出。"
+      }
+    ],
+    "excluded_intervals": [],
+    "notes": "将前世背景和重生确认归为同一事件，提供短钩子与完整因果两个版本，不能同时计两次召回。",
+    "source_video_sha256": "8f0dc337bce0ec618701ca1f47d842f2452069d64a836d307d936777af369220",
+    "evidence_reference": "../../outputs/annotation_audit_20260929/vid_d3431501c9bf32ef/",
+    "precision_note": "边界为视觉字幕与已有 ASR 核对后的建议值；未直接听审音轨，人工仍需核验词尾。非逐帧精确金标。"
   },
   {
     "video_id": "vid_dd4a6d68d0154644",
@@ -645,5 +914,519 @@
         "confidence": 0.85
       }
     ]
+  },
+  {
+    "video_id": "vid_635260186d8dcf85",
+    "annotation_version": "ai_review_v3_20261001",
+    "annotation_method": "codex_gemini_native_video_double_pass_frame_audit",
+    "annotation_status": "labeled",
+    "annotation_tier": "ai_reviewed",
+    "annotator_ids": [
+      "codex",
+      "gemini-3.7-flash"
+    ],
+    "human_verified": false,
+    "review_status": "pending_human_review",
+    "prediction_exposure": false,
+    "highlights": [
+      {
+        "event_id": "family_reunion_hug",
+        "start_sec": 14.5,
+        "end_sec": 35.5,
+        "highlight_type": "emotion",
+        "description": "幼儿园放学后，两个孩子喊着爸爸妈妈奔来，男女主蹲下迎接并与孩子们相拥。",
+        "reason": "孩子奔向父母、相认和拥抱形成完整的家庭团聚情绪释放。",
+        "evidence": [
+          {
+            "start_sec": 14.8,
+            "end_sec": 21.4,
+            "role": "setup",
+            "observation": "放学的孩子们跑来，其中两个孩子喊“爸爸妈妈”，男女主看见他们。"
+          },
+          {
+            "start_sec": 21.4,
+            "end_sec": 29.7,
+            "role": "decisive",
+            "observation": "男女主迎上前，两个孩子扑入怀中，一家四口抱在一起。"
+          },
+          {
+            "start_sec": 29.7,
+            "end_sec": 35.5,
+            "role": "reaction",
+            "observation": "拥抱延续，女主感叹男主第一次见两个孩子却不紧张，随后招呼回家。"
+          }
+        ],
+        "alternative_clips": [],
+        "boundary_status": "provisional_native_video_bounds"
+      },
+      {
+        "event_id": "family_life_acceptance",
+        "start_sec": 49.5,
+        "end_sec": 64.5,
+        "highlight_type": "emotion",
+        "description": "一家四口牵手同行时，女子内心独白说五年空白留下的不安正被夕阳和笑声填满，也不再害怕一起生活。",
+        "reason": "内心独白明确完成从不安到接受共同生活的情绪变化，和前面的团聚属于可独立取舍的另一看点。",
+        "evidence": [
+          {
+            "start_sec": 49.5,
+            "end_sec": 53.0,
+            "role": "setup",
+            "observation": "一家四口同行，女子内心独白“原来这就是一家四口”。"
+          },
+          {
+            "start_sec": 53.0,
+            "end_sec": 60.5,
+            "role": "decisive",
+            "observation": "女子想到五年空白留下的不安被夕阳和他们的笑声一点点填满。"
+          },
+          {
+            "start_sec": 60.5,
+            "end_sec": 64.5,
+            "role": "reaction",
+            "observation": "女子想到这样一起生活似乎也没有什么可怕。"
+          }
+        ],
+        "alternative_clips": [],
+        "boundary_status": "provisional_native_video_bounds"
+      }
+    ],
+    "optional_highlights": [
+      {
+        "event_id": "son_holds_mothers_hand",
+        "start_sec": 37.5,
+        "end_sec": 47.2,
+        "highlight_type": "emotion",
+        "description": "男子抱起女儿后，儿子拒绝让妈妈抱，称妈妈会累并主动牵住她的手，男子夸他懂事。",
+        "reason": "孩子体贴母亲的互动事实完整，但独立戏剧强度较弱，作为温馨关系类可选片段。",
+        "evidence": [
+          {
+            "start_sec": 37.5,
+            "end_sec": 40.2,
+            "role": "setup",
+            "observation": "男子抱起女儿，女子问儿子是否也要妈妈抱。"
+          },
+          {
+            "start_sec": 40.2,
+            "end_sec": 44.3,
+            "role": "decisive",
+            "observation": "儿子拒绝被抱，说妈妈会累，主动提出牵手。"
+          },
+          {
+            "start_sec": 44.3,
+            "end_sec": 47.2,
+            "role": "reaction",
+            "observation": "男子称赞儿子懂事，一家人准备离开。"
+          }
+        ],
+        "alternative_clips": [],
+        "boundary_status": "provisional_native_video_bounds"
+      }
+    ],
+    "context_events": [
+      {
+        "start_sec": 0.0,
+        "end_sec": 14.5,
+        "description": "男女主牵手在幼儿园外等待接孩子放学。",
+        "relation": "setup_for",
+        "event_id": "family_reunion_hug",
+        "selection_note": "交代人物在等待孩子，奔跑相认本身已保留必要信息。"
+      }
+    ],
+    "excluded_intervals": [
+      {
+        "start_sec": 64.5,
+        "end_sec": 66.6,
+        "reason": "正片情绪段结束后切入下一场室内画面，片段不足以形成新的完整事件。"
+      }
+    ],
+    "notes": "逐帧审计将原先遗漏的“接受共同生活”内心转变补为第二个推荐事件；儿子牵手保留为可选。",
+    "source_video_sha256": "20979ec1622bb79a5ac30aed92c07a7a012ae526f2e7e813688c68cebbe1a7be",
+    "evidence_reference": "../../outputs/annotation_audit_20261001/vid_635260186d8dcf85/",
+    "precision_note": "两次原生音视频观看后以带原片时间的1秒/0.5秒连续画面复核；边界精确到约0.1秒，仍待人类核对词尾与采用等级。"
+  },
+  {
+    "video_id": "vid_71bfb757d01a5fda",
+    "annotation_version": "ai_review_v3_20261001",
+    "annotation_method": "codex_gemini_native_video_double_pass_frame_audit",
+    "annotation_status": "labeled",
+    "annotation_tier": "ai_reviewed",
+    "annotator_ids": [
+      "codex",
+      "gemini-3.7-flash"
+    ],
+    "human_verified": false,
+    "review_status": "pending_human_review",
+    "prediction_exposure": false,
+    "highlights": [
+      {
+        "event_id": "manager_job_confrontation",
+        "start_sec": 35.0,
+        "end_sec": 59.0,
+        "highlight_type": "conflict",
+        "description": "聚会男子叫来经理，要求给自己的亲戚安排工作并让人穿旗袍上班；经理答应后，白皮草女子当面反问自己的话是否不好使。",
+        "reason": "把夸口安排工作立刻落实到经理面前，并以女子的强硬追问收尾，形成完整的荒诞刁难和冲突升级。",
+        "evidence": [
+          {
+            "start_sec": 35.0,
+            "end_sec": 38.8,
+            "role": "setup",
+            "observation": "男子拍桌叫经理过来。"
+          },
+          {
+            "start_sec": 38.8,
+            "end_sec": 52.8,
+            "role": "decisive",
+            "observation": "男子要求给老叔、弟弟等亲戚安排工作，还要求整日穿旗袍；经理回答会安排。"
+          },
+          {
+            "start_sec": 52.8,
+            "end_sec": 59.0,
+            "role": "reaction",
+            "observation": "男子得意确认对方答应，白皮草女子转头反问自己的话是否不好使。"
+          }
+        ],
+        "alternative_clips": [
+          {
+            "start_sec": 38.0,
+            "end_sec": 59.0,
+            "note": "从经理到场开始，保留具体要求、答应和女子追问。"
+          }
+        ],
+        "boundary_status": "provisional_native_video_bounds"
+      }
+    ],
+    "optional_highlights": [],
+    "context_events": [
+      {
+        "start_sec": 0.0,
+        "end_sec": 35.0,
+        "description": "饭局上众人接连提出给残疾亲戚安排工作，白皮草女子逐项答应。",
+        "relation": "setup_for",
+        "event_id": "manager_job_confrontation",
+        "selection_note": "说明男子为何随后直接叫经理落实要求；该段以重复起哄为主。"
+      }
+    ],
+    "excluded_intervals": [],
+    "notes": "推荐片段控制为24秒，保留召经理、提出具体要求、经理答应和女子追问。",
+    "source_video_sha256": "7bf89bc9c54660701ad1e9c0cbb97ceb783264e052f9f6684b21c505735cd14e",
+    "evidence_reference": "../../outputs/annotation_audit_20261001/vid_71bfb757d01a5fda/",
+    "precision_note": "两次原生音视频观看后以带原片时间的1秒/0.5秒连续画面复核；边界精确到约0.1秒，仍待人类核对词尾与采用等级。"
+  },
+  {
+    "video_id": "vid_9332f7bb20075b77",
+    "annotation_version": "ai_review_v3_20261001",
+    "annotation_method": "codex_gemini_native_video_double_pass_frame_audit",
+    "annotation_status": "labeled",
+    "annotation_tier": "ai_reviewed",
+    "annotator_ids": [
+      "codex",
+      "gemini-3.7-flash"
+    ],
+    "human_verified": false,
+    "review_status": "pending_human_review",
+    "prediction_exposure": false,
+    "highlights": [
+      {
+        "event_id": "empress_questions_seven_years_trust",
+        "start_sec": 38.0,
+        "end_sec": 50.0,
+        "highlight_type": "emotion",
+        "description": "苏皇后直呼萧凌风姓名，质问七年来他相信所有人，却唯独没有相信过自己。",
+        "reason": "一句质问集中呈现七年夫妻信任破裂，是清楚且可独立理解的情绪转折。",
+        "evidence": [
+          {
+            "start_sec": 38.0,
+            "end_sec": 41.0,
+            "role": "setup",
+            "observation": "苏皇后睁眼后直呼“萧凌风”。"
+          },
+          {
+            "start_sec": 41.0,
+            "end_sec": 50.0,
+            "role": "decisive",
+            "observation": "她质问这七年来，对方相信过所有人，却唯独没有相信过自己。"
+          }
+        ],
+        "alternative_clips": [
+          {
+            "start_sec": 38.5,
+            "end_sec": 49.8,
+            "note": "紧贴称名与核心质问的短版本。"
+          }
+        ],
+        "boundary_status": "provisional_native_video_bounds"
+      }
+    ],
+    "optional_highlights": [
+      {
+        "event_id": "emperor_accuses_empress",
+        "start_sec": 13.5,
+        "end_sec": 31.5,
+        "highlight_type": "conflict",
+        "description": "皇帝以柔儿刚入宫便小产为由，指责苏皇后七年来狠毒多疑，连未出生的孩子也不放过。",
+        "reason": "严厉指控推动夫妻矛盾升级，但仍是皇帝单方面陈述，不能当作皇后确实害人。",
+        "evidence": [
+          {
+            "start_sec": 13.5,
+            "end_sec": 19.0,
+            "role": "setup",
+            "observation": "皇帝说柔儿刚嫁入宫便小产，并把责任指向皇后。"
+          },
+          {
+            "start_sec": 19.0,
+            "end_sec": 31.5,
+            "role": "decisive",
+            "observation": "皇帝指责皇后做了七年皇后仍狠毒多疑，连未出生的胎儿也不放过。"
+          }
+        ],
+        "alternative_clips": [],
+        "boundary_status": "provisional_native_video_bounds"
+      }
+    ],
+    "context_events": [
+      {
+        "start_sec": 0.0,
+        "end_sec": 13.5,
+        "description": "柔儿跪地强调自己与皇帝只是兄妹之情，并反问皇后为何不相信夫君。",
+        "relation": "setup_for",
+        "event_id": "emperor_accuses_empress",
+        "selection_note": "交代指控前的宫廷争执。"
+      },
+      {
+        "start_sec": 31.5,
+        "end_sec": 38.0,
+        "description": "苏皇后在指控后闭眼沉默，随后睁眼直呼皇帝姓名。",
+        "relation": "setup_for",
+        "event_id": "empress_questions_seven_years_trust",
+        "selection_note": "这是核心质问前的情绪停顿，不单独计为事件。"
+      }
+    ],
+    "excluded_intervals": [
+      {
+        "start_sec": 50.0,
+        "end_sec": 60.1,
+        "reason": "核心质问后转入另一组人物和场景，当前视频未给出完整的新事件。"
+      }
+    ],
+    "notes": "删除推荐片段前约6秒静止停顿；保留皇帝指控为可选，并明确其属于人物说法。",
+    "source_video_sha256": "a9d425facde37ee1ecffc2fa3cb94068fe4894d2811f9ab9891ed0f0846b5392",
+    "evidence_reference": "../../outputs/annotation_audit_20261001/vid_9332f7bb20075b77/",
+    "precision_note": "两次原生音视频观看后以带原片时间的1秒/0.5秒连续画面复核；边界精确到约0.1秒，仍待人类核对词尾与采用等级。"
+  },
+  {
+    "video_id": "vid_b4a504905fd49852",
+    "annotation_version": "ai_review_v3_20261001",
+    "annotation_method": "codex_gemini_native_video_double_pass_frame_audit",
+    "annotation_status": "labeled",
+    "annotation_tier": "ai_reviewed",
+    "annotator_ids": [
+      "codex",
+      "gemini-3.7-flash"
+    ],
+    "human_verified": false,
+    "review_status": "pending_human_review",
+    "prediction_exposure": false,
+    "highlights": [
+      {
+        "event_id": "xuanmen_disciples_descend",
+        "start_sec": 46.5,
+        "end_sec": 61.5,
+        "highlight_type": "action",
+        "description": "群山之巅传下玄门敕令：乱世山河破碎，弟子当以半世修行换人间太平；众弟子领命后化作流光下山。",
+        "reason": "敕令、领命与集体出山构成完整行动决定，兼具剧情转折和明显视觉结果。",
+        "evidence": [
+          {
+            "start_sec": 46.5,
+            "end_sec": 51.5,
+            "role": "setup",
+            "observation": "群山画面出现，声音召集玄门弟子并说明玄门久已归隐。"
+          },
+          {
+            "start_sec": 51.5,
+            "end_sec": 58.7,
+            "role": "decisive",
+            "observation": "敕令说明乱世、山河破碎、黎民倒悬，要求弟子以半世修行换人间太平。"
+          },
+          {
+            "start_sec": 58.7,
+            "end_sec": 61.5,
+            "role": "reaction",
+            "observation": "一声“去”后，众弟子化作多道流光飞离山门。"
+          }
+        ],
+        "alternative_clips": [
+          {
+            "start_sec": 51.5,
+            "end_sec": 61.5,
+            "note": "保留乱世敕令和化光下山结果的短版本。"
+          }
+        ],
+        "boundary_status": "provisional_native_video_bounds"
+      }
+    ],
+    "optional_highlights": [
+      {
+        "event_id": "ghost_ship_compromise",
+        "start_sec": 0.0,
+        "end_sec": 22.5,
+        "highlight_type": "emotion",
+        "description": "女子坚持同去幽灵船，男子以危险为由拒绝；女子反问是否有人伤得了自己，男子最终同意，但要求她听从指挥。",
+        "reason": "拒绝、反问和妥协构成完整关系互动与同行决定，观看价值依赖甜宠偏好。",
+        "evidence": [
+          {
+            "start_sec": 0.0,
+            "end_sec": 7.5,
+            "role": "setup",
+            "observation": "女子提出同去幽灵船，男子说此行危险，不愿让她犯险。"
+          },
+          {
+            "start_sec": 7.5,
+            "end_sec": 14.5,
+            "role": "decisive",
+            "observation": "女子反问男子是否见过有人伤到自己，男子随即答应。"
+          },
+          {
+            "start_sec": 14.5,
+            "end_sec": 22.5,
+            "role": "reaction",
+            "observation": "男子要求她到时一切行动听从自己，女子答应。"
+          }
+        ],
+        "alternative_clips": [],
+        "boundary_status": "provisional_native_video_bounds"
+      },
+      {
+        "event_id": "mysterious_scale_clue",
+        "start_sec": 23.0,
+        "end_sec": 41.5,
+        "highlight_type": "reveal",
+        "description": "男子拿出从大帅府整理出的某种动物鳞片，称其入手清凉、有静气凝神之效，交给女子辨认是否有用。",
+        "reason": "神秘鳞片作为新线索被明确引入，但片段没有揭示其来源和结论，作为线索类可选事件。",
+        "evidence": [
+          {
+            "start_sec": 23.0,
+            "end_sec": 29.5,
+            "role": "setup",
+            "observation": "男子表示还有一样从大帅府整理出的东西，并称是某种动物鳞片。"
+          },
+          {
+            "start_sec": 29.5,
+            "end_sec": 36.5,
+            "role": "decisive",
+            "observation": "男子说明鳞片入手清凉，似有静气凝神的功效。"
+          },
+          {
+            "start_sec": 36.5,
+            "end_sec": 41.5,
+            "role": "reaction",
+            "observation": "男子把鳞片交给女子，问她是否有用，女子接过查看。"
+          }
+        ],
+        "alternative_clips": [],
+        "boundary_status": "provisional_native_video_bounds"
+      }
+    ],
+    "context_events": [],
+    "excluded_intervals": [
+      {
+        "start_sec": 41.5,
+        "end_sec": 46.5,
+        "reason": "鳞片对话结束后的离场及转场，没有独立新事件。"
+      }
+    ],
+    "notes": "把前段同行决定和中段神秘鳞片拆成两个可独立取舍的可选事件；玄门弟子出山为推荐事件。",
+    "source_video_sha256": "ec4191597d758456db4d9aacf6a8774ea8d101ab11b647bde41bf262499c3f09",
+    "evidence_reference": "../../outputs/annotation_audit_20261001/vid_b4a504905fd49852/",
+    "precision_note": "两次原生音视频观看后以带原片时间的1秒/0.5秒连续画面复核；边界精确到约0.1秒，仍待人类核对词尾与采用等级。"
+  },
+  {
+    "video_id": "vid_ce96726cea7402cd",
+    "annotation_version": "ai_review_v3_20261001",
+    "annotation_method": "codex_gemini_native_video_double_pass_frame_audit",
+    "annotation_status": "labeled",
+    "annotation_tier": "ai_reviewed",
+    "annotator_ids": [
+      "codex",
+      "gemini-3.7-flash"
+    ],
+    "human_verified": false,
+    "review_status": "pending_human_review",
+    "prediction_exposure": false,
+    "highlights": [
+      {
+        "event_id": "threatener_kicked_down",
+        "start_sec": 0.0,
+        "end_sec": 23.8,
+        "highlight_type": "payoff",
+        "description": "郑少以男子的母亲和妹妹进行侮辱威胁，男子随即将他踢飞倒地，并警告“动我家人者死”。",
+        "reason": "完整保留挑衅、直接反击和警告，形成明确的爽剧因果与情绪释放。",
+        "evidence": [
+          {
+            "start_sec": 0.0,
+            "end_sec": 10.7,
+            "role": "setup",
+            "observation": "郑少提到男子的妹妹和母亲，以“抢女人”为由进行侮辱和威胁。"
+          },
+          {
+            "start_sec": 10.7,
+            "end_sec": 15.8,
+            "role": "decisive",
+            "observation": "男子突然出手，将郑少踢飞倒地。"
+          },
+          {
+            "start_sec": 15.8,
+            "end_sec": 23.8,
+            "role": "reaction",
+            "observation": "郑少吐血并被扶起，男子当面警告“动我家人者死”。"
+          }
+        ],
+        "alternative_clips": [
+          {
+            "start_sec": 8.5,
+            "end_sec": 23.8,
+            "note": "从最后一句侮辱开始，保留踢飞和警告的紧凑版本。"
+          }
+        ],
+        "boundary_status": "provisional_native_video_bounds"
+      }
+    ],
+    "optional_highlights": [
+      {
+        "event_id": "bodyguards_charge_cliffhanger",
+        "start_sec": 43.0,
+        "end_sec": 58.0,
+        "highlight_type": "cliffhanger",
+        "description": "郑少叫嚣男子捅破了天并下令杀掉他，多名黑衣保镖随即冲上前包围男子。",
+        "reason": "命令和包围形成下一轮打斗的清楚起点，但视频在真正交手前结束，属于开放冲突。",
+        "evidence": [
+          {
+            "start_sec": 43.0,
+            "end_sec": 50.8,
+            "role": "decisive",
+            "observation": "郑少继续叫嚣并下令“给我杀了他”。"
+          },
+          {
+            "start_sec": 50.8,
+            "end_sec": 58.0,
+            "role": "reaction",
+            "observation": "多名黑衣保镖应声冲出，摆开架势包围男子。"
+          }
+        ],
+        "alternative_clips": [],
+        "boundary_status": "provisional_native_video_bounds"
+      }
+    ],
+    "context_events": [],
+    "excluded_intervals": [
+      {
+        "start_sec": 23.8,
+        "end_sec": 43.0,
+        "reason": "郑少及同伙连续口头叫嚣，主要重复威胁，没有新的行动结果。"
+      }
+    ],
+    "notes": "将推荐边界向前扩至完整家人威胁，避免只保留最后半句挑衅；后段围攻仅列为开放冲突可选项。",
+    "source_video_sha256": "7e728322c584ea68cbff1ffeeea04c03a5a40768a60a0339eb9d08f791ef298d",
+    "evidence_reference": "../../outputs/annotation_audit_20261001/vid_ce96726cea7402cd/",
+    "precision_note": "两次原生音视频观看后以带原片时间的1秒/0.5秒连续画面复核；边界精确到约0.1秒，仍待人类核对词尾与采用等级。"
   }
 ]

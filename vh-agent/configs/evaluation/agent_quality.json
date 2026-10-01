@@ -1,0 +1,7 @@
+{
+  "max_clip_sec": 30,
+  "min_clip_sec": 3,
+  "max_highlights": null,
+  "total_duration_sec": null,
+  "allow_overlap": true
+}

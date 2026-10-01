@@ -2,33 +2,34 @@ from pathlib import Path
 from typing import Literal
 from uuid import uuid4
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 
-HighlightType = Literal[
-    "conflict",
-    "reversal",
-    "reveal",
-    "payoff",
-    "emotion",
-    "action",
-    "romance",
-    "cliffhanger",
-    "other",
-]
 ReviewStatus = Literal["pending", "accepted", "rejected", "revised"]
 
 
-def _new_job_id() -> str:
-    return f"job_{uuid4().hex[:16]}"
-
-
 class DetectionTask(BaseModel):
-    """Internal backend-to-agent task; never exposed as a frontend contract."""
-
+    model_config = ConfigDict(extra="forbid", allow_inf_nan=False)
     video_path: Path
     video_id: str | None = Field(default=None, pattern=r"^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$")
-    job_id: str = Field(default_factory=_new_job_id, pattern=r"^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$")
-    language: Literal["zh", "en"] | None = None
+    job_id: str = Field(
+        default_factory=lambda: f"job_{uuid4().hex[:16]}",
+        pattern=r"^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$",
+    )
+    language: str | None = None
+    instruction: str = "挑选有看点、能独立看懂的短剧片段，保留必要铺垫和反应，剪辑简洁流畅。"
+    subtitle_path: Path | None = None
+    max_highlights: int | None = Field(default=12, gt=0)
+    min_clip_sec: float = Field(default=3, gt=0)
+    max_clip_sec: float = Field(default=24, gt=0)
+    total_duration_sec: float | None = Field(default=None, gt=0)
+    allow_overlap: bool = True
+    resume: bool = False
+
+    @model_validator(mode="after")
+    def durations(self):
+        if self.min_clip_sec > self.max_clip_sec:
+            raise ValueError("min_clip_sec must not exceed max_clip_sec")
+        return self
 
 
 class VideoSummary(BaseModel):
@@ -42,18 +43,37 @@ class Highlight(BaseModel):
     start_sec: float
     end_sec: float
     score: float = Field(ge=0, le=1)
-    highlight_type: HighlightType
+    highlight_type: str
     description: str
     reason: str
     clip_url: str
     review_status: ReviewStatus = "pending"
 
 
+class AnalysisSummary(BaseModel):
+    scan_coverage: float = Field(ge=0, le=1)
+    pending_event_count: int = Field(ge=0)
+    pending_observation_count: int = Field(ge=0)
+    pending_proposal_count: int = Field(ge=0)
+    pending_review_count: int = Field(ge=0)
+    stop_reason: str
+    model_calls: int = Field(ge=0)
+
+
 class DetectionResult(BaseModel):
-    schema_version: Literal["1.0"] = "1.0"
+    schema_version: Literal["2.0"] = "2.0"
     job_id: str
     video: VideoSummary
+    completion: Literal["complete", "partial"]
+    message: str
+    analysis: AnalysisSummary
     highlights: list[Highlight]
+
+    @model_validator(mode="after")
+    def publish_only_complete_selection(self):
+        if self.completion == "partial" and self.highlights:
+            raise ValueError("partial results cannot publish unselected highlights")
+        return self
 
 
 class VideoInfo(BaseModel):
@@ -63,8 +83,6 @@ class VideoInfo(BaseModel):
     height: int
     fps: float
     has_audio: bool
-    title: str = ""
-    language: str | None = None
 
 
 class TranscriptSegment(BaseModel):
@@ -80,7 +98,6 @@ class AudioEvent(BaseModel):
     end_sec: float = 0.0
     emotion: str = "neutral"
     event: str = "speech"
-    confidence: float | None = None
 
 
 class SceneSegment(BaseModel):
@@ -91,186 +108,3 @@ class SceneSegment(BaseModel):
 class FrameSample(BaseModel):
     timestamp_sec: float
     path: Path
-    change_score: float = 0.0
-    semantic_change_score: float = 0.0
-
-
-class CandidateWindow(BaseModel):
-    start_sec: float
-    end_sec: float
-    local_score: float = Field(ge=0, le=1)
-    audio_score: float = Field(default=0, ge=0, le=1)
-    visual_score: float = Field(default=0, ge=0, le=1)
-    semantic_score: float = Field(default=0, ge=0, le=1)
-    scene_score: float = Field(default=0, ge=0, le=1)
-    cue_score: float = Field(default=0, ge=0, le=1)
-    filter_penalty: float = Field(default=0, ge=0, le=1)
-    filter_reasons: list[str] = Field(default_factory=list)
-    transcript: str = ""
-
-
-class SceneCard(BaseModel):
-    """A semantic scene assembled locally before cloud narrative mapping."""
-
-    scene_id: str
-    start_sec: float
-    end_sec: float
-    shot_ids: list[str] = Field(default_factory=list)
-    local_score: float = Field(default=0, ge=0, le=1)
-    transcript: str = ""
-    audio_context: str = ""
-    frame_samples: list[FrameSample] = Field(default_factory=list)
-    speakers: list[str] = Field(default_factory=list)
-    face_track_ids: list[str] = Field(default_factory=list)
-    actors: list[str] = Field(default_factory=list)
-    action: str = ""
-    event_type: list[str] = Field(default_factory=list)
-    claims: list[str] = Field(default_factory=list)
-    state_before: str = ""
-    new_evidence: str = ""
-    state_after: str = ""
-    relationship_change: str = ""
-    emotion: list[str] = Field(default_factory=list)
-    salience: float = Field(default=0.5, ge=0, le=1)
-    uncertainty: float = Field(default=0.5, ge=0, le=1)
-    evidence: list[str] = Field(default_factory=list)
-
-
-class SceneNarrative(BaseModel):
-    """Evidence-backed Scene Map fields returned for one pre-built SceneCard."""
-
-    scene_id: str
-    actors: list[str] = Field(default_factory=list)
-    action: str = ""
-    event_type: list[str] = Field(default_factory=list)
-    claims: list[str] = Field(default_factory=list)
-    state_before: str = ""
-    new_evidence: str = ""
-    state_after: str = ""
-    relationship_change: str = ""
-    emotion: list[str] = Field(default_factory=list)
-    salience: float = Field(default=0.5, ge=0, le=1)
-    uncertainty: float = Field(default=0.5, ge=0, le=1)
-    evidence: list[str] = Field(default_factory=list)
-
-
-class EvidenceLedger(BaseModel):
-    """Unverified, time-bounded observations from prior Scene Map outputs."""
-
-    characters: list[str] = Field(default_factory=list)
-    observations: list[str] = Field(default_factory=list)
-    relationships: list[str] = Field(default_factory=list)
-    open_threads: list[str] = Field(default_factory=list)
-    recent_summaries: list[str] = Field(default_factory=list)
-
-
-class JudgeDecision(BaseModel):
-    map_supported: bool
-    is_highlight: bool = False
-    score: float = Field(default=0, ge=0, le=1)
-    highlight_type: HighlightType = "other"
-    description: str = ""
-    reason: str = ""
-    confidence: float = Field(default=0, ge=0, le=1)
-    evidence_grounding: float = Field(ge=0, le=1)
-    narrative_impact: float = Field(ge=0, le=1)
-    standalone_clarity: float = Field(ge=0, le=1)
-    clipability: float = Field(ge=0, le=1)
-    start_sec: float | None = None
-    end_sec: float | None = None
-    evidence: list[str] = Field(default_factory=list)
-    setup_evidence_times_sec: list[float] = Field(default_factory=list)
-    decisive_evidence_times_sec: list[float] = Field(default_factory=list)
-    reaction_evidence_times_sec: list[float] = Field(default_factory=list)
-    counter_evidence: list[str] = Field(default_factory=list)
-    continue_previous_scene: bool = False
-
-
-class JudgeConsensus(BaseModel):
-    decision: JudgeDecision
-    votes: list[JudgeDecision] = Field(min_length=2, max_length=3)
-    calls: int = Field(ge=2, le=3)
-
-
-class RankedHighlight(BaseModel):
-    """Internal scored highlight before conversion to the public result."""
-
-    highlight_id: str
-    start_sec: float
-    end_sec: float
-    score: float = Field(ge=0, le=1)
-    local_score: float = Field(ge=0, le=1)
-    judge_score: float = Field(ge=0, le=1)
-    highlight_type: HighlightType
-    description: str
-    reason: str
-    transcript: str = ""
-    evidence: list[str] = Field(default_factory=list)
-    confidence: float = Field(ge=0, le=1)
-
-
-class GlobalRanking(BaseModel):
-    ranked_highlight_ids: list[str]
-    selected_highlight_ids: list[str]
-    rationale: str = ""
-
-
-class DetectionStats(BaseModel):
-    sampled_frames: int
-    detected_scenes: int
-    transcript_segments: int
-    ocr_segments: int
-    audio_events: int
-    local_candidate_windows: int
-    scene_map_calls: int
-    judge_calls: int
-    listwise_calls: int
-
-
-class PreprocessTrace(BaseModel):
-    video: VideoInfo
-    scenes: list[SceneSegment]
-    transcript: list[TranscriptSegment]
-    audio_events: list[AudioEvent]
-    frame_samples: list[FrameSample]
-    saliency_per_second: list[float]
-
-
-class PreprocessArtifacts(BaseModel):
-    """Reusable expensive local outputs for one exact preprocessing signature."""
-
-    cache_version: Literal["1"] = "1"
-    signature: str
-    scenes: list[SceneSegment]
-    transcript: list[TranscriptSegment]
-    audio_events: list[AudioEvent]
-    frame_samples: list[FrameSample]
-
-
-class SceneMapArtifact(BaseModel):
-    """One cached Scene Map response tied to its exact request signature."""
-
-    cache_version: Literal["1"] = "1"
-    signature: str
-    narrative: SceneNarrative
-
-
-class DecisionTrace(BaseModel):
-    scene: SceneCard
-    decision: JudgeDecision
-    votes: list[JudgeDecision] = Field(min_length=2, max_length=3)
-
-
-class ReasoningTrace(BaseModel):
-    scenes: list[SceneCard]
-    decisions: list[DecisionTrace]
-    ranking: GlobalRanking
-
-
-class DetectionTrace(BaseModel):
-    pipeline_version: Literal["0.21.0"] = "0.21.0"
-    preprocess: PreprocessTrace
-    local_candidates: list[CandidateWindow]
-    reasoning: ReasoningTrace
-    stats: DetectionStats
-    notes: list[str] = Field(default_factory=list)

@@ -1,12 +1,8 @@
 import hashlib
 import json
-import re
 import subprocess
 import wave
 from pathlib import Path
-
-import numpy as np
-from PIL import Image
 
 from ..models import FrameSample, VideoInfo
 
@@ -25,7 +21,7 @@ def _run(command: list[str]) -> subprocess.CompletedProcess[str]:
         raise MediaError(message) from exc
 
 
-def probe_video(path: Path, language: str | None = None) -> VideoInfo:
+def probe_video(path: Path) -> VideoInfo:
     path = path.expanduser().resolve()
     if not path.is_file():
         raise MediaError(f"Video is not readable: {path}")
@@ -63,8 +59,6 @@ def probe_video(path: Path, language: str | None = None) -> VideoInfo:
         height=height,
         fps=fps,
         has_audio=any(stream.get("codec_type") == "audio" for stream in streams),
-        title=_clean_title(path.stem),
-        language=language,
     )
 
 
@@ -129,16 +123,10 @@ def extract_frames(
 
 
 def load_frame_samples(output_dir: Path, sample_fps: float) -> list[FrameSample]:
-    samples: list[FrameSample] = []
-    previous: np.ndarray | None = None
-    for index, path in enumerate(sorted(output_dir.glob("frame_*.jpg"))):
-        with Image.open(path) as image:
-            current = np.asarray(image.convert("L").resize((64, 64)), dtype=np.float32)
-        change = 0.0 if previous is None else float(np.mean(np.abs(current - previous)) / 255.0)
-        samples.append(
-            FrameSample(timestamp_sec=index / sample_fps, path=path, change_score=change)
-        )
-        previous = current
+    samples = [
+        FrameSample(timestamp_sec=index / sample_fps, path=path)
+        for index, path in enumerate(sorted(output_dir.glob("frame_*.jpg")))
+    ]
     if not samples:
         raise MediaError(f"Frame cache contains no images: {output_dir}")
     return samples
@@ -154,67 +142,7 @@ def _valid_wav(path: Path) -> bool:
         return False
 
 
-def audio_energy_per_second(audio_path: Path) -> list[float]:
-    if not audio_path.is_file():
-        raise MediaError(f"Extracted audio is missing: {audio_path}")
-    with wave.open(str(audio_path), "rb") as source:
-        sample_rate = source.getframerate()
-        channels = source.getnchannels()
-        raw = source.readframes(source.getnframes())
-    samples = np.frombuffer(raw, dtype=np.int16).astype(np.float32)
-    if channels > 1:
-        samples = samples.reshape(-1, channels).mean(axis=1)
-    energies: list[float] = []
-    for start in range(0, len(samples), sample_rate):
-        chunk = samples[start : start + sample_rate]
-        rms = float(np.sqrt(np.mean(np.square(chunk)))) if len(chunk) else 0.0
-        energies.append(rms)
-    return energies
-
-
-def export_clip(
-    video_path: Path,
-    output_path: Path,
-    start_sec: float,
-    end_sec: float,
-) -> Path:
-    output_path.parent.mkdir(parents=True, exist_ok=True)
-    _run(
-        [
-            "ffmpeg",
-            "-y",
-            "-v",
-            "error",
-            "-ss",
-            f"{start_sec:.3f}",
-            "-i",
-            str(video_path),
-            "-t",
-            f"{end_sec - start_sec:.3f}",
-            "-c:v",
-            "libx264",
-            "-preset",
-            "veryfast",
-            "-crf",
-            "21",
-            "-c:a",
-            "aac",
-            "-movflags",
-            "+faststart",
-            str(output_path),
-        ]
-    )
-    return output_path
-
-
 def video_fingerprint(path: Path) -> str:
     stat = path.stat()
     payload = f"{path.resolve()}:{stat.st_size}:{stat.st_mtime_ns}"
     return hashlib.sha1(payload.encode()).hexdigest()[:16]
-
-
-def _clean_title(stem: str) -> str:
-    title = re.sub(r"^\([^)]*\)P\d+_第\d+集_#?", "", stem)
-    title = title.split("【", 1)[0]
-    title = re.sub(r"_(?:360|480|720|1080)P$", "", title, flags=re.IGNORECASE)
-    return title.strip("_# ") or stem

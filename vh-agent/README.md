@@ -1,248 +1,85 @@
-# VH Agent
+# Video Highlight Agent
 
-短剧多模态高光检测 Agent。输入一个本地视频，输出结构化高光结果和可播放片段。
+项目只保留一条检测链路：`vh run` → 原生 Gemini 视频 ReAct Agent → 实际成片复核 → 完整候选池取舍 → 冻结成片。旧 Scene Map、双 Judge、仲裁、滑窗启发式和中点切分已删除。
 
-## Structure
+## 输入与工具
 
-```text
-vh-agent/
-├── src/vh_agent/   # Agent 运行代码
-├── tests/          # 核心单元与回归测试
-├── datasets/test/  # 5 条人工金标 + 10 条长视频银标
-├── datasets/silver/ # 全量模型银标，按运行 ID 隔离
-└── outputs/        # 任务结果与评测结果
-```
+输入是原视频、可选字幕、语言、提取目标和输出约束。24 秒是可配置上限，不是目标长度；目标是有看点、能独立看懂，保留必要铺垫和反应的片段。输出数量只在最终选择时生效。
 
-根目录不保存生成式契约、一次性调参脚本或独立架构文档。Agent 的公共边界直接由 `DetectionTask` 和 `DetectionResult` 两个 Pydantic 模型定义。
+- 原片分页由运行时按时间顺序连续送入；能放进同一请求的相邻页面会批量发送，媒体过大时拆页，不截断。
+- `inspect_interval`：按原片时间补查，可设置 `sampling_fps` 提高动作观察密度。
+- `search_transcript`：按原文或时间分页查询 SRT/VTT/ASS 字幕或按需 ASR；未配置可用文字来源时不声明该工具。
+- `propose_highlights`：可选本地定位模型，对完整视频推理并分页返回全部预测；粗边界、分数只是线索。每个返回池中的候选须以视频证据处置。
+- `record_observations`：一次登记本轮送入的全部观察。每条发现直接登记为事件并与实际观察关联；确实没有发现候选时说明情况。
+- `update_event`：修订已有事件的判断、证据、边界和合并关系。
+- `read_state`：需要回查时分页读取事件、观察、已读字幕、查询历史和有效页面。
+- `select_highlights`：依据实际成片所见比较完整候选池的独立吸引力和新增价值，逐项保留或舍弃；一次原子提交同时冻结候选、记录理由和价值顺序。内容需要核对时先补看或修订。
 
-## Single-Agent Development Contract
+Agent 在各工作段内保留原生工具交互，按 token 估算、请求字节预算和处理阶段换段。每批视频送达后，下一步只开放绑定这些观察的批量登记工具；登记完成后才继续取证。全片取证完成后，运行时自动生成实际片段并并发独立复核，不再为确定性步骤消耗 Agent 轮次。已读字幕、分页进度、当前事件和完整候选池持久保存。每条候选只围绕一个可独立采用的核心看点；相邻看点分开登记，可以共享铺垫并重叠。最终选择不修改冻结边界；禁止重叠时由 Agent 修订冲突的选择，程序不切分片段。独立复核只判断实际成片是否缺少必要上下文、存在截断、混合多个独立看点或有音画故障；粗边界直接交给人类编辑调整。公开片段的描述和类型使用同一次独立复核的实际所见，取舍理由来自全局选择；原始事件判断保留在内部状态中。
 
-本项目长期采用一个面向用户的 `HighlightAgent`，不把 Chapter Mapper、Judge、Listwise Ranker、预处理器或视频编辑器包装成多个 Agent。它们是单 Agent 可调用的模型角色或确定性工具。只有当单 Agent 因工具严重重叠或提示词条件长期不可维护而无法达到评测目标时，才重新评估多 Agent 架构。
+事件核验与编辑取舍分开：清楚发生的事件先进入成片复核，价值较弱、开放悬念或剧情继续都留到最终选择。`rejected` 只允许事件未发生、被证据否定、明确超出用户任务，或已经证明无法形成合格片段，并保存结构化类别。
 
-自然语言是控制层，稳定的视频处理流程是执行层：
+v23 首次进入最终选择时建立新的会话工作段，依据完整候选池的 `visible_event` 比较可用看点。独立复核只描述实际内容、分类并检查具体剪辑缺陷；采用价值 `score` 和理由由主 Agent 看完整候选后统一生成。初看描述和早期价值理由按需回查。选择期间补看、登记和修订保持同一工作段，并持久保留核对结论；公开描述和类型来自实际成片复核，分数和理由来自同一次最终取舍。
 
-```text
-natural-language request
-  -> typed command plan
-  -> deterministic tools
-  -> evidence verification
-  -> at most one targeted refinement
-  -> structured result
-```
+每轮模型只允许执行一个工具动作；`record_observations` 和 `select_highlights` 分别在一次动作中提交一批观察或完整候选决定。多工具调用整体拒绝且不改变业务状态。已启用的输入来源必须全部消费：全文字幕分页读完，本地位置线索完整载入并逐项用原视频核验，之后才开放最终选择。每轮请求都提供最新持久状态，包含运行时自动生成的成片与独立复核结果。选择阶段直接提供完整候选池，同时保留补看、修订和可用的字幕检索；候选较多时还可读取完整事件。修订会使旧复核失效，重新成片复核后才能选择。
 
-采用受约束的 Plan-Execute-Verify 循环，不使用自由运行的 ReAct 循环。简单命令只执行一个工具；只有证据不足时才允许一次局部补查。Agent 必须有明确的完成条件、失败状态和最大调用预算。
-
-### Command Plans
-
-自然语言请求最终只能编译为四类带类型的计划：
-
-- `DetectPlan`: 检测指定类型、数量和时长的高光。
-- `EditPlan`: 调整、删除、拆分、合并或替换已有高光。
-- `QueryPlan`: 查询视频内容、剧情证据或检测结果。
-- `ExportPlan`: 导出单段、合集或指定媒体格式。
-
-含义不完整且会改变视频结果的命令必须先澄清。例如“第二段缩短两秒”需要确认修改开头、结尾还是两端；“第二段尾部缩短两秒”可以直接执行。用户界面的序号在执行前必须解析为稳定的 `highlight_id`，不能把可变化的数组下标当作资源标识。
-
-### Agent Tools
-
-单 Agent 最多暴露五组职责互斥的工具：
-
-- `inspect_video`: 读取视频元信息和现有任务状态。
-- `detect_highlights`: 执行高光检测工作流。
-- `edit_highlights`: 对已检测片段执行确定性非破坏编辑。
-- `query_video`: 针对时间轴和剧情证据进行局部检索。
-- `export_highlights`: 使用 ffmpeg 生成或重新生成媒体文件。
-
-模型不得直接拼接 shell 或 ffmpeg 命令。所有编辑先校验视频边界、最小时长和稳定 ID，只重新导出受影响的片段。
-
-### State Ownership
-
-`vh-backend` 负责会话、当前 `job_id`、结果版本、操作历史和撤销记录；`vh-agent` 接收显式状态并返回更新后的结构化结果，不维护隐藏的跨请求内存。一次 Agent 调用的最小状态包括：
-
-```text
-session_id, active_job_id, revision, user_message,
-ordered highlight summaries, last action
-```
-
-检测运行内部仍只有五步：
-
-```text
-local preprocessing
-  -> high-recall semantic scene construction
-  -> one-scene narrative mapping
-  -> dual-perspective verification and boundary refinement
-  -> causal merge, global ranking and export
-```
-
-### Context And Prompt Rules
-
-- Planner 只接收用户目标、视频元信息、可用工具和输出约束，不接收帧或整集字幕。
-- Scene Map 逐场抽取可观察叙事，不做最终高光裁决；本地滑窗只聚合成 `local_score`，不作为 Map 或 Judge 的语义单位。
-- Judge 只验证当前 `SceneCard` 的 Map 三元组、当前场原始材料、紧邻前场铺垫和未验证 `EvidenceLedger`；证据核验视角与成片视角各调用一次，只有结论、类型、分数或边界存在实质分歧时才增加一次仲裁，不改写剧情或另起高光事件。
-- Listwise Ranker 只在已验证候选超过视频输出预算时接收其摘要，负责全局压缩、相对强弱、去重、剧情覆盖和数量选择，不修改事实、类型或时间边界；预算内候选由确定性去重后直接保留。
-- 每张关键帧必须带稳定编号和时间戳；每条剧情事实必须保留时间范围与证据来源。
-- 事实、假设和最终决策使用不同字段，模型不得把推测写入已知事实。
-- 提示词要求结论、分项分数和可核验的证据 ID，不要求或保存模型隐藏思维链。
-- 上下文按任务检索，不把整集字幕、全部事件或历史提示词不断追加到下一次调用。
-- 模型输出必须通过 Pydantic 严格校验；空内容或非法 JSON 使用同一模型和同一请求最多重试两次，第三次失败即终止当前步骤，不静默补默认值或切换兜底模型。
-- Prompt 只表达可推广的任务定义和判据，不写入具体失败样本的人名、台词或剧情；规则变更必须配套通用回归测试。
-
-### Engineering Rules
-
-以下规则继承自全局 `AGENTS.md`，对本项目所有后续开发生效：
-
-1. 不保留向后兼容。过时代码直接删除，不增加兼容层、migration 或 fallback。
-2. 选择满足当前需求的最简单实现，不做预防性抽象或多余配置层。
-3. 从可运行的最小端到端版本逐步生长，不为未完成的复杂度拆掉工作链路。
-4. 组件模块化并保持关注点分离。
-5. 优先采用成熟、活跃维护的库，没有明确理由不自行重写。
-6. 增加依赖或自研前，先检查项目现有依赖已经提供的能力。
-7. 架构决策面向长期，不接受“先这样以后再换”的临时设计。
-8. 先研究成熟产品和论文的已验证模式，再设计同类能力。
-
-当前迭代优先级是检测效果而不是扩展 Agent 功能。先冻结命令和工具边界，再集中优化 Judge 召回、剧情证据、时间边界和全局排序；检测指标稳定后再实现完整自然语言编辑体验。
-
-### Accuracy Roadmap
-
-1. 第一阶段：本地将镜头合成为 8-40 秒的 `SceneCard`，滑窗分数只作为场景召回与切分软约束；Scene Map 为每场生成带原始证据的叙事三元组。
-2. 第二阶段：两个互补 Judge 视角使用原始帧、带时间码字幕、声音、紧邻前场和未验证 `EvidenceLedger` 验证 Scene Map；Map 不成立时直接否决，分歧时才仲裁，不在 Judge 内改写剧情。
-3. 第三阶段：相邻且因果连续的通过场景合并为 6-24 秒片段；确定性去重后，只有候选超过数量预算时才进行全局 listwise 压缩。
-4. 人工标注扩充后，使用 `SceneCard`、Map 证据、Judge 决策、显著性曲线和最终边界训练多模态高光模型，并作为同一检测接口的本地实现接入。
-
-三个阶段均已实现。第三阶段只处理已验证候选的全局相对排序、去重与数量预算，不反向改变章节 Map、Judge 或边界。
-
-### Local Highlight Model
-
-本地模型采用无 Query 的事件中心叙事转变定位。标注文件保持不变，Gemini 的剧情描述和判断理由不进入学生模型；公开输出仍只有带分数的时间段。
-
-```text
-3-frame video moment + separated ASR/OCR -> frozen Qwen3-VL-Embedding-2B
-30-second audio windows -> frozen SenseVoice encoder -> second-aligned audio states
-  -> availability-aware gated moment fusion
-  -> causal hierarchical local attention at 1s / 4s / 16s
-  -> temporally pooled scene memory
-  -> causal before / local event / bounded after + global salience
-  -> narrative transition vector
-  -> eventness peak + start/end offsets + anchor-aware segment quality
-  -> temporal NMS
-```
-
-每一秒使用 `[t-1,t,t+1]` 三帧的 Qwen video 接口，并在文本中分开写入 Speech 与 On-screen text。音频以带重叠的 30 秒窗口提取 SenseVoice encoder hidden，再对齐到秒级；两路冻结特征按视频缓存，训练阶段只优化融合、层次时序、场景记忆、转变解码器和输出头。
-
-场景记忆只由媒体缓存中的镜头边界和时序特征池化得到。层级骨干的局部注意力、下采样和上采样均为因果计算；before 分支只能访问过去 32 秒和在当前时刻前已经结束的场景；event 分支访问 `[t-2,t+2]`；after 分支最多访问未来 8 秒。全片场景记忆仅进入显著性上下文，不进入三种状态，因此不会把未来剧情泄漏给 before。
-
-模型以 decisive anchor 为事件中心生成更尖锐的 eventness 热图，并在中心采样区域内回归完整银标段的起止偏移；边界损失额外约束预测片段中心。setup、decisive 与 reaction 时间监督三个受时间掩码约束的注意力位置，并进入片段质量头。分类和排序只把每个高光的 decisive 秒当作正峰：其它局部峰是难负样本，质量头只在这些候选上预测与匹配银标的 IoU。推理分数仍由 eventness 与 segment quality 相乘，再执行 temporal NMS。
-
-训练数据使用固定 seed 按视频随机划分为 90% 训练集和 10% 测试集，同一部剧的不同视频允许进入不同子集；不设置验证集，也不使用测试集选择 checkpoint 或搜索解码参数。模型固定训练 8 轮并保存最终轮 `checkpoint.pt`，以固定阈值 0.05 和最多 12 个片段在测试集上执行一次段级 `F1@IoU 0.3/0.5/0.7` 评估。运行目录保存完整 `video_split.json`，确保实验可复现。
-
-
-## Pipeline
-
-```text
-video
-  -> ffmpeg / PySceneDetect / Whisper / PP-OCRv6 / SenseVoice / Qwen3-VL Embedding
-  -> local high-recall windows (score and scene-boundary hints only)
-  -> semantic SceneCard construction
-  -> concurrent OpenAI-compatible one-SceneCard Scene Map calls
-  -> unverified EvidenceLedger
-  -> evidence-focused Judge + editing-focused Judge
-  -> conditional adjudication on material disagreement
-  -> scene-aware state-change gate and boundary refinement
-  -> post-Judge causal scene merge and deterministic deduplication
-  -> global listwise compression only above the output budget
-  -> selected highlights and MP4 clips
-```
-
-`SceneSegment` 只是镜头边界；`SceneCard` 才是一场戏或完整事件跨度，目标 8-40 秒，可跨多个镜头，最终高光仍限制在 24 秒内。局部滑窗只向 SceneCard 聚合 `local_score`，绝不作为 Judge 主输入。Scene Map 对每场生成唯一、带证据的叙事命题；Judge 只输出证据充分性、叙事影响、独立可懂性和成片完整性四项分数，总分和通过结论由代码计算。`EvidenceLedger` 由更早 Scene Map 的带时间证据观察组成，明确是未验证账本，不能混称为 Judge 已验证记忆。只有两张相邻 SceneCard 都通过 Judge、后场明确标记为前场的因果连续，且合并后不超过 24 秒时才合并出片。确定性去重后，已验证候选在输出预算内会直接保留；仅超出预算时调用全局 listwise 压缩。短视频最多输出两段。
-0.21.0 的性能优化不删减 SceneCard：PP-OCRv6 以 8 帧批量推理；镜头检测、ASR、OCR 与 SenseVoice 首次运行并行；ASR/OCR/声音事件/镜头/embedding 结果按视频指纹和预处理签名写入媒体缓存；Scene Map 均匀检查最多 6 张低细节关键帧，Judge 均匀检查最多 8 张高细节关键帧。Scene Map 按模型、完整 Prompt、SceneCard 和实际提交帧逐场缓存，模型、Prompt、帧或预处理参数变化会直接使对应缓存失效，不读取旧格式。Map 与 Judge 默认并发均为 6；Whisper 使用确定性贪心解码，硬字幕继续由 PP-OCRv6 校正，避免 beam search 在全量标注中接近实时地重复搜索。最终结果仍等待全片所有场景完成，因此这些优化不改变召回范围。
-
-
-## Source Modules
-
-- `pipeline.py`: 端到端编排和后端调用入口。
-- `models.py`: Agent 输入、输出、SceneCard 和 trace 数据模型。
-- `candidates.py`: 本地高召回滑窗评分和时间覆盖。
-- `reasoning.py`: OpenAI 兼容的单场 Scene Map、Judge、结构化校验和 EvidenceLedger。
-- `preprocessing/`: ffmpeg、ASR、OCR、声音事件、镜头和 embedding 适配器。
-- `highlight_model/`: 本地高光模型的编码器、数据集、网络、损失、解码和拟合流程。
-- `evaluation.py`: 测试集运行与指标计算。
-- `cli.py`: `vh` 命令行入口。
-
-## Setup
+## 安装与运行
 
 ```bash
-conda activate env_vh
-cd /home/wkw/video-highlight/vh-agent
-python -m pip install -e '.[enhanced,dev]'
+uv sync --extra dev
+cp .env.example .env  # 填写 GEMINI_API_KEY 与明确的端点、模型
+uv run vh run /path/to/video.mp4 --job-id job_example1 --language zh
+uv run vh run /path/to/video.mp4 --job-id job_example1 --language zh --resume
+uv run vh run /path/to/video.mp4 --subtitles /path/to/dialogue.srt --max-clip-sec 15 --max-highlights 8
 ```
 
-`.env` 只保存在本机。模型位于 `/data1/video-highlight-models` 和 `/data1/modelscope_models`，媒体缓存位于 `/data1/video-highlight-cache`。
+默认终端仅显示完成状态和结果路径，`--verbose` 显示逐步工具进度。
 
-推理模型使用 OpenAI 兼容接口。当前默认路由为 Gemini：Scene Map 使用
-`gemini-3.1-flash-lite`，Judge 与全局排序使用 `gemini-3.7-flash`，端点为
-`https://yetoken.vip/v1`。Qwen/SiliconFlow 配置仍保留；将
-`VH_REASONING_PROVIDER` 设置为 `siliconflow` 即可显式切换。
+`--instruction` 设置目标；`--task-file task.json` 可设置 `min_clip_sec`、`max_clip_sec`、`max_highlights`（null 表示不限数量）、`total_duration_sec` 和 `allow_overlap`。CLI 参数覆盖任务文件对应项。
 
-## Run
+本地候选及 ASR 使用 `uv sync --extra enhanced --extra dev` 安装依赖；`VH_LOCAL_CHECKPOINT` 指向实际 checkpoint，其同目录 `config.json` 定义网络与特征配置，`VH_LOCAL_DEVICE` 指定设备。启用本地候选时必须提供视频语言，OCR 按该语言选择模型，不根据数据集名称猜测。没有 checkpoint 时 Agent 通过原生音视频独立发现事件。特征冷启动复用现有 ASR、OCR、镜头和冻结编码器；缓存签名不匹配时重新提取。
 
-```bash
-vh inspect /path/to/video.mp4 --language zh
-vh run /path/to/video.mp4 --language zh --video-id vid_xxx --trace
-```
+Gemini 走原生 `generateContent`，发送实际音视频与函数响应；只使用配置端点和模型，不自动切换协议或模型。上传帧率设置不等于已证明网关逐帧检查，真实召回和边界质量需人工评测。
 
-后端直接调用：
+## 结果、检查点和恢复
 
-```python
-from vh_agent import DetectionTask, HighlightDetectionService
-
-result = HighlightDetectionService().detect(
-    DetectionTask(video_path="/path/to/video.mp4", video_id="vid_xxx", language="zh")
-)
-```
-
-每个任务只写入：
+每个任务写入 `outputs/jobs/{job_id}/`：
 
 ```text
-outputs/jobs/{job_id}/
-├── result.json
-├── clips/
-└── trace.json       # 仅启用 trace 时生成
+result.json     # schema 2.0、complete/partial、高光与公开播放 URL
+clips.json      # 稳定片段 ID → 已复核媒体及对应事件
+state.json      # 检查点：业务记录、原生会话、待执行调用与已提交结果、检索和停滞记忆
+progress.json   # 实际覆盖及待处理数量
+trace.jsonl     # 工具动作、复核、API 用量和耗时，不保存隐藏思维
+selection.json # 每个候选的最终选择/排除理由
+media/          # 按实际源时间戳生成的观察与成片
 ```
 
-## Evaluate
+全部页面已观察登记、全部已发现事件及工具候选已处置后才能 `complete`。空高光可以是完整结果；partial 保留待选片段于 state，公开 highlights 为空，避免把尚未取舍的候选当作最终输出；API 错误、无效模型输出或无进展循环停止时返回 `partial`、退出码 2。`--resume` 继续同一检查点，要求输入、模型、代码和约束一致；暂时性请求失败按 `VH_MAX_REQUEST_ATTEMPTS` 有界重试同一请求，所有尝试写入 trace；不会重跑整个任务。前后端都消费 schema 2.0，不兼容旧结果格式。
 
-`datasets/test` 是唯一测试集，共 15 条真实视频。默认只评分 5 条人工金标；`--include-silver` 同时评分 10 条长视频银标。评分同时报告 IoU 0.30、0.50、0.70 的候选召回、验证召回、边界召回、精确率和 F1。
+状态更新和调用结果一同提交；恢复继续未执行调用，复用已提交结果。未完成的模型请求重发同一会话输入。`VH_CONTEXT_TOKEN_BUDGET`（含 8192 输出预留）、`VH_CONTEXT_BYTE_BUDGET` 和 `VH_MAX_STAGNANT_STEPS` 控制资源；token 使用保守估算，字节另由请求端强校验。改代码后的旧检查点不迁移，需要新任务。
+
+后端 `/api/jobs/{id}/clips/{highlight_id}` 返回复核的同一份媒体。手工编辑边界使旧成片关联失效，按编辑后的原片区间导出。
+
+## 评测与本地训练
 
 ```bash
-vh evaluate run --run-id phase3_v0_13 --resume
-vh evaluate score --run-id phase3_v0_13
-vh evaluate score --run-id phase3_v0_13 --include-silver
+uv run vh evaluate run --run-id react_v1 --task-file configs/evaluation/agent_quality.json
+uv run vh evaluate score --run-id react_v1
+uv run vh evaluate compare --comparison-id selection_change --kind revision --run-id before --run-id after
+uv run vh label run --run-id react_silver_v1
+uv run vh train run --help
 ```
 
-0.13.0 的 5 条人工金标结果保存在 `outputs/evaluations/phase3_v0_13`：候选召回、语义验证召回和最终召回均为 100%，精确率 61.5%，F1 76.2%，共输出 13 段。该目录是 Qwen/SiliconFlow 的历史隔离 listwise 基线；每次推理或边界逻辑变更都必须使用独立运行 ID 重跑 Gemini，不能复用旧 trace。
+评测冻结输入、标注、配置与代码，支持恢复和离线重算；分别报告事件发现、原始边界 IoU、阶段召回、完成率、置信区间和运行时指标。partial 保留在评测分母中，其片段不当作最终预测。数据集现有 20 条：10 条 AI 复核标签和 10 条银标，均未经过人类确认。默认只选择 `annotation_status=labeled` 的 10 条 AI 复核样本；显式 `--include-silver` 才运行全部 20 条。详见 [评测协议与复用方法](docs/evaluation.md)、[五条新增标注审计](docs/annotation-expansion-20261001.md)和[稳定性复查](docs/stability-review-20261001.md)。银标使用同一 Agent，不能作为独立准确率证据。用户负责后续人工定稿。
 
+评测请求默认固定 `VH_GENERATION_SEED=7`，并可用 `vh evaluate compare` 比较同协议重复运行的完成率、输出数量和边界一致性。固定 seed 只提高可复现性，不能替代重复运行。
 
-## Silver Labels
-
-`vh label run` 读取 `/data1/my_short_drama/metadata/{en,zh}/{train,test}.jsonl` 的每条视频，按时长从短到长调度。Map 与 Judge 均固定为 `gemini-3.7-flash`，并裁决每一个 `SceneCard`，不使用在线检测的 18 场召回预算或 12 段成片预算；银标保留全部已验证场景，不调用 listwise 压缩。每场由证据核验 Judge 和成片 Judge 独立判断；存在实质分歧时才调用第三次仲裁。本地保留帧、ASR、OCR 与音频证据，云端只接收带时间戳的 SceneCard 证据包；yetoken 的 OpenAI 兼容接口没有可用的视频文件上传端点，因此不直传整段视频。
+`highlight_model/` 保留既有冻结多模态编码器与叙事转变定位器、训练和指标；推理工具不按最终输出数量截断。本地模型仍可独立训练。
 
 ```bash
-vh label run --run-id gemini37_scene_v1
+uv run pytest -q             # 全部测试需 enhanced 中的 torch
+uv run ruff check src tests
 ```
 
-结果只写入 `datasets/silver/{run_id}/`：
-
-```text
-run.json             # 模型、总量与完成状态
-annotations.jsonl    # 每条源元数据加 silver highlights，适合作为训练数据
-errors.jsonl         # 仅失败项；下次 --resume 会重试
-```
-
-命令默认断点续跑，保留源 metadata 不变，不导出 MP4、不写 trace，也不创建每条视频的 job 目录。同一 run 可以继续既有进度；新规则生成的记录带 `annotation_revision: scene_v2`，无该字段的旧记录视为 `scene_v1`。每个高光包含时间边界、类型、分数、描述、证据、两次原始评分、共识置信度和 `pending` 人工复核状态。顶层 `highlights` 保存全部去重后的验证事件，残余重叠会在相邻边界中点切开；每条记录还包含全部 `scene_labels`：已裁决场景保存正负标签、共识决策和原始投票，未进入 Judge 的场景标为 `null`。空高光视频同样写入，因此负样本和难负样本不会丢失。
-
-## Verify
-
-```bash
-ruff check src tests
-pytest -q
-```
+模块职责与处理约束见 [架构文档](docs/react-video-agent-design.md)，任务和工具字段见 [输入契约审计](docs/input-contract-audit.md)，五视频状态机结果见 [v8 验证](docs/state-v8-evaluation-20260930.md)，当前事件粒度定向实测见 [v9 验证](docs/state-v9-granularity-evaluation-20260930.md)，下一轮对照见 [Agent 消融协议](docs/agent-ablation.md)。

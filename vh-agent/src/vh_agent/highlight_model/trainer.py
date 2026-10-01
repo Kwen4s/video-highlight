@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import json
 import random
 from contextlib import nullcontext
 from dataclasses import asdict
@@ -14,6 +13,7 @@ import torch
 from torch.optim import AdamW
 from torch.utils.data import DataLoader
 
+from ..storage import write_json
 from .config import HighlightModelConfig
 from .dataset import (
     EpisodeBatch,
@@ -39,8 +39,8 @@ def fit_highlight_model(config: HighlightModelConfig) -> dict[str, Any]:
     videos = load_silver_videos(config.annotations)
     splits = split_by_video(videos, config.seed)
     config.output_dir.mkdir(parents=True, exist_ok=True)
-    _write_json(config.output_dir / "config.json", asdict(config))
-    _write_json(
+    write_json(config.output_dir / "config.json", asdict(config))
+    write_json(
         config.output_dir / "video_split.json",
         {name: [video.video_id for video in subset] for name, subset in splits.items()},
     )
@@ -52,7 +52,7 @@ def fit_highlight_model(config: HighlightModelConfig) -> dict[str, Any]:
             feature_report = extractor.prepare(videos)
         finally:
             extractor.close()
-        _write_json(config.output_dir / "feature_report.json", feature_report)
+        write_json(config.output_dir / "feature_report.json", feature_report)
     if config.stage == "features":
         return {
             "stage": "features",
@@ -122,7 +122,7 @@ def fit_highlight_model(config: HighlightModelConfig) -> dict[str, Any]:
             "learning_rate": optimizer.param_groups[0]["lr"],
         }
         history.append(row)
-        _write_json(config.output_dir / "history.json", history)
+        write_json(config.output_dir / "history.json", history)
         scheduler.step()
         print(
             f"epoch={epoch} train_loss={train_metrics['loss']:.4f} "
@@ -157,8 +157,8 @@ def fit_highlight_model(config: HighlightModelConfig) -> dict[str, Any]:
         "test_loss": best["test_loss"] if best else None,
         "test": best["test"] if best else {},
     }
-    _write_json(config.output_dir / "metrics.json", report)
-    _write_json(
+    write_json(config.output_dir / "metrics.json", report)
+    write_json(
         config.output_dir / "test_predictions.json",
         predictions_as_json(best["predictions"] if best else {}),
     )
@@ -324,16 +324,6 @@ def _autocast(device: str) -> Any:
     if device.startswith("cuda"):
         return torch.autocast(device_type="cuda", dtype=torch.bfloat16)
     return nullcontext()
-
-
-def _write_json(path: Path, value: Any) -> None:
-    path.parent.mkdir(parents=True, exist_ok=True)
-    temporary = path.with_suffix(path.suffix + ".tmp")
-    temporary.write_text(
-        json.dumps(value, default=str, ensure_ascii=False, indent=2) + "\n",
-        encoding="utf-8",
-    )
-    temporary.replace(path)
 
 
 def _set_seed(seed: int) -> None:

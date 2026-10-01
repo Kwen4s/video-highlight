@@ -16,14 +16,13 @@ OCR_BATCH_SIZE = 8
 
 def extract_subtitle_segments(
     frames: list[FrameSample],
-    language: str | None,
+    language: str,
     device: str,
     ocr_version: str = "PP-OCRv6",
     min_confidence: float = 0.55,
 ) -> list[TranscriptSegment]:
     ocr = _load_ocr(
-        # The English collection contains English audio with Chinese hard subtitles.
-        lang="ch" if language in {"zh", "en", None} else "en",
+        lang="ch" if language.startswith("zh") else language.split("-", 1)[0],
         ocr_version=ocr_version,
         device=device,
         enable_mkldnn=False,

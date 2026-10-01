@@ -118,9 +118,7 @@ def split_by_video(videos: list[SilverVideo], seed: int) -> dict[str, list[Silve
         raise ValueError("at least two videos are required")
     shuffled = sorted(
         videos,
-        key=lambda video: hashlib.sha256(
-            f"{seed}:{video.video_id}".encode()
-        ).hexdigest(),
+        key=lambda video: hashlib.sha256(f"{seed}:{video.video_id}".encode()).hexdigest(),
     )
     train_end = min(len(shuffled) - 1, max(1, round(len(shuffled) * 0.9)))
     return {
@@ -202,13 +200,9 @@ def build_targets(video: SilverVideo, config: HighlightModelConfig) -> EpisodeTa
         )
 
     for highlight_index, highlight in enumerate(video.highlights):
-        decisive = highlight.decisive_times_sec or (
-            (highlight.start_sec + highlight.end_sec) / 2,
-        )
+        decisive = highlight.decisive_times_sec or ((highlight.start_sec + highlight.end_sec) / 2,)
         for event_time in decisive:
-            gaussian = torch.exp(
-                -0.5 * ((grid - event_time) / config.event_sigma_sec).square()
-            )
+            gaussian = torch.exp(-0.5 * ((grid - event_time) / config.event_sigma_sec).square())
             quality = max(0.05, min(1.0, highlight.confidence))
             eventness = torch.maximum(eventness, gaussian * quality)
             center = min(length - 1, max(0, round(event_time)))
@@ -220,9 +214,7 @@ def build_targets(video: SilverVideo, config: HighlightModelConfig) -> EpisodeTa
                 min(length, center + config.center_sampling_radius_sec + 1),
             ):
                 distance = abs(index - event_time)
-                assignment = quality * (
-                    1.0 - distance / (config.center_sampling_radius_sec + 1.0)
-                )
+                assignment = quality * (1.0 - distance / (config.center_sampling_radius_sec + 1.0))
                 if assignment < assignment_quality[index]:
                     continue
                 assignment_quality[index] = assignment
