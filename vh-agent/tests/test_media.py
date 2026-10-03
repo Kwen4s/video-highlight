@@ -1,11 +1,3 @@
-from vh_agent.preprocessing.media import _clean_title
-
-
-def test_clean_short_drama_filename() -> None:
-    stem = "(洋洋放映官)P9_第9集_#一纸医院报告，拆穿儿媳谎言【火爆新剧，免费观看全集】_480P"
-    assert _clean_title(stem) == "一纸医院报告，拆穿儿媳谎言"
-
-
 def test_media_cache_reuses_matching_audio_and_frames(monkeypatch, tmp_path) -> None:
     import json
     import wave
@@ -39,20 +31,6 @@ def test_media_cache_reuses_matching_audio_and_frames(monkeypatch, tmp_path) -> 
     assert frames[0].timestamp_sec == 0.0
 
 
-def test_english_audio_uses_bilingual_chinese_ocr_model(monkeypatch) -> None:
-    from vh_agent.preprocessing import subtitle_ocr
-
-    requested: list[str] = []
-
-    def fake_load_ocr(*, lang, **_kwargs):
-        requested.append(lang)
-        return object()
-
-    monkeypatch.setattr(subtitle_ocr, "_load_ocr", fake_load_ocr)
-    assert subtitle_ocr.extract_subtitle_segments([], "en", "cpu") == []
-    assert requested == ["ch"]
-
-
 def test_subtitle_ocr_batches_frames_without_losing_timestamps(monkeypatch, tmp_path) -> None:
     from PIL import Image
 
@@ -73,10 +51,8 @@ def test_subtitle_ocr_batches_frames_without_losing_timestamps(monkeypatch, tmp_
             self.batch_sizes.append(len(input))
             return [
                 {
-                    "res": {
-                        "rec_texts": [f"subtitle-{len(self.batch_sizes)}-{index}"],
-                        "rec_scores": [0.9],
-                    }
+                    "rec_texts": [f"subtitle-{len(self.batch_sizes)}-{index}"],
+                    "rec_scores": [0.9],
                 }
                 for index, _image in enumerate(input)
             ]
@@ -88,7 +64,6 @@ def test_subtitle_ocr_batches_frames_without_losing_timestamps(monkeypatch, tmp_
     assert ocr.batch_sizes == [8, 1]
     assert len(segments) == 9
     assert [segment.start_sec for segment in segments] == [float(index) for index in range(9)]
-
 
 
 def test_whisper_uses_deterministic_greedy_decoding(tmp_path) -> None:

@@ -6,7 +6,7 @@
 video-highlight/
 ├── vh-frontend/   # Electron 任务归档、审阅、编辑与导出
 ├── vh-backend/    # FastAPI 持久化任务、媒体存储与会话编排
-└── vh-agent/      # 高光检测与离线评测（本次未修改）
+└── vh-agent/      # 原生视频 ReAct Agent、本地候选工具与离线评测
 ```
 
 ## 数据流
@@ -14,9 +14,9 @@ video-highlight/
 ```text
 Electron 以 multipart 将视频上传到 FastAPI
   → FastAPI 将任务记录和原片写入持久化目录
-  → FastAPI 调用 vh-agent（不导出高光 MP4）
-  → 前端轮询服务端保存的状态和高光时间段 JSON
-  → 用户预览原片、采用、排除或直接拖动时间轴调整高光
+  → FastAPI 调用唯一的 vh run，Agent 检查视频并复核真实高光 MP4
+  → 前端轮询覆盖进度、complete/partial 状态和高光 JSON
+  → 用户预览已复核成片、采用、排除或直接拖动原片时间轴调整高光
   → Electron 可将高光直接导出为新 MP4，或追加片尾广告后导出
   → 后端对话 Agent 将自然语言编译为类型化计划并执行受控查询或编辑
   → 任务、原片、结果与会话持续保留，仅在用户明确确认后删除
@@ -135,3 +135,5 @@ npm start
 ```
 
 前端默认访问 `http://122.193.22.119:8777`。服务器部署后，在 `vh-frontend/.env.local` 中将 `VITE_API_BASE_URL` 改为服务器 IP 或域名。详细配置分别见 [前端说明](vh-frontend/README.md) 和 [后端说明](vh-backend/README.md)。
+
+新版检测架构与运行方式见 [Agent README](vh-agent/README.md)。运行中断后通过任务的“继续分析”恢复检查点。

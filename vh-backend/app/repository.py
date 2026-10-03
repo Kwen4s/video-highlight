@@ -33,46 +33,11 @@ class JobRepository:
                     updated_at TEXT NOT NULL,
                     revision INTEGER NOT NULL DEFAULT 0,
                     attempt INTEGER NOT NULL DEFAULT 0,
-                    max_attempts INTEGER NOT NULL DEFAULT 3,
-                    current_stage TEXT NOT NULL DEFAULT 'orchestration',
                     history_json TEXT NOT NULL DEFAULT '[]',
                     conversation_json TEXT NOT NULL DEFAULT '[]',
                     error_message TEXT,
                     result_json TEXT
                 )
-                """
-            )
-            columns = {
-                row["name"]
-                for row in connection.execute("PRAGMA table_info(jobs)").fetchall()
-            }
-            additions = {
-                "revision": "INTEGER NOT NULL DEFAULT 0",
-                "attempt": "INTEGER NOT NULL DEFAULT 0",
-                "max_attempts": "INTEGER NOT NULL DEFAULT 3",
-                "current_stage": "TEXT NOT NULL DEFAULT 'orchestration'",
-                "history_json": "TEXT NOT NULL DEFAULT '[]'",
-                "conversation_json": "TEXT NOT NULL DEFAULT '[]'",
-            }
-            for name, declaration in additions.items():
-                if name not in columns:
-                    connection.execute(f"ALTER TABLE jobs ADD COLUMN {name} {declaration}")
-            connection.execute(
-                """
-                UPDATE jobs
-                SET current_stage = CASE status
-                    WHEN 'completed' THEN 'delivery'
-                    WHEN 'processing' THEN 'preprocessing'
-                    WHEN 'failed' THEN 'preprocessing'
-                    ELSE 'orchestration'
-                END
-                WHERE current_stage IS NULL
-                   OR current_stage NOT IN (
-                       'orchestration', 'preprocessing', 'perception',
-                       'fusion', 'reasoning', 'delivery'
-                   )
-                   OR (status = 'completed' AND current_stage != 'delivery')
-                   OR (status IN ('processing', 'failed') AND current_stage = 'orchestration')
                 """
             )
 
@@ -85,7 +50,6 @@ class JobRepository:
         content_type: str,
         size_bytes: int,
         language: str,
-        max_attempts: int = 3,
     ) -> dict[str, Any]:
         now = utc_now()
         with self._connect() as connection:
@@ -93,8 +57,8 @@ class JobRepository:
                 """
                 INSERT INTO jobs (
                     job_id, status, original_name, stored_name, content_type,
-                    size_bytes, language, created_at, updated_at, max_attempts
-                ) VALUES (?, 'queued', ?, ?, ?, ?, ?, ?, ?, ?)
+                    size_bytes, language, created_at, updated_at
+                ) VALUES (?, 'queued', ?, ?, ?, ?, ?, ?, ?)
                 """,
                 (
                     job_id,
@@ -105,7 +69,6 @@ class JobRepository:
                     language,
                     now,
                     now,
-                    max_attempts,
                 ),
             )
         return self.get(job_id)  # type: ignore[return-value]
@@ -117,9 +80,7 @@ class JobRepository:
 
     def list(self) -> list[dict[str, Any]]:
         with self._connect() as connection:
-            rows = connection.execute(
-                "SELECT * FROM jobs ORDER BY created_at DESC"
-            ).fetchall()
+            rows = connection.execute("SELECT * FROM jobs ORDER BY created_at DESC").fetchall()
         return [dict(row) for row in rows]
 
     def set_status(
@@ -151,22 +112,10 @@ class JobRepository:
             connection.execute(
                 """
                 UPDATE jobs
-                SET status = ?, attempt = ?, current_stage = 'preprocessing',
-                    error_message = ?, updated_at = ?
+                SET status = ?, attempt = ?, error_message = ?, updated_at = ?
                 WHERE job_id = ?
                 """,
                 (status, attempt, error_message, utc_now(), job_id),
-            )
-
-    def set_current_stage(self, job_id: str, current_stage: str) -> None:
-        with self._connect() as connection:
-            connection.execute(
-                """
-                UPDATE jobs
-                SET current_stage = ?, updated_at = ?
-                WHERE job_id = ? AND status = 'processing' AND current_stage != ?
-                """,
-                (current_stage, utc_now(), job_id, current_stage),
             )
 
     def save_result(
@@ -178,8 +127,7 @@ class JobRepository:
             connection.execute(
                 """
                 UPDATE jobs
-                SET status = 'completed', current_stage = 'delivery',
-                    result_json = ?, error_message = NULL,
+                SET status = 'completed', result_json = ?, error_message = NULL,
                     revision = 0, history_json = '[]', conversation_json = '[]',
                     updated_at = ?
                 WHERE job_id = ?
@@ -190,56 +138,6 @@ class JobRepository:
                     job_id,
                 ),
             )
-
-    def open_demo_session(
-        self,
-        *,
-        job_id: str,
-        original_name: str,
-        size_bytes: int,
-        language: str,
-        result: dict[str, Any],
-    ) -> dict[str, Any]:
-        now = utc_now()
-        with self._connect() as connection:
-            connection.execute(
-                """
-                INSERT INTO jobs (
-                    job_id, status, original_name, stored_name, content_type,
-                    size_bytes, language, created_at, updated_at,
-                    revision, current_stage, history_json, conversation_json,
-                    error_message, result_json
-                ) VALUES (
-                    ?, 'completed', ?, '', 'video/mp4', ?, ?, ?, ?,
-                    0, 'delivery', '[]', '[]', NULL, ?
-                )
-                ON CONFLICT(job_id) DO UPDATE SET
-                    status = 'completed',
-                    current_stage = 'delivery',
-                    original_name = excluded.original_name,
-                    stored_name = '',
-                    content_type = 'video/mp4',
-                    size_bytes = excluded.size_bytes,
-                    language = excluded.language,
-                    created_at = excluded.created_at,
-                    updated_at = excluded.updated_at,
-                    revision = 0,
-                    history_json = '[]',
-                    conversation_json = '[]',
-                    error_message = NULL,
-                    result_json = excluded.result_json
-                """,
-                (
-                    job_id,
-                    original_name,
-                    size_bytes,
-                    language,
-                    now,
-                    now,
-                    json.dumps(result, ensure_ascii=False),
-                ),
-            )
-        return self.get(job_id)  # type: ignore[return-value]
 
     def replace_result(
         self,
@@ -259,6 +157,15 @@ class JobRepository:
             history = json.loads(row["history_json"] or "[]")
             history.append(json.loads(row["result_json"]))
             history = history[-20:]
+            previous = {h["highlight_id"]: h for h in history[-1]["highlights"]}
+            for item in result["highlights"]:
+                old = previous.get(item["highlight_id"])
+                if old is None or (old["start_sec"], old["end_sec"]) != (
+                    item["start_sec"],
+                    item["end_sec"],
+                ):
+                    item["clip_url"] = ""
+
             connection.execute(
                 """
                 UPDATE jobs
@@ -361,6 +268,15 @@ class JobRepository:
                     job_id,
                     expected_revision,
                 ),
+            )
+        return cursor.rowcount == 1
+
+    def queue_resume(self, job_id: str) -> bool:
+        with self._connect() as connection:
+            cursor = connection.execute(
+                "UPDATE jobs SET status='queued', error_message=NULL, updated_at=? "
+                "WHERE job_id=? AND status IN ('completed','failed') AND revision=0",
+                (utc_now(), job_id),
             )
         return cursor.rowcount == 1
 

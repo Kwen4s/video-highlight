@@ -28,18 +28,6 @@ class Settings(BaseSettings):
         ge=60,
         validation_alias="VH_AGENT_TIMEOUT_SEC",
     )
-    agent_max_attempts: int = Field(
-        default=3,
-        ge=1,
-        le=3,
-        validation_alias="VH_AGENT_MAX_ATTEMPTS",
-    )
-    agent_retry_delay_sec: float = Field(
-        default=2.0,
-        ge=0,
-        le=60,
-        validation_alias="VH_AGENT_RETRY_DELAY_SEC",
-    )
     max_upload_bytes: int = Field(
         default=20 * 1024 * 1024 * 1024,
         ge=1,

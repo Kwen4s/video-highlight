@@ -4,7 +4,6 @@ from dataclasses import dataclass
 from .models import DetectionResult, Highlight
 
 MIN_HIGHLIGHT_SEC = 0.5
-MAX_HIGHLIGHT_SEC = 24.0
 NUMBER_PATTERN = r"(\d+(?:\.\d+)?)"
 CHINESE_NUMBERS = {
     "一": 1,
@@ -227,6 +226,4 @@ def validate_highlight_range(
     duration = end_sec - start_sec
     if duration < MIN_HIGHLIGHT_SEC:
         return f"高光片段至少需要 {MIN_HIGHLIGHT_SEC:.1f} 秒。"
-    if duration > MAX_HIGHLIGHT_SEC:
-        return f"高光片段最长不能超过 {MAX_HIGHLIGHT_SEC:.0f} 秒。"
     return None

@@ -22,7 +22,7 @@ def decode_segments(
     duration_sec: float,
     threshold: float,
     nms_iou: float,
-    max_highlights: int,
+    max_highlights: int | None,
     min_duration_sec: float = 6.0,
     max_duration_sec: float = 24.0,
 ) -> list[PredictedSegment]:
@@ -55,7 +55,7 @@ def decode_segments(
     for candidate in sorted(candidates, key=lambda item: item.score, reverse=True):
         if all(_temporal_iou(candidate, kept) < nms_iou for kept in selected):
             selected.append(candidate)
-        if len(selected) == max_highlights:
+        if max_highlights is not None and len(selected) >= max_highlights:
             break
     return selected
 
@@ -81,12 +81,8 @@ def segment_metrics(
         recall = tp / max(1, tp + fn)
         metrics[f"precision_iou_{threshold:.1f}"] = precision
         metrics[f"recall_iou_{threshold:.1f}"] = recall
-        metrics[f"f1_iou_{threshold:.1f}"] = (
-            2 * precision * recall / max(1e-8, precision + recall)
-        )
-    metrics["mean_f1"] = 0.5 * (
-        metrics["f1_iou_0.5"] + metrics["f1_iou_0.7"]
-    )
+        metrics[f"f1_iou_{threshold:.1f}"] = 2 * precision * recall / max(1e-8, precision + recall)
+    metrics["mean_f1"] = 0.5 * (metrics["f1_iou_0.5"] + metrics["f1_iou_0.7"])
     return metrics
 
 

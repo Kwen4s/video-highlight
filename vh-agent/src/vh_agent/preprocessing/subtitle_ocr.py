@@ -1,4 +1,3 @@
-import json
 from functools import lru_cache
 
 import numpy as np
@@ -16,20 +15,15 @@ OCR_BATCH_SIZE = 8
 
 def extract_subtitle_segments(
     frames: list[FrameSample],
-    language: str | None,
+    language: str,
     device: str,
     ocr_version: str = "PP-OCRv6",
     min_confidence: float = 0.55,
 ) -> list[TranscriptSegment]:
     ocr = _load_ocr(
-        # The English collection contains English audio with Chinese hard subtitles.
-        lang="ch" if language in {"zh", "en", None} else "en",
+        lang="ch" if language.startswith("zh") else language.split("-", 1)[0],
         ocr_version=ocr_version,
         device=device,
-        enable_mkldnn=False,
-        use_doc_orientation_classify=False,
-        use_doc_unwarping=False,
-        use_textline_orientation=False,
     )
     raw_segments: list[TranscriptSegment] = []
     for start in range(0, len(frames), OCR_BATCH_SIZE):
@@ -61,10 +55,6 @@ def _load_ocr(
     lang: str,
     ocr_version: str,
     device: str,
-    enable_mkldnn: bool,
-    use_doc_orientation_classify: bool,
-    use_doc_unwarping: bool,
-    use_textline_orientation: bool,
 ) -> object:
     try:
         from paddleocr import PaddleOCR
@@ -74,10 +64,10 @@ def _load_ocr(
         lang=lang,
         ocr_version=ocr_version,
         device=device,
-        enable_mkldnn=enable_mkldnn,
-        use_doc_orientation_classify=use_doc_orientation_classify,
-        use_doc_unwarping=use_doc_unwarping,
-        use_textline_orientation=use_textline_orientation,
+        enable_mkldnn=False,
+        use_doc_orientation_classify=False,
+        use_doc_unwarping=False,
+        use_textline_orientation=False,
     )
 
 
@@ -89,32 +79,13 @@ def _subtitle_region(frame: FrameSample) -> np.ndarray:
 
 
 def _predict_many(ocr: object, images: list[np.ndarray]) -> list[tuple[list[str], list[float]]]:
-    if not images:
-        return []
-    if not hasattr(ocr, "predict"):
-        raise OCRUnavailable("PaddleOCR 3.7+ predict API is required")
     output = list(ocr.predict(input=images))
     if len(output) != len(images):
         raise OCRUnavailable(f"PaddleOCR returned {len(output)} results for {len(images)} frames")
-    return [_parse_prediction(item) for item in output]
-
-
-def _parse_prediction(item: object) -> tuple[list[str], list[float]]:
-    texts: list[str] = []
-    scores: list[float] = []
-    payload = getattr(item, "json", item)
-    if callable(payload):
-        payload = payload()
-    if isinstance(payload, str):
-        payload = json.loads(payload)
-    if not isinstance(payload, dict):
-        raise OCRUnavailable(f"Unexpected PaddleOCR result type: {type(payload).__name__}")
-    result = payload.get("res", payload)
-    texts.extend(str(value) for value in result.get("rec_texts", []))
-    scores.extend(float(value) for value in result.get("rec_scores", []))
-    if len(texts) != len(scores):
-        raise OCRUnavailable("PaddleOCR returned mismatched texts and scores")
-    return texts, scores
+    return [
+        ([str(text) for text in item["rec_texts"]], [float(score) for score in item["rec_scores"]])
+        for item in output
+    ]
 
 
 def _merge_repeated(segments: list[TranscriptSegment]) -> list[TranscriptSegment]:

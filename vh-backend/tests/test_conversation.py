@@ -12,6 +12,17 @@ def sample_result() -> DetectionResult:
     return DetectionResult.model_validate(
         {
             "job_id": "job_conversation1",
+            "completion": "complete",
+            "message": "done",
+            "analysis": dict(
+                scan_coverage=1,
+                pending_event_count=0,
+                pending_observation_count=0,
+                pending_proposal_count=0,
+                pending_review_count=0,
+                stop_reason="complete",
+                model_calls=1,
+            ),
             "video": {"video_id": "video_1", "title": "demo", "duration_sec": 60},
             "highlights": [
                 {

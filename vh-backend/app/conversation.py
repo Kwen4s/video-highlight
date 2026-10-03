@@ -48,19 +48,13 @@ class EditPlan(BaseModel):
             self.delta_sec is None or self.delta_sec == 0
         ):
             raise ValueError("boundary movement requires a non-zero delta_sec")
-        if self.operation == "set_range" and (
-            self.start_sec is None or self.end_sec is None
-        ):
+        if self.operation == "set_range" and (self.start_sec is None or self.end_sec is None):
             raise ValueError("set_range requires start_sec and end_sec")
-        if self.operation in {"rename", "update_reason"} and not (
-            self.text and self.text.strip()
-        ):
+        if self.operation in {"rename", "update_reason"} and not (self.text and self.text.strip()):
             raise ValueError(f"{self.operation} requires text")
         if self.operation == "split" and self.split_sec is None:
             raise ValueError("split requires split_sec")
-        if self.operation in {"rename", "update_reason", "split"} and len(
-            self.highlight_ids
-        ) != 1:
+        if self.operation in {"rename", "update_reason", "split"} and len(self.highlight_ids) != 1:
             raise ValueError(f"{self.operation} requires exactly one highlight")
         if self.operation == "merge" and len(self.highlight_ids) < 2:
             raise ValueError("merge requires at least two highlights")
@@ -209,7 +203,7 @@ class OpenAICommandPlanner:
             content = response.choices[0].message.content
             if not content:
                 raise ValueError("model returned an empty plan")
-            return COMMAND_PLAN_ADAPTER.validate_json(_strip_json_fence(content))
+            return COMMAND_PLAN_ADAPTER.validate_json(content)
         except Exception as error:
             raise ConversationAgentError("对话 Agent 规划失败，请稍后重试。") from error
 
@@ -467,9 +461,7 @@ def _merge_highlights(
     first_index = min(
         index for index, item in enumerate(result.highlights) if item.highlight_id in target_ids
     )
-    result.highlights = [
-        item for item in result.highlights if item.highlight_id not in target_ids
-    ]
+    result.highlights = [item for item in result.highlights if item.highlight_id not in target_ids]
     result.highlights.insert(first_index, merged)
     return _changed(
         result,
@@ -545,17 +537,8 @@ def _is_explicit_local_command(message: str) -> bool:
     return bool(
         re.search(r"开头|入点|结尾|尾部|出点|前后|两端|缩短|延长|收紧", text)
         and re.search(r"\d+(?:\.\d+)?\s*秒", text)
-    ) or bool(
-        re.search(r"\d+(?:\.\d+)?\s*秒?\s*(?:到|至|[-—~])\s*\d+(?:\.\d+)?\s*秒", text)
-    )
+    ) or bool(re.search(r"\d+(?:\.\d+)?\s*秒?\s*(?:到|至|[-—~])\s*\d+(?:\.\d+)?\s*秒", text))
 
 
 def _is_local_query(message: str) -> bool:
     return bool(re.search(r"列出|有哪些|几段|多少.*高光", message))
-
-
-def _strip_json_fence(content: str) -> str:
-    text = content.strip()
-    if text.startswith("```json") and text.endswith("```"):
-        return text[len("```json") : -len("```")].strip()
-    return text

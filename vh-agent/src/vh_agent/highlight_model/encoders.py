@@ -159,9 +159,9 @@ class FrozenMomentFeatureExtractor:
                 continue
             chunk_start_sec = start / sample_rate
             chunk_duration_sec = len(chunk) / sample_rate
-            times = chunk_start_sec + (
-                torch.arange(len(encoded), dtype=torch.float32) + 0.5
-            ) * (chunk_duration_sec / len(encoded))
+            times = chunk_start_sec + (torch.arange(len(encoded), dtype=torch.float32) + 0.5) * (
+                chunk_duration_sec / len(encoded)
+            )
             seconds = times.floor().long().clamp(0, length - 1)
             result.index_add_(0, seconds, encoded)
             counts.index_add_(0, seconds, torch.ones_like(times))
@@ -171,9 +171,7 @@ class FrozenMomentFeatureExtractor:
             available = (~missing).nonzero(as_tuple=False).flatten()
             if len(available):
                 nearest = torch.argmin(
-                    torch.abs(
-                        torch.arange(length)[:, None] - available[None, :]
-                    ),
+                    torch.abs(torch.arange(length)[:, None] - available[None, :]),
                     dim=1,
                 )
                 result[missing] = result[available[nearest[missing]]]
@@ -249,8 +247,7 @@ def _moment_frame_paths(
     if not available:
         raise RuntimeError("media cache contains no readable frames")
     nearest = [
-        min(available, key=lambda item: abs(item[0] - timestamp))[1]
-        for timestamp in range(length)
+        min(available, key=lambda item: abs(item[0] - timestamp))[1] for timestamp in range(length)
     ]
     return [
         (

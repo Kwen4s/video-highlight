@@ -14,16 +14,6 @@ interface Window {
     toggleMaximize: () => void
     close: () => void
   }
-  localLibrary?: {
-    importSource: <T>(file: File, input: {
-      jobId: string
-      originalName: string
-      contentType: string
-      language: 'zh' | 'en'
-    }) => Promise<T>
-    saveJob: <T>(job: T) => Promise<T>
-    listJobs: <T>() => Promise<T[]>
-  }
   adStudio?: {
     importAsset: <T>(file: File, kind: 'video' | 'image') => Promise<T>
     listAssets: <T>() => Promise<T[]>

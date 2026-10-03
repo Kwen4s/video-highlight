@@ -30,8 +30,19 @@ def make_client(tmp_path):
 
 def sample_result(job_id: str = "job_abcdefgh") -> dict:
     return {
-        "schema_version": "1.0",
+        "schema_version": "2.0",
         "job_id": job_id,
+        "completion": "complete",
+        "message": "done",
+        "analysis": dict(
+            scan_coverage=1,
+            pending_event_count=0,
+            pending_observation_count=0,
+            pending_proposal_count=0,
+            pending_review_count=0,
+            stop_reason="complete",
+            model_calls=1,
+        ),
         "video": {"video_id": job_id, "title": "demo", "duration_sec": 60},
         "highlights": [
             {
@@ -78,9 +89,7 @@ def test_upload_returns_public_media_url_without_exposing_server_path(tmp_path) 
         assert response.status_code == 202
         body = response.json()
         assert body["status"] == "queued"
-        assert body["current_stage"] == "orchestration"
         assert body["attempt"] == 0
-        assert body["max_attempts"] == 3
         assert body["source_url"] == "/api/jobs/job_12345678/source"
         assert str(settings.jobs_dir) not in json.dumps(body)
         assert runner.enqueued == ["job_12345678"]
@@ -128,57 +137,6 @@ def test_cors_allows_electron_origins_and_message_preflight(tmp_path) -> None:
         assert "access-control-allow-origin" not in rejected.headers
 
 
-def test_demo_job_can_open_a_conversation_session(tmp_path) -> None:
-    client, _settings, repository, _runner = make_client(tmp_path)
-    job_id = "job_demo_citypulse"
-
-    with client:
-        opened = client.post(
-            f"/api/demo-jobs/{job_id}/session",
-            json={
-                "original_name": "城市节拍_原片.mp4",
-                "size_bytes": 1024,
-                "language": "zh",
-                "result": sample_result(job_id),
-            },
-        )
-        assert opened.status_code == 200
-        body = opened.json()
-        assert body["status"] == "completed"
-        assert body["current_stage"] == "delivery"
-        assert body["source_url"] is None
-        assert body["revision"] == 0
-        assert "session_expires_at" not in body
-
-        edited = client.post(
-            f"/api/jobs/{job_id}/messages",
-            json={
-                "message": "入点后移 1 秒",
-                "revision": 0,
-                "selected_highlight_id": "hl_1",
-            },
-        )
-        assert edited.status_code == 200
-        assert edited.json()["job"]["result"]["highlights"][0]["start_sec"] == 3
-        assert repository.get(job_id)["stored_name"] == ""
-
-
-def test_demo_session_bootstrap_rejects_non_demo_job(tmp_path) -> None:
-    client, _settings, _repository, _runner = make_client(tmp_path)
-
-    with client:
-        response = client.post(
-            "/api/demo-jobs/job_not_a_demo/session",
-            json={
-                "original_name": "fake.mp4",
-                "size_bytes": 1,
-                "language": "zh",
-                "result": sample_result("job_not_a_demo"),
-            },
-        )
-        assert response.status_code == 404
-
-
 def test_result_contains_only_intervals_and_editing_is_versioned(tmp_path) -> None:
     client, settings, repository, _runner = make_client(tmp_path)
 
@@ -187,11 +145,9 @@ def test_result_contains_only_intervals_and_editing_is_versioned(tmp_path) -> No
         response = client.get("/api/jobs/job_abcdefgh")
         body = response.json()
         highlight = body["result"]["highlights"][0]
-        assert "clip_url" not in highlight
+        assert highlight["clip_url"] == ""
         assert body["source_url"] == "/api/jobs/job_abcdefgh/source"
         assert body["revision"] == 0
-        assert "session_expires_at" not in body
-
         edited = client.post(
             "/api/jobs/job_abcdefgh/messages",
             json={
@@ -343,43 +299,12 @@ def test_message_stream_emits_incremental_reply_and_final_job(tmp_path) -> None:
         assert response.headers["content-type"].startswith("application/x-ndjson")
         events = [json.loads(line) for line in response.text.splitlines()]
         assert events[0] == {"type": "start"}
-        assert "".join(
-            event["delta"] for event in events if event["type"] == "delta"
-        )
+        assert "".join(event["delta"] for event in events if event["type"] == "delta")
         completed = events[-1]
         assert completed["type"] == "complete"
         assert completed["changed"] is True
         assert completed["job"]["revision"] == 1
         assert completed["job"]["result"]["highlights"][0]["start_sec"] == 3
-
-
-def test_completed_job_remains_available_and_editable_without_time_limit(tmp_path) -> None:
-    client, settings, repository, _runner = make_client(tmp_path)
-
-    with client:
-        create_completed_job(settings, repository)
-        with sqlite3.connect(settings.database_path) as connection:
-            connection.execute("ALTER TABLE jobs ADD COLUMN session_expires_at TEXT")
-            connection.execute(
-                """
-                UPDATE jobs
-                SET updated_at = '2000-01-01T00:00:00+00:00',
-                    session_expires_at = '2000-01-01T00:00:00+00:00'
-                WHERE job_id = ?
-                """,
-                ("job_abcdefgh",),
-            )
-
-        listed = client.get("/api/jobs")
-        assert listed.status_code == 200
-        assert any(job["job_id"] == "job_abcdefgh" for job in listed.json())
-
-        response = client.post(
-            "/api/jobs/job_abcdefgh/messages",
-            json={"message": "入点后移 1 秒", "revision": 0, "selected_highlight_id": "hl_1"},
-        )
-        assert response.status_code == 200
-        assert response.json()["job"]["result"]["highlights"][0]["start_sec"] == 3
 
 
 def test_stale_queued_job_is_not_deleted_automatically(tmp_path) -> None:
@@ -479,3 +404,64 @@ def test_delete_cleans_finished_temporary_job_and_reports_locked_files(
         assert locked.status_code == 423
         assert repository.get("job_locked123") is not None
         assert (settings.jobs_dir / "job_locked123").exists()
+
+
+def test_partial_resume_is_atomic_and_preserves_progress(tmp_path):
+    client, settings, repository, runner = make_client(tmp_path)
+    with client:
+        create_completed_job(settings, repository)
+        result = sample_result()
+        result["completion"] = "partial"
+        result["highlights"] = []
+        result["analysis"]["scan_coverage"] = 0.5
+        repository.save_result("job_abcdefgh", result)
+        root = settings.jobs_dir / "job_abcdefgh"
+        (root / "state.json").write_text("{}")
+        (root / "progress.json").write_text(json.dumps(result["analysis"]))
+        assert client.get("/api/jobs/job_abcdefgh").json()["progress"]["scan_coverage"] == 0.5
+        assert client.post("/api/jobs/job_abcdefgh/resume").status_code == 200
+        assert client.post("/api/jobs/job_abcdefgh/resume").status_code == 409
+        assert runner.enqueued == ["job_abcdefgh"]
+
+
+def test_frozen_clip_serving_and_range_edit_invalidation(tmp_path):
+    client, settings, repository, _ = make_client(tmp_path)
+    with client:
+        create_completed_job(settings, repository)
+        result = sample_result()
+        result["highlights"][0]["clip_url"] = "/api/jobs/job_abcdefgh/clips/hl_1"
+        repository.save_result("job_abcdefgh", result)
+        root = settings.jobs_dir / "job_abcdefgh"
+        (root / "reviewed.mp4").write_bytes(b"reviewed-video")
+        (root / "clips.json").write_text(
+            json.dumps(dict(hl_1=dict(path="reviewed.mp4", start_sec=2, end_sec=8)))
+        )
+        assert client.get("/api/jobs/job_abcdefgh/clips/hl_1").content == b"reviewed-video"
+        assert client.head("/api/jobs/job_abcdefgh/clips/hl_1").status_code == 200
+        edited = client.post(
+            "/api/jobs/job_abcdefgh/highlights/hl_1/range",
+            json=dict(start_sec=1, end_sec=8, revision=0),
+        )
+        assert edited.json()["result"]["highlights"][0]["clip_url"] == ""
+        assert client.get("/api/jobs/job_abcdefgh/clips/hl_1").status_code == 404
+
+
+def test_upload_task_constraints_and_subtitle_input(tmp_path):
+    client, settings, _, _ = make_client(tmp_path)
+    with client:
+        response = client.post(
+            "/api/jobs",
+            data=dict(
+                job_id="job_options1",
+                options=json.dumps(dict(max_clip_sec=12, instruction="提取反转")),
+            ),
+            files=dict(
+                file=("test.mp4", b"video", "video/mp4"),
+                subtitles=("test.srt", b"1\n00:00:01,000 --> 00:00:02,000\nHello\n", "text/plain"),
+            ),
+        )
+        assert response.status_code == 202
+        task = json.loads((settings.jobs_dir / "job_options1/task.json").read_text())
+        assert task["max_clip_sec"] == 12
+        assert task["instruction"] == "提取反转"
+        assert task["subtitle_path"].endswith("subtitles.srt")

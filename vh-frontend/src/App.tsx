@@ -4,13 +4,12 @@ import type { DragEvent, PointerEvent as ReactPointerEvent, ReactNode, SVGProps 
 const API_BASE = (import.meta.env.VITE_API_BASE_URL?.trim() || 'http://122.193.22.119:8777').replace(/\/+$/, '')
 const API_ADDRESS = API_BASE.replace(/^https?:\/\//, '')
 const VIDEO_EXTENSIONS = ['.mp4', '.mov', '.mkv', '.webm', '.avi', '.m4v']
-const MESSAGE_CHUNK_SIZE = 4
-const MESSAGE_CHUNK_DELAY_MS = 20
+
+type DetectionOptions = { instruction: string; max_clip_sec: number; max_highlights: number; allow_overlap: boolean }
 
 type View = 'workspace' | 'library' | 'ads'
 type Theme = 'dark' | 'light'
 type JobStatus = 'queued' | 'processing' | 'completed' | 'failed'
-type JobStage = 'orchestration' | 'preprocessing' | 'perception' | 'fusion' | 'reasoning' | 'delivery'
 type ReviewStatus = 'pending' | 'accepted' | 'rejected' | 'revised'
 type AdPresetId = 'cinema-cliffhanger' | 'neon-app' | 'velvet-qr'
 
@@ -22,20 +21,32 @@ type Highlight = {
   highlight_type: string
   description: string
   reason: string
+  clip_url: string
   review_status: ReviewStatus
 }
 
 type DetectionResult = {
-  schema_version: '1.0'
+  schema_version: '2.0'
   job_id: string
   video: { video_id: string; title: string; duration_sec: number }
+  completion: 'complete' | 'partial'
+  message: string
+  analysis: AnalysisProgress & { stop_reason: string }
   highlights: Highlight[]
+}
+
+type AnalysisProgress = {
+  scan_coverage: number
+  pending_event_count: number
+  pending_observation_count: number
+  pending_proposal_count: number
+  pending_review_count: number
+  model_calls: number
 }
 
 type Job = {
   job_id: string
   status: JobStatus
-  current_stage: JobStage
   original_name: string
   content_type: string
   size_bytes: number
@@ -44,7 +55,7 @@ type Job = {
   updated_at: string
   revision: number
   attempt: number
-  max_attempts: number
+  progress: AnalysisProgress | null
   source_url: string | null
   error_message: string | null
   result: DetectionResult | null
@@ -140,16 +151,7 @@ function adAssignmentKey(jobId: string, highlightId: string) {
   return `${jobId}:${highlightId}`
 }
 
-type RemoteJob = Omit<Job, 'source_url' | 'messages' | 'current_stage'> & {
-  source_url?: string | null
-  current_stage?: JobStage
-}
-
-function fallbackJobStage(status: JobStatus): JobStage {
-  if (status === 'queued') return 'orchestration'
-  if (status === 'completed') return 'delivery'
-  return 'preprocessing'
-}
+type RemoteJob = Omit<Job, 'messages'>
 
 function resolveSourceUrl(sourceUrl: string | null | undefined) {
   return sourceUrl ? new URL(sourceUrl, `${API_BASE}/`).toString() : null
@@ -158,9 +160,6 @@ function resolveSourceUrl(sourceUrl: string | null | undefined) {
 function withSourceUrl(job: RemoteJob): Job {
   return {
     ...job,
-    attempt: job.attempt ?? 0,
-    max_attempts: job.max_attempts ?? 3,
-    current_stage: job.current_stage ?? fallbackJobStage(job.status),
     source_url: resolveSourceUrl(job.source_url),
     messages: [],
   }
@@ -188,148 +187,13 @@ type UploadQueueStatus = 'waiting' | 'uploading' | 'submitted' | 'failed'
 
 type UploadQueueItem = {
   queue_id: string
+  options: DetectionOptions
   job_id: string
   file: File
   status: UploadQueueStatus
   progress: number
   error?: string
 }
-
-type WorkflowNode = {
-  title: string
-  detail: string
-  topic: string
-}
-
-type WorkflowStage = {
-  code: string
-  title: string
-  subtitle: string
-  description: string
-  nodes: WorkflowNode[]
-}
-
-type WorkflowState = 'done' | 'current' | 'unknown' | 'waiting' | 'failed'
-
-type WorkflowNodeExecution = {
-  state: WorkflowState
-  label: string
-  detail: string
-}
-
-const WORKFLOW_STAGES: WorkflowStage[] = [
-  {
-    code: '01',
-    title: '源文件接入',
-    subtitle: 'INGEST / GATEWAY',
-    description: '接收桌面端上传的原始视频，在进入分析队列前完成传输进度、媒体格式和任务隔离存储检查。',
-    nodes: [
-      { title: '分片上传', detail: 'multipart 字节流 · 客户端进度回调', topic: 'upload.chunk.received' },
-      { title: '格式校验', detail: '扩展名 · MIME · 20 GB 上限', topic: 'media.guard.passed' },
-      { title: '原片落盘', detail: '任务隔离目录 · source/original', topic: 'source.committed' },
-    ],
-  },
-  {
-    code: '02',
-    title: '任务编排',
-    subtitle: 'FASTAPI / QUEUE',
-    description: '由后端创建稳定任务编号、持久化公开状态并投递分析请求，Worker 获得执行槽后开始运行 Agent。',
-    nodes: [
-      { title: '任务注册', detail: 'job_id · language · revision=0', topic: 'job.created' },
-      { title: '状态持久化', detail: 'SQLite · queued · 时间戳', topic: 'job.state.changed' },
-      { title: 'Worker 认领', detail: '单 Worker 执行队列 · 超时保护', topic: 'analysis.requested' },
-    ],
-  },
-  {
-    code: '03',
-    title: '媒体预处理',
-    subtitle: 'FFMPEG / CACHE',
-    description: '读取原片基础信息并建立内容缓存，同时生成后续视觉、语音和声音分析需要的帧序列、音轨与能量曲线。',
-    nodes: [
-      { title: '媒体探测', detail: '时长 · 编解码 · 音视频轨 · FPS', topic: 'media.probed' },
-      { title: '内容指纹', detail: '视频 fingerprint · 缓存命中检查', topic: 'cache.resolved' },
-      { title: '帧提取', detail: '1 FPS · 宽 480 px · 时间戳采样', topic: 'frames.extracted' },
-      { title: '音频提取', detail: 'PCM WAV · 每秒能量曲线', topic: 'audio.extracted' },
-    ],
-  },
-  {
-    code: '04',
-    title: '并行感知',
-    subtitle: '4-WAY FAN-OUT',
-    description: '场景、语音、字幕和声音事件四条支路并行执行，完成后统一回收到同一条带来源标记的多模态时间轴。',
-    nodes: [
-      { title: '镜头检测', detail: 'shot boundary · 场景时间段', topic: 'scenes.detected' },
-      { title: 'ASR 转写', detail: 'Faster-Whisper · VAD · beam=5', topic: 'asr.transcribed' },
-      { title: '字幕 OCR', detail: 'PP-OCRv6 · batch=8 · 置信度≥0.55', topic: 'ocr.recognized' },
-      { title: '声音事件', detail: 'SenseVoice · 情绪 · BGM/笑/哭/掌声', topic: 'audio.events.detected' },
-      { title: '时间轴对齐', detail: 'ASR + OCR 去重合并 · 来源标记', topic: 'transcript.aligned' },
-    ],
-  },
-  {
-    code: '05',
-    title: '语义融合',
-    subtitle: 'EMBEDDING / SALIENCY',
-    description: '将画面和邻近文本编码为多模态向量，融合视觉、音频、台词与场景变化，形成高光候选窗口。',
-    nodes: [
-      { title: '多模态 Embedding', detail: 'Qwen3-VL · 画面 + 邻近文本', topic: 'embedding.indexed' },
-      { title: '语义跃迁评分', detail: '相邻向量距离 · 帧级变化', topic: 'transition.scored' },
-      { title: '显著性曲线', detail: '画面 · 音量 · 台词 · 场景 · 事件融合', topic: 'saliency.composed' },
-      { title: '候选窗口', detail: '20 s 窗口 · 4 s 步长 · 分段覆盖', topic: 'candidates.generated' },
-      { title: '局部去重', detail: '候选 NMS · 最多 72 个窗口', topic: 'candidates.deduplicated' },
-    ],
-  },
-  {
-    code: '06',
-    title: '事件推理',
-    subtitle: 'MAP / JUDGE / RANK',
-    description: '把候选窗口组织成可推理的场景卡，通过证据账本、并行裁决和全局排序筛选出最终高光。',
-    nodes: [
-      { title: '语义场景卡', detail: '人物 · 动作 · 台词 · 声音证据', topic: 'scene.cards.built' },
-      { title: 'Scene Map', detail: 'VLM 并行叙事映射 · cache', topic: 'scene.map.completed' },
-      { title: 'Evidence Ledger', detail: '人物关系 · 新证据 · 未决线索', topic: 'evidence.ledger.updated' },
-      { title: 'Judge 共识', detail: '并行裁决 · 类型 · 分数 · 置信度', topic: 'judge.consensus.reached' },
-      { title: '边界精修', detail: 'setup / decisive evidence · 因果核心', topic: 'boundaries.refined' },
-      { title: '合并与排序', detail: '重叠合并 · 全局排名 · final NMS', topic: 'highlights.ranked' },
-    ],
-  },
-  {
-    code: '07',
-    title: '结果交付',
-    subtitle: 'PERSIST / REVIEW',
-    description: '校验高光结果契约，只持久化可公开字段，并将视频、高光列表和编辑能力交给人工复核工作台。',
-    nodes: [
-      { title: '契约校验', detail: 'DetectionResult schema 1.0', topic: 'result.validated' },
-      { title: '结果持久化', detail: '公开字段 · revision · source_url', topic: 'result.persisted' },
-      { title: '人工复核就绪', detail: '播放器 · 高光列表 · 编辑助手', topic: 'review.ready' },
-    ],
-  },
-]
-
-const JOB_STAGE_INDEX: Record<JobStage, number> = {
-  orchestration: 1,
-  preprocessing: 2,
-  perception: 3,
-  fusion: 4,
-  reasoning: 5,
-  delivery: 6,
-}
-
-const WORKFLOW_EVENT_ROUTES = [
-  ['media.probe.requested', 'ffprobe → duration / streams / codec / has_audio'],
-  ['media.decode.fanout', 'frames.extract + audio.extract + energy.scan'],
-  ['perception.fanout', 'scene.detect | asr | ocr | audio.event'],
-  ['asr.transcribe.requested', 'language=zh · vad_filter=true · beam_size=5'],
-  ['ocr.batch.requested', 'PP-OCRv6 · subtitle region · batch_size=8'],
-  ['audio.event.requested', 'SenseVoice · VAD merge · emotion + event'],
-  ['embedding.requested', 'frame pixels + timestamp-near transcript'],
-  ['saliency.compose.requested', 'visual + audio + transcript + scene + event'],
-  ['candidate.window.requested', 'window=20s · stride=4s · coverage segmentation'],
-  ['scene.map.requested', 'semantic scene cards → parallel VLM mapping'],
-  ['judge.consensus.requested', 'evidence ledger + previous scene + candidate'],
-  ['highlight.boundary.requested', 'setup evidence + decisive evidence + saliency'],
-  ['highlight.rank.requested', 'merge → budget → listwise rank → final NMS'],
-  ['result.persist.requested', 'schema 1.0 → public result → review queue'],
-] as const
 
 type IconName =
   | 'spark' | 'upload' | 'library' | 'film' | 'check' | 'close' | 'minus'
@@ -406,20 +270,6 @@ async function requestMessageStream(
   }
   if (!response.ok) {
     const error = await response.json().catch(() => null) as { detail?: string } | null
-    if (response.status === 404 && error?.detail === 'Not Found' && path.endsWith('/stream')) {
-      const fallback = await requestJson<EditMessageStreamResult>(path.slice(0, -'/stream'.length), {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-      })
-      let visibleReply = ''
-      for (let index = 0; index < fallback.reply.length; index += MESSAGE_CHUNK_SIZE) {
-        visibleReply += fallback.reply.slice(index, index + MESSAGE_CHUNK_SIZE)
-        onDelta(visibleReply)
-        await new Promise<void>((resolve) => window.setTimeout(resolve, MESSAGE_CHUNK_DELAY_MS))
-      }
-      return fallback
-    }
     throw new Error(error?.detail || `请求失败（${response.status}）`)
   }
   if (!response.body) throw new Error('后端没有返回可读取的流式响应')
@@ -469,11 +319,13 @@ function uploadVideo(
   file: File,
   onProgress: (value: number) => void,
   register: (request: XMLHttpRequest | null) => void,
+  options: DetectionOptions,
 ): Promise<RemoteJob> {
   return new Promise((resolve, reject) => {
     const request = new XMLHttpRequest()
     const form = new FormData()
     form.append('job_id', jobId)
+    form.append('options', JSON.stringify(options))
     form.append('language', 'zh')
     form.append('file', file, file.name)
     register(request)
@@ -516,9 +368,7 @@ function mergeRemoteJob(local: Job, remote: RemoteJob): Job {
   return {
     ...local,
     ...remote,
-    attempt: remote.attempt ?? local.attempt ?? 0,
-    max_attempts: remote.max_attempts ?? local.max_attempts ?? 3,
-    current_stage: remote.current_stage ?? local.current_stage ?? fallbackJobStage(remote.status),
+    attempt: remote.attempt,
     result,
     source_url: resolveSourceUrl(remote.source_url),
     messages: local.messages,
@@ -560,9 +410,13 @@ const reviewStatusCopy: Record<ReviewStatus, string> = {
   pending: '待复核', accepted: '已采用', rejected: '已排除', revised: '已调整',
 }
 
+function jobStatusLabel(job: Job) {
+  return job.status === "completed" && job.result?.completion === "partial" ? "分析未完成" : statusCopy[job.status]
+}
+
 function attemptLabel(job: Job) {
   if (!['queued', 'processing', 'failed'].includes(job.status) || job.attempt < 1) return null
-  return `第 ${Math.min(job.attempt, job.max_attempts)}/${job.max_attempts} 次`
+  return `第 ${job.attempt} 次执行`
 }
 
 const highlightTypeCopy: Record<string, string> = {
@@ -584,7 +438,7 @@ function WindowChrome({ theme, onToggleTheme }: { theme: Theme; onToggleTheme: (
 }
 
 function Sidebar({ view, onView, online, jobs }: { view: View; onView: (view: View) => void; online: boolean; jobs: Job[] }) {
-  const completed = jobs.filter((job) => job.status === 'completed').length
+  const completed = jobs.filter((job) => job.status === 'completed' && job.result?.completion === 'complete').length
   const accepted = jobs.reduce((total, item) => total + (item.result?.highlights.filter((highlight) => highlight.review_status === 'accepted').length || 0), 0)
   return <aside className="sidebar">
     <div className="brand"><div className="brand-glyph"><i /><i /><i /></div><div><strong>FRAME</strong><span>高光工作台</span></div></div>
@@ -595,7 +449,7 @@ function Sidebar({ view, onView, online, jobs }: { view: View; onView: (view: Vi
       <button className={view === 'ads' ? 'active' : ''} onClick={() => onView('ads')}><Icon name="ad" /><span>广告编排</span><b>03</b></button>
     </nav>
     <div className="sidebar-metric"><span>服务端任务</span><strong>{String(jobs.length).padStart(2, '0')}</strong><small>{completed} 个已完成 · {accepted} 段已采用</small></div>
-    <div className={`service-state ${online ? 'online' : ''}`}><i /><div><b>{online ? '后端服务在线' : '后端服务离线'}</b></div></div>
+    <div className={`service-state ${online ? 'online' : ''}`}><i /><div><b>{online ? '后端服务在线' : '后端服务离线'}</b><span>API · {API_ADDRESS}</span></div></div>
   </aside>
 }
 
@@ -650,7 +504,7 @@ function UploadQueuePanel({ queue, jobs, onClear }: { queue: UploadQueueItem[]; 
             : item.status === 'failed'
               ? '上传失败'
               : live
-                ? statusCopy[live.status]
+                ? jobStatusLabel(live)
                 : '已提交'
         const detail = item.error || live?.error_message || (attempt ? `${attempt}执行` : '等待后端调度')
         const progress = item.status === 'uploading' ? item.progress : item.status === 'waiting' ? 0 : 100
@@ -666,176 +520,22 @@ function UploadQueuePanel({ queue, jobs, onClear }: { queue: UploadQueueItem[]; 
 }
 
 function ProgressPanel({ upload, job, onCancel }: { upload: UploadState; job: Job | null; onCancel: () => void }) {
-  const uploading = upload.phase !== 'idle'
-  const retryLabel = job ? attemptLabel(job) : null
-  const label = upload.phase === 'uploading' ? `正在上传 ${upload.progress}%` : job ? `${statusCopy[job.status]}${retryLabel ? ` · ${retryLabel}` : ''}` : ''
-  const number = upload.phase === 'uploading' ? upload.progress : job?.status === 'completed' ? 100 : null
-  const internalPipelineActive = job?.status === 'processing'
-  const workflowNodeCount = WORKFLOW_STAGES.reduce((total, stage) => total + stage.nodes.length, 0)
-  const activeJobStageIndex = job ? JOB_STAGE_INDEX[job.current_stage] : 0
-  const automaticStageIndex = uploading ? 0 : activeJobStageIndex
-  const [selectedWorkflowStageIndex, setSelectedWorkflowStageIndex] = useState(automaticStageIndex)
-  useEffect(() => setSelectedWorkflowStageIndex(automaticStageIndex), [upload.phase, job?.status, job?.current_stage])
-  const stageState = (stageIndex: number): WorkflowState => {
-    if (uploading) return stageIndex === 0 ? 'current' : 'waiting'
-    if (!job) return 'waiting'
-    if (job.status === 'queued') return stageIndex === 0 ? 'done' : stageIndex === 1 ? 'current' : 'waiting'
-    if (job.status === 'processing') return stageIndex < activeJobStageIndex ? 'done' : stageIndex === activeJobStageIndex ? 'current' : 'waiting'
-    if (job.status === 'completed') return 'done'
-    if (job.status === 'failed') return stageIndex < activeJobStageIndex ? 'done' : stageIndex === activeJobStageIndex ? 'failed' : 'waiting'
-    return 'waiting'
-  }
-  const selectedWorkflowStage = WORKFLOW_STAGES[selectedWorkflowStageIndex]
-  const selectedWorkflowState = stageState(selectedWorkflowStageIndex)
-  const confirmedStageCount = uploading ? 0 : job?.status === 'completed' ? WORKFLOW_STAGES.length : job ? activeJobStageIndex : 0
-  const confirmedPercent = uploading ? upload.progress : Math.round((confirmedStageCount / WORKFLOW_STAGES.length) * 100)
-  const publicProgressLabel = uploading
-    ? `${upload.progress}%`
-    : job?.status === 'completed'
-      ? '100%'
-      : job?.status === 'processing' || job?.status === 'failed'
-        ? `≥ ${confirmedPercent}%`
-        : `${confirmedPercent}%`
-  const publicProgressDetail = uploading
-    ? '客户端上传进度'
-    : `${confirmedStageCount} / ${WORKFLOW_STAGES.length} 个阶段已由 API 确认`
-  const selectedStageLabel = selectedWorkflowState === 'done'
-    ? '已确认完成'
-    : selectedWorkflowState === 'failed'
-      ? '执行中断'
-      : selectedWorkflowState === 'current'
-        ? internalPipelineActive ? 'Agent 处理中' : '进行中'
-        : selectedWorkflowState === 'unknown'
-          ? '状态未回传'
-          : '等待调度'
-  const nodeExecution = (): WorkflowNodeExecution => {
-    if (selectedWorkflowState === 'done') return {
-      state: 'done',
-      label: 'API 已确认',
-      detail: '公开任务状态已确认该阶段完成。',
-    }
-    if (selectedWorkflowState === 'failed') return {
-      state: 'failed',
-      label: '执行中断',
-      detail: job?.error_message || '后端返回 failed，公开状态无法定位到具体失败节点。',
-    }
-    if (selectedWorkflowState === 'current' && uploading) return {
-      state: 'current',
-      label: '正在上传',
-      detail: `客户端已发送 ${upload.progress}% 的源文件字节。`,
-    }
-    if (selectedWorkflowState === 'current' && job?.status === 'queued') return {
-      state: 'current',
-      label: '等待 Worker',
-      detail: '任务已创建，等待后端 Worker 认领。',
-    }
-    if (selectedWorkflowState === 'current') return {
-      state: 'current',
-      label: '阶段已确认',
-      detail: '后端已从 Agent 的阶段产物确认任务进入此阶段；阶段内节点仍按整体状态展示。',
-    }
-    if (selectedWorkflowState === 'unknown') return {
-      state: 'unknown',
-      label: '状态未回传',
-      detail: '该阶段可能等待、执行中或已完成，当前公开 API 无法进一步区分。',
-    }
-    return {
-      state: 'waiting',
-      label: '等待调度',
-      detail: '前序阶段完成后进入此步骤。',
-    }
-  }
-  const eventMessages = [
-    ...(uploading ? [{ kind: 'observed', topic: 'upload.stream.active', payload: `progress=${upload.progress}% · transport=multipart/form-data` }] : []),
-    ...(job ? [
-      { kind: 'observed', topic: 'job.created', payload: `job_id=${job.job_id} · language=${job.language} · revision=${job.revision}` },
-      { kind: 'observed', topic: 'job.state.changed', payload: `status=${job.status} · current_stage=${job.current_stage} · updated_at=${formatDate(job.updated_at)}` },
-    ] : []),
-    ...(internalPipelineActive ? [{ kind: 'observed', topic: 'analysis.worker.active', payload: '后端已确认 processing · Agent 内部节点按拓扑展示' }] : []),
-    ...WORKFLOW_EVENT_ROUTES.map(([topic, payload]) => ({ kind: 'route', topic, payload })),
-  ]
-  return <section className={`progress-panel ${job?.status || upload.phase}`}>
-    <div className="progress-heading">
-      <div><span className="pulse" /><div><b>{label}</b><small>{uploading ? upload.fileName : job?.original_name}</small></div></div>
-      <div className="progress-heading-actions">
-        {job && <span>{job.job_id}{retryLabel ? ` · ${retryLabel}` : ''}</span>}
-        {upload.phase === 'uploading' && <button onClick={onCancel}><Icon name="x" size={15} />取消上传</button>}
-      </div>
-    </div>
-    <div className={`progress-track ${job?.status === 'processing' || job?.status === 'queued' ? 'indeterminate' : ''}`}><i style={{ width: `${number ?? 38}%` }} /></div>
-
-    <nav className="workflow-flow" aria-label="高光提取流程">
-      {WORKFLOW_STAGES.map((stage, index) => {
-        const state = stageState(index)
-        const selected = index === selectedWorkflowStageIndex
-        const stateLabel = state === 'done' ? '已完成' : state === 'current' ? '处理中' : state === 'failed' ? '已中断' : state === 'unknown' ? '状态未回传' : '等待'
-        return <button
-          type="button"
-          className={`workflow-flow-step ${state}${selected ? ' selected' : ''}`}
-          key={stage.code}
-          aria-pressed={selected}
-          aria-controls="workflow-stage-detail"
-          onClick={() => setSelectedWorkflowStageIndex(index)}
-        >
-          <span className="workflow-flow-node">{stage.code}</span>
-          <b>{stage.title}</b>
-          <small>{stateLabel} · {stage.nodes.length} 个节点</small>
-        </button>
-      })}
-    </nav>
-
-    <div className="workflow-summary" aria-label="分析流程摘要">
-      <span><b>{WORKFLOW_STAGES.length}</b> 个阶段</span>
-      <span><b>{workflowNodeCount}</b> 个细节节点</span>
-      <span><b>4</b> 路并行感知</span>
-      <span><b>{WORKFLOW_EVENT_ROUTES.length}</b> 条事件路由</span>
-      <em><i /><span><b>{publicProgressLabel}</b><small>{publicProgressDetail}</small></span><strong>PUBLIC STATUS · {job?.status?.toUpperCase() || 'UPLOADING'}</strong></em>
-    </div>
-
-    <div className="workflow-layout">
-      <div className="workflow-graph" aria-label="高光分析编排拓扑">
-        <div className="workflow-section-head workflow-graph-head"><div><span>INTERACTIVE PIPELINE</span><b>点击流程节点查看完整内容</b></div><small>当前查看 · {selectedWorkflowStage.code} {selectedWorkflowStage.title}</small></div>
-        <article id="workflow-stage-detail" className={`workflow-stage-detail ${selectedWorkflowState}`} key={selectedWorkflowStage.code}>
-          <header>
-            <span>{selectedWorkflowStage.code}</span>
-            <div><small>{selectedWorkflowStage.subtitle}</small><h2>{selectedWorkflowStage.title}</h2><p>{selectedWorkflowStage.description}</p></div>
-            <aside><b>{selectedWorkflowStage.nodes.length}</b><span>执行节点</span><em>{selectedStageLabel}</em></aside>
-          </header>
-          <div className="workflow-stage-contents">
-            {selectedWorkflowStage.nodes.map((node, nodeIndex) => {
-              const execution = nodeExecution()
-              return <section className={execution.state} key={node.topic}>
-                <span>{selectedWorkflowStage.code}.{String(nodeIndex + 1).padStart(2, '0')}</span>
-                <div>
-                  <div className="workflow-node-heading"><h3>{node.title}</h3><em><i />{execution.label}</em></div>
-                  <p>{node.detail}</p>
-                </div>
-                <small className="workflow-node-note">{execution.detail}</small>
-                <code><b>EVENT</b>{node.topic}</code>
-              </section>
-            })}
-          </div>
-        </article>
-      </div>
-
-      <aside className="event-console" aria-label="事件驱动消息">
-        <div className="workflow-section-head"><div><span>EVENT BUS</span><b>编排消息</b></div><small>{eventMessages.length} messages</small></div>
-        <div className="event-legend"><span><i className="observed" />API 回执</span><span><i className="route" />拓扑路由</span></div>
-        <ol role="log" aria-live="polite">
-          {eventMessages.map((event, index) => <li className={`${event.kind}${event.kind === 'route' && internalPipelineActive ? ' active' : ''}`} key={`${event.topic}-${index}`}>
-            <span>{String(index + 1).padStart(2, '0')}</span>
-            <div><b>{event.topic}</b><small>{event.payload}</small></div>
-            <em>{event.kind === 'observed' ? 'API' : internalPipelineActive ? 'ROUTE' : 'WAIT'}</em>
-          </li>)}
-        </ol>
-      </aside>
-    </div>
-    <p className="workflow-disclosure"><span>STATUS SOURCE</span> 顶部状态和当前阶段来自后端公开任务 API；阶段内节点与事件展示的是当前编排拓扑，不读取 trace 或服务端日志，也不伪装成逐节点完成回执。</p>
+  const progress = job?.progress || job?.result?.analysis
+  const uploading = upload.phase === 'uploading'
+  return <section className="progress-panel">
+    <h2>{uploading ? '上传视频' : job?.result?.completion === 'complete' ? '分析完成' : '视频分析'}</h2>
+    {uploading ? <><p>已上传 {upload.progress}%</p><button onClick={onCancel}>取消上传</button></> : <>
+      <p>{job?.status === 'queued' ? '等待执行' : `全片检查 ${Math.round((progress?.scan_coverage || 0) * 100)}%`}</p>
+      <progress max={1} value={progress?.scan_coverage || 0} />
+      {progress && <p>待处理事件 {progress.pending_event_count} · 未确认本地线索 {progress.pending_proposal_count} · 待核验成片 {progress.pending_review_count}</p>}
+      <p>Agent 根据视频证据选择补查位置，完成全部事件处置和成片复核后交付结果。</p>
+    </>}
   </section>
 }
 
 function Player({ job, selected, reloadToken, rangeBusy, exportBusy, exportResult, onSelect, onRangeEdit, onExport, onPlaybackError }: { job: Job; selected: Highlight | null; reloadToken: number; rangeBusy: boolean; exportBusy: boolean; exportResult: AdExportResult | null; onSelect: (item: Highlight | null) => void; onRangeEdit: (item: Highlight, startSec: number, endSec: number) => Promise<void>; onExport: (item: Highlight) => Promise<void>; onPlaybackError: (message: string | null) => void }) {
-  const source = job.source_url
+  const frozen = Boolean(selected?.clip_url)
+  const source = selected?.clip_url ? resolveSourceUrl(selected.clip_url) : job.source_url
   const highlights = job.result?.highlights || []
   const sourceDuration = job.result?.video.duration_sec || 1
   const selectedIndex = selected ? highlights.findIndex((item) => item.highlight_id === selected.highlight_id) : -1
@@ -862,16 +562,16 @@ function Player({ job, selected, reloadToken, rangeBusy, exportBusy, exportResul
       start_sec: selected.start_sec,
       end_sec: selected.end_sec,
     } : null)
-  }, [selected?.highlight_id, selected?.start_sec, selected?.end_sec])
+  }, [selected?.highlight_id, selected?.start_sec, selected?.end_sec, source])
 
   const normalizeRange = (edge: 'start' | 'end', value: number, current: { start_sec: number; end_sec: number }) => {
     if (edge === 'start') return {
-      start_sec: Math.max(0, current.end_sec - 24, Math.min(value, current.end_sec - .5)),
+      start_sec: Math.max(0, Math.min(value, current.end_sec - .5)),
       end_sec: current.end_sec,
     }
     return {
       start_sec: current.start_sec,
-      end_sec: Math.min(sourceDuration, current.start_sec + 24, Math.max(value, current.start_sec + .5)),
+      end_sec: Math.min(sourceDuration, Math.max(value, current.start_sec + .5)),
     }
   }
   const setDraftEdge = (edge: 'start' | 'end', value: number) => {
@@ -950,15 +650,15 @@ function Player({ job, selected, reloadToken, rangeBusy, exportBusy, exportResul
     const player = videoRef.current
     if (!player) return
     const seekToSelection = () => {
-      player.currentTime = selected?.start_sec || 0
+      player.currentTime = frozen ? 0 : selected?.start_sec || 0
       if (selected) void player.play().catch(() => undefined)
     }
     if (player.readyState >= 1) seekToSelection()
     else player.addEventListener('loadedmetadata', seekToSelection, { once: true })
     const stopAtOutPoint = () => {
-      if (selected && player.currentTime >= selected.end_sec) {
+      if (selected && player.currentTime >= (frozen ? selected.end_sec - selected.start_sec : selected.end_sec)) {
         player.pause()
-        player.currentTime = selected.end_sec
+        player.currentTime = frozen ? selected.end_sec - selected.start_sec : selected.end_sec
       }
     }
     player.addEventListener('timeupdate', stopAtOutPoint)
@@ -966,7 +666,7 @@ function Player({ job, selected, reloadToken, rangeBusy, exportBusy, exportResul
       player.removeEventListener('loadedmetadata', seekToSelection)
       player.removeEventListener('timeupdate', stopAtOutPoint)
     }
-  }, [selected?.highlight_id, selected?.start_sec, selected?.end_sec])
+  }, [selected?.highlight_id, selected?.start_sec, selected?.end_sec, source])
   return <section className="player-card">
     <div className="player-top"><div><span>VIDEO MONITOR · {selected ? 'HIGHLIGHT' : 'SOURCE'}</span><b>{selected?.description || job.original_name}</b></div><span className="media-chip">{selected ? `${formatTime(selected.start_sec)} — ${formatTime(selected.end_sec)}` : formatBytes(job.size_bytes)}</span></div>
     <div className="video-frame">
@@ -1005,7 +705,7 @@ function Player({ job, selected, reloadToken, rangeBusy, exportBusy, exportResul
             ><span className="timeline-handle timeline-handle-in" aria-hidden="true" onPointerDown={(event) => beginRangeDrag(event, 'start', item)} /><span className="timeline-handle timeline-handle-out" aria-hidden="true" onPointerDown={(event) => beginRangeDrag(event, 'end', item)} /></div>
           })}
         </div>
-        <div className="timeline-scale"><span>00:00</span><span>拖动编辑 · 点击预览 · 最长 24 秒</span><span>{formatTime(sourceDuration)}</span></div>
+        <div className="timeline-scale"><span>00:00</span><span>拖动编辑 · 点击预览</span><span>{formatTime(sourceDuration)}</span></div>
       </div>
       {selected && <section className="highlight-detail-drawer" key={selected.highlight_id} aria-labelledby="highlight-detail-title">
         <div className="detail-identity">
@@ -1308,6 +1008,8 @@ function AdWorkspace({ jobs, assignments, assets, onOpen, onGoReview }: { jobs: 
 }
 
 type WorkspaceProps = {
+  onResume: () => void
+
   upload: UploadState
   uploadQueue: UploadQueueItem[]
   jobs: Job[]
@@ -1333,30 +1035,33 @@ type WorkspaceProps = {
   onPlaybackError: (message: string | null) => void
 }
 
-function Workspace({ upload, uploadQueue, jobs, job, selected, error, chatBusy, rangeBusy, exportBusy, exportResult, playerReloadToken, configuredAdIds, onFiles, onSelect, onReview, onAd, onChat, onRangeEdit, onExport, onClearQueue, onCancel, onRetry, onPlaybackError }: WorkspaceProps) {
+function Workspace({ upload, uploadQueue, jobs, job, selected, error, chatBusy, rangeBusy, exportBusy, exportResult, playerReloadToken, configuredAdIds, onFiles, onSelect, onReview, onAd, onChat, onRangeEdit, onExport, onClearQueue, onCancel, onRetry, onPlaybackError, onResume }: WorkspaceProps) {
   const busy = upload.phase !== 'idle' || job?.status === 'queued' || job?.status === 'processing'
   const reviewing = job?.status === 'completed'
   return <div className={`view workspace-view${reviewing ? ' task-review' : ''}`}>
-    {!reviewing && <header className="view-header"><div><p className="overline">VIDEO INTELLIGENCE</p><h1>高光提取</h1><p>批量导入视频，后端排队完成高光提取，并在失败时自动重试至多三次。</p></div><UploadDropzone compact onFiles={onFiles} /></header>}
+    {!reviewing && <header className="view-header"><div><p className="overline">VIDEO INTELLIGENCE</p><h1>高光提取</h1><p>批量导入视频，Agent 检查全片、核验事件并复核成片；中断后可继续分析。</p></div><UploadDropzone compact onFiles={onFiles} /></header>}
     {error && <div className="error-banner"><span><Icon name="close" size={16} /></span><div><b>流程没有完成</b><p>{error}</p></div><button onClick={onRetry}><Icon name="retry" size={15} />重新载入</button></div>}
     <UploadQueuePanel queue={uploadQueue} jobs={jobs} onClear={onClearQueue} />
     {!job && upload.phase === 'idle' && !uploadQueue.length && <UploadDropzone onFiles={onFiles} />}
+    {(job?.result?.completion === 'partial' || job?.status === 'failed') && <div className="error-banner"><div><b>分析尚未完成</b><p>{job.result?.message || job.error_message}</p></div><button disabled={busy || job.revision > 0} onClick={onResume}>继续分析</button></div>}
     {busy && <ProgressPanel upload={upload} job={job} onCancel={onCancel} />}
-    {job?.status === 'failed' && <div className="failed-state"><Icon name="close" size={22} /><div><h2>Agent 在 {job.attempt}/{job.max_attempts} 次尝试后停止</h2><p>{job.error_message || '后端未能完成当前任务。'}</p></div></div>}
+    {job?.status === 'failed' && <div className="failed-state"><Icon name="close" size={22} /><div><h2>分析已中断</h2><p>{job.error_message || '后端未能完成当前任务。'}</p></div></div>}
     {job?.status === 'completed' && <div className="review-grid"><HighlightList job={job} selectedId={selected?.highlight_id || null} configuredIds={configuredAdIds} onSelect={onSelect} onReview={onReview} onAd={onAd} /><Player job={job} selected={selected} reloadToken={playerReloadToken} rangeBusy={rangeBusy} exportBusy={exportBusy} exportResult={exportResult} onSelect={onSelect} onRangeEdit={onRangeEdit} onExport={onExport} onPlaybackError={onPlaybackError} /><HighlightAssistant job={job} selected={selected} busy={chatBusy} onSend={onChat} /></div>}
   </div>
 }
 
 function Library({ jobs, onOpen, onFiles, onDelete }: { jobs: Job[]; onOpen: (job: Job) => void; onFiles: (files: File[]) => void; onDelete: (job: Job) => void }) {
   const [query, setQuery] = useState('')
-  const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'completed' | 'failed'>('all')
+  const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'completed' | 'partial' | 'failed'>('all')
   const [sort, setSort] = useState<'newest' | 'oldest' | 'name'>('newest')
   const filteredJobs = useMemo(() => {
     const keyword = query.trim().toLocaleLowerCase()
     const matches = jobs.filter((item) => {
       const statusMatches = statusFilter === 'all'
         || (statusFilter === 'active' && ['queued', 'processing'].includes(item.status))
-        || item.status === statusFilter
+        || (statusFilter === 'completed' && item.status === 'completed' && item.result?.completion === 'complete')
+        || (statusFilter === 'partial' && item.status === 'completed' && item.result?.completion === 'partial')
+        || (statusFilter === 'failed' && item.status === 'failed')
       if (!statusMatches) return false
       if (!keyword) return true
       const highlightText = item.result?.highlights.map((highlight) => `${highlight.description} ${highlight.reason} ${highlight.highlight_type}`).join(' ') || ''
@@ -1370,10 +1075,10 @@ function Library({ jobs, onOpen, onFiles, onDelete }: { jobs: Job[]; onOpen: (jo
   }, [jobs, query, sort, statusFilter])
   return <div className="view library-view">
     <header className="view-header"><div><p className="overline">SERVER TASKS</p><h1>任务归档</h1><p>搜索原片、任务编号或高光内容，快速定位历史分析结果。</p></div><UploadDropzone compact onFiles={onFiles} /></header>
-    <section className="archive-summary"><div><small>全部任务</small><b>{jobs.length}</b></div><div><small>提取完成</small><b>{jobs.filter((item) => item.status === 'completed').length}</b></div><div><small>处理中</small><b>{jobs.filter((item) => ['queued', 'processing'].includes(item.status)).length}</b></div><div><small>高光片段</small><b>{jobs.reduce((sum, item) => sum + (item.result?.highlights.length || 0), 0)}</b></div></section>
+    <section className="archive-summary"><div><small>全部任务</small><b>{jobs.length}</b></div><div><small>提取完成</small><b>{jobs.filter((item) => item.status === 'completed' && item.result?.completion === 'complete').length}</b></div><div><small>处理中</small><b>{jobs.filter((item) => ['queued', 'processing'].includes(item.status)).length}</b></div><div><small>高光片段</small><b>{jobs.reduce((sum, item) => sum + (item.result?.highlights.length || 0), 0)}</b></div></section>
     <section className="archive-search" aria-label="归档检索">
       <label><span>SEARCH ARCHIVE</span><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="搜索文件名、任务 ID、高光标题或理由…" /></label>
-      <select value={statusFilter} onChange={(event) => setStatusFilter(event.target.value as typeof statusFilter)} aria-label="按任务状态筛选"><option value="all">全部状态</option><option value="active">正在处理</option><option value="completed">提取完成</option><option value="failed">提取失败</option></select>
+      <select value={statusFilter} onChange={(event) => setStatusFilter(event.target.value as typeof statusFilter)} aria-label="按任务状态筛选"><option value="all">全部状态</option><option value="active">正在处理</option><option value="completed">提取完成</option><option value="partial">分析未完成</option><option value="failed">提取失败</option></select>
       <select value={sort} onChange={(event) => setSort(event.target.value as typeof sort)} aria-label="归档排序"><option value="newest">最新创建</option><option value="oldest">最早创建</option><option value="name">按文件名</option></select>
       <span><b>{filteredJobs.length}</b> / {jobs.length} 条结果</span>
     </section>
@@ -1385,7 +1090,7 @@ function Library({ jobs, onOpen, onFiles, onDelete }: { jobs: Job[]; onOpen: (jo
         return <div className="job-row" key={item.job_id}>
           <button className="job-title" onClick={() => onOpen(item)} aria-label={`打开任务 ${item.original_name}`}><i><Icon name="film" size={17} /></i><span><b>{item.original_name}</b><small>{item.job_id}</small></span></button>
           <span>{formatBytes(item.size_bytes)}</span>
-          <span className="job-status-stack"><b><i className={`status-dot ${item.status}`} />{statusCopy[item.status]}</b>{attempt && <small>{attempt}</small>}</span>
+          <span className="job-status-stack"><b><i className={`status-dot ${item.status}`} />{jobStatusLabel(item)}</b>{attempt && <small>{attempt}</small>}</span>
           <span>{formatDate(item.created_at)}</span>
           <div className="job-actions"><button className="open-job" onClick={() => onOpen(item)} aria-label={`打开任务 ${item.original_name}`}>→</button><button className="delete-job" disabled={active} title={active ? '分析中的任务不能删除' : '删除任务'} onClick={() => onDelete(item)} aria-label={`删除任务 ${item.original_name}`}><Icon name="trash" size={15} /></button></div>
         </div>
@@ -1411,6 +1116,7 @@ function DeleteDialog({ job, busy, error, onCancel, onConfirm }: { job: Job; bus
 }
 
 export default function App() {
+  const [detectionOptions, setDetectionOptions] = useState<DetectionOptions>({ instruction: '挑选有看点、能独立看懂的短剧片段，保留必要铺垫和反应，剪辑简洁流畅。', max_clip_sec: 24, max_highlights: 12, allow_overlap: true })
   const [theme, setTheme] = useState<Theme>(() => {
     try {
       return window.localStorage.getItem('frame-theme') === 'light' ? 'light' : 'dark'
@@ -1534,6 +1240,7 @@ export default function App() {
               setUploadQueue((current) => current.map((entry) => entry.queue_id === item.queue_id ? { ...entry, progress } : entry))
             },
             (request) => { uploadRequest.current = request },
+            item.options,
           )
           await persistJob(withSourceUrl(created))
           setUploadQueue((current) => current.map((entry) => entry.queue_id === item.queue_id ? { ...entry, status: 'submitted', progress: 100 } : entry))
@@ -1561,6 +1268,7 @@ export default function App() {
           : undefined
       return {
         queue_id: `queue_${crypto.randomUUID()}`,
+        options: { ...detectionOptions },
         job_id: createJobId(),
         file,
         status: errorMessage ? 'failed' : 'waiting',
@@ -1577,7 +1285,7 @@ export default function App() {
     setCleanExportResult(null)
     setError(null)
     void drainUploadQueue()
-  }, [drainUploadQueue])
+  }, [drainUploadQueue, detectionOptions])
 
   const clearFinishedQueue = () => {
     const jobsById = new Map(jobs.map((item) => [item.job_id, item]))
@@ -1742,24 +1450,6 @@ export default function App() {
     setError(null)
     setCleanExportResult(null)
     setView('workspace')
-    return
-
-    setChatBusy(true)
-    void requestJson<RemoteJob>(`/api/demo-jobs/${record.job_id}/session`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        original_name: record.original_name,
-        size_bytes: record.size_bytes,
-        language: record.language,
-        result: record.result,
-      }),
-    }).then(async (remote) => {
-      await persistJob(mergeRemoteJob(record, remote))
-      setOnline(true)
-    }).catch((reason) => {
-      setError(reason instanceof Error ? reason.message : '演示对话会话创建失败')
-    }).finally(() => setChatBusy(false))
   }
   const requestDelete = (record: Job) => { setDeleteCandidate(record); setDeleteError(null) }
   const closeDelete = () => { if (!deleteBusy) { setDeleteCandidate(null); setDeleteError(null) } }
@@ -1792,7 +1482,17 @@ export default function App() {
     <WindowChrome theme={theme} onToggleTheme={() => setTheme((current) => current === 'dark' ? 'light' : 'dark')} />
     <Sidebar view={view} onView={setView} online={online} jobs={jobs} />
     <main>{view === 'workspace'
-      ? <Workspace upload={upload} uploadQueue={uploadQueue} jobs={jobs} job={job} selected={activeHighlight} error={error} chatBusy={chatBusy} rangeBusy={rangeBusy} exportBusy={cleanExportBusy} exportResult={cleanExportResult} playerReloadToken={playerReloadToken} configuredAdIds={configuredAdIds} onFiles={handleFiles} onSelect={setSelected} onReview={review} onAd={openAdStudio} onChat={sendEditMessage} onRangeEdit={editHighlightRange} onExport={exportCleanHighlight} onClearQueue={clearFinishedQueue} onCancel={() => uploadRequest.current?.abort()} onRetry={() => { setError(null); setPlayerReloadToken((value) => value + 1); void refreshJobs() }} onPlaybackError={setError} />
+      ? <><details className="task-options"><summary>新任务要求</summary>
+        <label>提取目标<textarea value={detectionOptions.instruction} onChange={event => setDetectionOptions({ ...detectionOptions, instruction: event.target.value })} /></label>
+        <label>单段时长上限（秒）<input type="number" min="3" value={detectionOptions.max_clip_sec} onChange={event => setDetectionOptions({ ...detectionOptions, max_clip_sec: Number(event.target.value) })} /></label>
+        <label>最多输出片段数<input type="number" min="1" value={detectionOptions.max_highlights} onChange={event => setDetectionOptions({ ...detectionOptions, max_highlights: Number(event.target.value) })} /></label>
+        <label><input type="checkbox" checked={detectionOptions.allow_overlap} onChange={event => setDetectionOptions({ ...detectionOptions, allow_overlap: event.target.checked })} />允许不同事件共享上下文</label>
+      </details><Workspace upload={upload} uploadQueue={uploadQueue} jobs={jobs} job={job} selected={activeHighlight} error={error} chatBusy={chatBusy} rangeBusy={rangeBusy} exportBusy={cleanExportBusy} exportResult={cleanExportResult} playerReloadToken={playerReloadToken} configuredAdIds={configuredAdIds} onFiles={handleFiles} onSelect={setSelected} onReview={review} onAd={openAdStudio} onChat={sendEditMessage} onRangeEdit={editHighlightRange} onExport={exportCleanHighlight} onClearQueue={clearFinishedQueue} onCancel={() => uploadRequest.current?.abort()} onRetry={() => { setError(null); setPlayerReloadToken((value) => value + 1); void refreshJobs() }} onPlaybackError={setError} onResume={() => {
+        if (!job) return
+        void fetch(`${API_BASE}/api/jobs/${job.job_id}/resume`, { method: 'POST' })
+          .then(async response => { if (!response.ok) throw new Error((await response.json()).detail); await refreshJobs() })
+          .catch(reason => setError(String(reason)))
+      }} /></>
       : view === 'library'
         ? <Library jobs={jobs} onOpen={openJob} onFiles={handleFiles} onDelete={requestDelete} />
         : <AdWorkspace jobs={jobs} assignments={adAssignments} assets={adAssets} onOpen={openAdStudioFromQueue} onGoReview={() => setView('workspace')} />}

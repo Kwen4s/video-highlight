@@ -36,9 +36,7 @@ def highlight_localization_loss(output: TransitionOutput, targets: EpisodeTarget
     )
 
     boundary_mask = targets.boundary_mask.to(device)
-    centers = torch.arange(
-        len(output.offsets), device=device, dtype=output.offsets.dtype
-    )
+    centers = torch.arange(len(output.offsets), device=device, dtype=output.offsets.dtype)
     predicted_segments = torch.stack(
         [centers + output.offsets[:, 0], centers + output.offsets[:, 1]], dim=1
     )
@@ -79,9 +77,7 @@ def highlight_localization_loss(output: TransitionOutput, targets: EpisodeTarget
     else:
         position_loss = torch.zeros((), device=device)
     if boundary_mask.any():
-        presence_probability = output.anchor_presence[boundary_mask].float().clamp(
-            1e-6, 1.0 - 1e-6
-        )
+        presence_probability = output.anchor_presence[boundary_mask].float().clamp(1e-6, 1.0 - 1e-6)
         presence_loss = F.binary_cross_entropy_with_logits(
             torch.logit(presence_probability),
             targets.anchor_mask.to(device)[boundary_mask].float(),
@@ -92,9 +88,9 @@ def highlight_localization_loss(output: TransitionOutput, targets: EpisodeTarget
 
     labeled_segments = targets.segments.to(device)
     if len(labeled_segments):
-        quality_target = _pairwise_temporal_iou(
-            predicted_segments.detach(), labeled_segments
-        ).amax(dim=1)
+        quality_target = _pairwise_temporal_iou(predicted_segments.detach(), labeled_segments).amax(
+            dim=1
+        )
     else:
         quality_target = torch.zeros(len(predicted_segments), device=device)
     quality_loss = _balanced_focal_target(
@@ -104,19 +100,13 @@ def highlight_localization_loss(output: TransitionOutput, targets: EpisodeTarget
         positive_mask=quality_target >= 0.3,
         negative_mask=(quality_target < 0.1) & ~targets.ignore_mask.to(device),
     )
-    combined_score = F.logsigmoid(output.event_logits) + F.logsigmoid(
-        output.segment_quality_logits
-    )
-    decode_score = torch.sigmoid(output.event_logits) * torch.sigmoid(
-        output.segment_quality_logits
-    )
+    combined_score = F.logsigmoid(output.event_logits) + F.logsigmoid(output.segment_quality_logits)
+    decode_score = torch.sigmoid(output.event_logits) * torch.sigmoid(output.segment_quality_logits)
     peaks = _local_max_mask(decode_score.detach())
     ignore = targets.ignore_mask.to(device)
     hard_negative = targets.hard_negative_mask.to(device)
     positive = event_target >= 0.3
-    negative = (hard_negative | ((event_target <= 0.05) & ~ignore)) & (
-        quality_target < 0.1
-    )
+    negative = (hard_negative | ((event_target <= 0.05) & ~ignore)) & (quality_target < 0.1)
     ranking_loss = (
         _hard_negative_ranking_loss(combined_score, positive, negative)
         + _local_peak_score_loss(decode_score, peaks & positive, peaks & negative)
@@ -153,9 +143,7 @@ def _balanced_focal_target(
     parts: list[Tensor] = []
     for mask in (positive_mask, negative_mask):
         if mask.any():
-            parts.append(
-                (losses[mask] * weight[mask]).sum() / weight[mask].sum().clamp_min(1)
-            )
+            parts.append((losses[mask] * weight[mask]).sum() / weight[mask].sum().clamp_min(1))
     return torch.stack(parts).mean() if parts else torch.zeros((), device=logits.device)
 
 
@@ -197,12 +185,10 @@ def _local_max_mask(scores: Tensor) -> Tensor:
 
 def _temporal_iou_loss(predicted: Tensor, target: Tensor) -> Tensor:
     intersection = (
-        torch.minimum(predicted[:, 1], target[:, 1])
-        - torch.maximum(predicted[:, 0], target[:, 0])
+        torch.minimum(predicted[:, 1], target[:, 1]) - torch.maximum(predicted[:, 0], target[:, 0])
     ).clamp_min(0)
     union = (
-        torch.maximum(predicted[:, 1], target[:, 1])
-        - torch.minimum(predicted[:, 0], target[:, 0])
+        torch.maximum(predicted[:, 1], target[:, 1]) - torch.minimum(predicted[:, 0], target[:, 0])
     ).clamp_min(1e-6)
     return (1.0 - intersection / union).mean()
 
@@ -229,9 +215,5 @@ def _hard_negative_ranking_loss(
     if not positive.any() or not negative.any():
         return torch.zeros((), device=scores.device)
     positive_scores = scores[positive]
-    negative_scores = scores[negative].topk(
-        min(hard_negative_count, int(negative.sum()))
-    ).values
-    return F.softplus(
-        margin + negative_scores[:, None] - positive_scores[None, :]
-    ).mean()
+    negative_scores = scores[negative].topk(min(hard_negative_count, int(negative.sum()))).values
+    return F.softplus(margin + negative_scores[:, None] - positive_scores[None, :]).mean()

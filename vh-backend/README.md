@@ -87,13 +87,12 @@ runtime/
 - `GET /api/jobs`：列出服务端保留的全部任务，不按时间或数量隐藏旧任务。
 - `GET /api/jobs/{job_id}`：查询任务状态和公开结果。
 - `GET|HEAD /api/jobs/{job_id}/source`：读取原视频；支持浏览器媒体播放所需的字节范围请求。
-- `POST /api/demo-jobs/{job_id}/session`：为白名单内置 Demo 创建或重置对话上下文，不上传视频。
 - `POST /api/jobs/{job_id}/highlights/{highlight_id}/range`：使用 `start_sec`、`end_sec` 和 `revision` 直接调整高光时间范围。
 - `POST /api/jobs/{job_id}/messages`：发送查询或编辑请求；请求携带 `message`、`revision` 和可选的 `selected_highlight_id`。
 - `POST /api/jobs/{job_id}/messages/stream`：以 NDJSON 流式返回对话回复与最终任务结果。
 - `DELETE /api/jobs/{job_id}`：删除已完成或失败的任务；仅接受用户确认后发送的 `{"confirmed": true, "job_id": "<job_id>"}`，任务号不匹配或缺少确认时不会删除。
 
-任务状态为 `queued → processing → completed`，失败时为 `failed`。公开任务响应中的 `current_stage` 依据 Agent 已落盘的阶段产物在 `orchestration → preprocessing → perception → fusion → reasoning → delivery` 之间推进，不暴露缓存路径或内部 trace。检测失败会自动重试，默认最多执行 3 次；`attempt` 和 `max_attempts` 用于展示当前尝试次数。当前使用单检测工作线程，避免多个 GPU 任务并发争用显存。结果和编辑对话没有有效期限制；结果修改仍使用乐观版本号，版本冲突返回 `409`。
+任务状态为 `queued → processing → completed`，失败时为 `failed`。检测不自动重跑整任务。schema 2.0 的 `completion` 区分 complete 与 partial；`POST /api/jobs/{job_id}/resume` 从检查点继续。`attempt` 记录显式执行次数。当前使用单检测工作线程，避免多个 GPU 任务并发争用显存。结果和编辑对话没有有效期限制；结果修改仍使用乐观版本号，版本冲突返回 `409`。
 
 ## 配置
 
@@ -103,8 +102,6 @@ runtime/
 - `VH_AGENT_ROOT`：`vh-agent` 根目录。
 - `VH_AGENT_UV_EXECUTABLE`：uv 可执行文件。
 - `VH_AGENT_TIMEOUT_SEC`：检测任务超时秒数。
-- `VH_AGENT_MAX_ATTEMPTS`：检测任务最大执行次数，范围为 1–3，默认 3。
-- `VH_AGENT_RETRY_DELAY_SEC`：失败后再次执行前的等待秒数，默认 2 秒。
 - `VH_MAX_UPLOAD_BYTES`：上传上限，默认 20 GB。
 - `VH_CHAT_*`：对话模型的密钥、OpenAI 兼容地址、模型、超时和重试次数。
 - `VH_ALLOWED_ORIGINS`：逗号分隔的 Electron/Vite 页面来源。
@@ -126,3 +123,5 @@ $env:UV_DEFAULT_INDEX = "https://pypi.tuna.tsinghua.edu.cn/simple"
 uv run ruff check app tests
 uv run pytest -q
 ```
+
+上传表单支持 `options` JSON（提取目标、时长、数量、重叠约束）及可选 `subtitles` 文件。`GET/HEAD /api/jobs/{job_id}/clips/{highlight_id}` 返回已复核媒体；手工修改边界后不再提供旧媒体。任务响应 `progress` 来自 Agent 检查点进度。

@@ -10,16 +10,16 @@
     "dev:web": "vite --host 127.0.0.1",
     "dev:electron": "wait-on http://127.0.0.1:5173 && electron . --dev",
     "build": "tsc --noEmit -p tsconfig.app.json && tsc --noEmit -p tsconfig.node.json && vite build",
-    "build:win": "npm run build && electron-builder --win portable --x64",
     "preview": "vite preview --host 127.0.0.1",
-    "start": "electron ."
+    "start": "electron .",
+    "test": "node --test tests/*.test.cjs"
   },
   "dependencies": {
     "ffmpeg-static": "^5.3.0",
     "ffprobe-static": "^3.1.0",
     "react": "latest",
     "react-dom": "latest",
-    "sharp": "^0.35.3"
+    "sharp": "^0.35.5"
   },
   "devDependencies": {
     "@types/react": "latest",
@@ -27,59 +27,8 @@
     "@vitejs/plugin-react": "latest",
     "concurrently": "latest",
     "electron": "latest",
-    "electron-builder": "^26.15.3",
     "typescript": "latest",
     "vite": "latest",
     "wait-on": "latest"
-  },
-  "build": {
-    "appId": "com.videohighlight.desktop",
-    "productName": "Video Highlight",
-    "asar": true,
-    "asarUnpack": [
-      "node_modules/ffmpeg-static/ffmpeg.exe",
-      "node_modules/ffprobe-static/bin/win32/x64/ffprobe.exe",
-      "node_modules/sharp/**/*",
-      "node_modules/@img/**/*"
-    ],
-    "compression": "maximum",
-    "electronLanguages": [
-      "en-US",
-      "zh-CN"
-    ],
-    "npmRebuild": false,
-    "directories": {
-      "output": "release"
-    },
-    "files": [
-      "dist/**/*",
-      "electron/**/*",
-      "package.json",
-      "!node_modules/ffprobe-static/bin/darwin/**/*",
-      "!node_modules/ffprobe-static/bin/linux/**/*",
-      "!node_modules/ffprobe-static/bin/win32/ia32/**/*"
-    ],
-    "extraResources": [
-      {
-        "from": "video-data/jobs/job_demo_citypulse",
-        "to": "demo-jobs/job_demo_citypulse"
-      },
-      {
-        "from": "video-data/jobs/job_demo_launchfilm",
-        "to": "demo-jobs/job_demo_launchfilm"
-      }
-    ],
-    "win": {
-      "target": [
-        {
-          "target": "portable",
-          "arch": [
-            "x64"
-          ]
-        }
-      ],
-      "artifactName": "${productName}-${version}-portable-${arch}.${ext}",
-      "signAndEditExecutable": false
-    }
   }
 }

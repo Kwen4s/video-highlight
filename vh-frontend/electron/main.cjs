@@ -1,6 +1,6 @@
 const { app, BrowserWindow, dialog, ipcMain, net, protocol } = require('electron')
 const { createWriteStream } = require('node:fs')
-const { copyFile, cp, mkdir, mkdtemp, readFile, readdir, rename, rm, stat, writeFile } = require('node:fs/promises')
+const { copyFile, mkdir, mkdtemp, readFile, rename, rm, stat, writeFile } = require('node:fs/promises')
 const { randomUUID } = require('node:crypto')
 const { spawn } = require('node:child_process')
 const path = require('node:path')
@@ -16,8 +16,8 @@ const VIDEO_EXTENSIONS = new Set(['.mp4', '.mov', '.mkv', '.webm', '.avi', '.m4v
 const IMAGE_EXTENSIONS = new Set(['.png', '.jpg', '.jpeg', '.webp'])
 const AD_PRESET_IDS = new Set(['cinema-cliffhanger', 'neon-app', 'velvet-qr'])
 const MEDIA_SCHEME = 'vh-media'
-const DEFAULT_DEMO_VERSION = 1
-const DEFAULT_DEMO_JOB_IDS = ['job_demo_citypulse', 'job_demo_launchfilm']
+const FFMPEG_PATH = require('ffmpeg-static').replace('app.asar', 'app.asar.unpacked')
+const FFPROBE_PATH = require('ffprobe-static').path.replace('app.asar', 'app.asar.unpacked')
 
 protocol.registerSchemesAsPrivileged([{
   scheme: MEDIA_SCHEME,
@@ -29,252 +29,12 @@ function requireJobId(value) {
   return value
 }
 
-function getLibraryRoot() {
-  if (!app.isPackaged) return path.join(app.getPath('userData'), 'video-library')
-
-  const portableDirectory = process.env.PORTABLE_EXECUTABLE_DIR
-  const executableDirectory = portableDirectory && path.isAbsolute(portableDirectory)
-    ? portableDirectory
-    : path.dirname(process.execPath)
-  return path.join(executableDirectory, 'video-data')
-}
-
-function getJobsRoot() {
-  return path.join(getLibraryRoot(), 'jobs')
-}
-
 function getAdAssetsRoot() {
-  return path.join(getLibraryRoot(), 'ad-assets')
+  return path.join(app.getPath('userData'), 'video-library', 'ad-assets')
 }
 
 function getAdAssetsIndexPath() {
   return path.join(getAdAssetsRoot(), 'assets.json')
-}
-
-function getDemoMarkerPath() {
-  return path.join(getLibraryRoot(), 'default-demos.json')
-}
-
-function getBundledDemoJobsRoot() {
-  if (app.isPackaged) return path.join(process.resourcesPath, 'demo-jobs')
-  return path.resolve(__dirname, '..', 'video-data', 'jobs')
-}
-
-function getJobDirectory(jobId) {
-  return path.join(getJobsRoot(), requireJobId(jobId))
-}
-
-function getTaskPath(jobId) {
-  return path.join(getJobDirectory(jobId), 'task.json')
-}
-
-function localSourceUrl(jobId) {
-  return `${MEDIA_SCHEME}://jobs/${requireJobId(jobId)}/source`
-}
-
-async function readStoredJob(jobId) {
-  const payload = await readFile(getTaskPath(jobId), 'utf8')
-  const parsed = JSON.parse(payload)
-  if (parsed.job_id !== jobId || typeof parsed.local_source_name !== 'string') {
-    throw new Error('本地任务数据无效')
-  }
-  return parsed
-}
-
-function publicJob(stored) {
-  const {
-    local_source_name: _localSourceName,
-    session_expires_at: _legacySessionExpiry,
-    ...task
-  } = stored
-  return { ...task, source_url: localSourceUrl(task.job_id) }
-}
-
-async function writeStoredJob(jobId, task) {
-  const taskPath = getTaskPath(jobId)
-  const temporaryPath = `${taskPath}.${randomUUID()}.tmp`
-  await writeFile(temporaryPath, JSON.stringify(task, null, 2), 'utf8')
-  await rename(temporaryPath, taskPath)
-}
-
-async function hasInitializedDefaultDemos() {
-  try {
-    const marker = JSON.parse(await readFile(getDemoMarkerPath(), 'utf8'))
-    return marker.version === DEFAULT_DEMO_VERSION
-  } catch {
-    return false
-  }
-}
-
-async function buildDemoTask(templateDirectory, jobId, createdAt) {
-  const result = JSON.parse(await readFile(path.join(templateDirectory, 'result.json'), 'utf8'))
-  if (result?.job_id !== jobId || !Array.isArray(result?.highlights)) {
-    throw new Error(`Demo 任务数据无效：${jobId}`)
-  }
-
-  const sourceDirectory = path.join(templateDirectory, 'source')
-  const sourceEntries = await readdir(sourceDirectory, { withFileTypes: true })
-  const sourceEntry = sourceEntries.find((entry) => (
-    entry.isFile() && VIDEO_EXTENSIONS.has(path.extname(entry.name).toLowerCase())
-  ))
-  if (!sourceEntry) throw new Error(`Demo 原片不存在：${jobId}`)
-
-  const sourceStats = await stat(path.join(sourceDirectory, sourceEntry.name))
-  const originalName = typeof result?.video?.title === 'string'
-    ? path.basename(result.video.title)
-    : sourceEntry.name
-  return {
-    job_id: jobId,
-    status: 'completed',
-    original_name: originalName,
-    content_type: 'video/mp4',
-    size_bytes: sourceStats.size,
-    language: 'zh',
-    created_at: createdAt,
-    updated_at: createdAt,
-    revision: 0,
-    error_message: null,
-    result: {
-      ...result,
-      highlights: result.highlights.map((highlight) => ({
-        ...highlight,
-        review_status: highlight.review_status || 'pending',
-      })),
-    },
-    messages: [],
-    local_source_name: path.join('source', sourceEntry.name),
-  }
-}
-
-async function installDefaultDemo(jobId, index) {
-  const targetDirectory = getJobDirectory(jobId)
-  try {
-    await readStoredJob(jobId)
-    return
-  } catch (error) {
-    try {
-      const targetStats = await stat(targetDirectory)
-      if (targetStats.isDirectory()) {
-        throw new Error(`Demo 任务目录已存在但数据无效：${jobId}`, { cause: error })
-      }
-    } catch (targetError) {
-      if (targetError?.code !== 'ENOENT') throw targetError
-    }
-  }
-
-  const templateDirectory = path.join(getBundledDemoJobsRoot(), jobId)
-  const createdAt = new Date(Date.now() - index * 1000).toISOString()
-  const task = await buildDemoTask(templateDirectory, jobId, createdAt)
-  const stagingDirectory = path.join(getJobsRoot(), `.demo-${jobId}-${randomUUID()}`)
-  try {
-    await cp(templateDirectory, stagingDirectory, { recursive: true, errorOnExist: true })
-    await writeFile(path.join(stagingDirectory, 'task.json'), JSON.stringify(task, null, 2), 'utf8')
-    await rename(stagingDirectory, targetDirectory)
-  } catch (error) {
-    await rm(stagingDirectory, { recursive: true, force: true })
-    throw error
-  }
-}
-
-async function ensureDefaultDemos() {
-  await mkdir(getJobsRoot(), { recursive: true })
-  if (await hasInitializedDefaultDemos()) return
-
-  for (const [index, jobId] of DEFAULT_DEMO_JOB_IDS.entries()) {
-    await installDefaultDemo(jobId, index)
-  }
-
-  const markerPath = getDemoMarkerPath()
-  const temporaryPath = `${markerPath}.${randomUUID()}.tmp`
-  await writeFile(temporaryPath, JSON.stringify({
-    version: DEFAULT_DEMO_VERSION,
-    job_ids: DEFAULT_DEMO_JOB_IDS,
-    initialized_at: new Date().toISOString(),
-  }, null, 2), 'utf8')
-  await rename(temporaryPath, markerPath)
-}
-
-async function importSource(input) {
-  const jobId = requireJobId(input?.jobId)
-  const sourcePath = typeof input?.sourcePath === 'string' ? path.resolve(input.sourcePath) : ''
-  const originalName = path.basename(typeof input?.originalName === 'string' ? input.originalName : '')
-  const extension = path.extname(originalName).toLowerCase()
-  if (!path.isAbsolute(sourcePath) || !VIDEO_EXTENSIONS.has(extension)) {
-    throw new Error('请选择受支持的本地视频文件')
-  }
-  const sourceStats = await stat(sourcePath)
-  if (!sourceStats.isFile()) throw new Error('选择的视频文件不存在')
-
-  const jobDirectory = getJobDirectory(jobId)
-  await mkdir(getJobsRoot(), { recursive: true })
-  await mkdir(jobDirectory, { recursive: false })
-  const storedName = `original${extension}`
-  const targetPath = path.join(jobDirectory, storedName)
-  try {
-    await copyFile(sourcePath, targetPath)
-    const createdAt = new Date().toISOString()
-    const stored = {
-      job_id: jobId,
-      status: 'queued',
-      original_name: originalName,
-      content_type: typeof input?.contentType === 'string' ? input.contentType : 'application/octet-stream',
-      size_bytes: sourceStats.size,
-      language: input?.language === 'en' ? 'en' : 'zh',
-      created_at: createdAt,
-      updated_at: createdAt,
-      revision: 0,
-      error_message: null,
-      result: null,
-      messages: [],
-      local_source_name: storedName,
-    }
-    await writeStoredJob(jobId, stored)
-    return publicJob(stored)
-  } catch (error) {
-    const resolvedJobDirectory = path.resolve(jobDirectory)
-    if (path.dirname(resolvedJobDirectory) === path.resolve(getJobsRoot())) {
-      await rm(resolvedJobDirectory, { recursive: true, force: true })
-    }
-    throw error
-  }
-}
-
-async function saveJob(input) {
-  const jobId = requireJobId(input?.job_id)
-  const current = await readStoredJob(jobId)
-  const { session_expires_at: _legacySessionExpiry, ...currentWithoutExpiry } = current
-  const messages = Array.isArray(input?.messages) ? input.messages.slice(-200) : current.messages
-  const stored = {
-    ...currentWithoutExpiry,
-    status: input.status,
-    updated_at: input.updated_at,
-    revision: Number.isInteger(input.revision) ? input.revision : current.revision,
-    error_message: input.error_message ?? null,
-    result: input.result ?? null,
-    messages,
-    job_id: current.job_id,
-    original_name: current.original_name,
-    content_type: current.content_type,
-    size_bytes: current.size_bytes,
-    language: current.language,
-    created_at: current.created_at,
-    local_source_name: current.local_source_name,
-  }
-  await writeStoredJob(jobId, stored)
-  return publicJob(stored)
-}
-
-async function listJobs() {
-  await ensureDefaultDemos()
-  const entries = await readdir(getJobsRoot(), { withFileTypes: true })
-  const tasks = await Promise.all(entries.filter((entry) => entry.isDirectory() && JOB_ID_PATTERN.test(entry.name)).map(async (entry) => {
-    try {
-      return publicJob(await readStoredJob(entry.name))
-    } catch {
-      return null
-    }
-  }))
-  return tasks.filter(Boolean).sort((left, right) => right.created_at.localeCompare(left.created_at))
 }
 
 function publicAdAsset(asset) {
@@ -323,17 +83,6 @@ async function getAdAsset(assetId, expectedKind) {
   return asset
 }
 
-function optionalBinaryPath(moduleName, fallback) {
-  try {
-    const imported = require(moduleName)
-    const candidate = typeof imported === 'string' ? imported : imported?.path
-    if (candidate) return candidate.replace('app.asar', 'app.asar.unpacked')
-  } catch {
-    // Development machines may intentionally use a system FFmpeg installation.
-  }
-  return fallback
-}
-
 function runMediaCommand(executable, args) {
   return new Promise((resolve, reject) => {
     const child = spawn(executable, args, { windowsHide: true })
@@ -352,8 +101,7 @@ function runMediaCommand(executable, args) {
 }
 
 async function probeMedia(filePath) {
-  const ffprobePath = optionalBinaryPath('ffprobe-static', 'ffprobe')
-  const { stdout } = await runMediaCommand(ffprobePath, [
+  const { stdout } = await runMediaCommand(FFPROBE_PATH, [
     '-v', 'error', '-show_streams', '-show_format', '-of', 'json', filePath,
   ])
   const payload = JSON.parse(stdout)
@@ -562,7 +310,6 @@ function normalizationFilter(width, height) {
 }
 
 async function transcodeSegment({ inputPath, outputPath, width, height, startSec = 0, durationSec, hasAudio }) {
-  const ffmpegPath = optionalBinaryPath('ffmpeg-static', 'ffmpeg')
   const args = ['-hide_banner', '-loglevel', 'error', '-y']
   if (startSec > 0) args.push('-ss', String(startSec))
   args.push('-t', String(durationSec), '-i', inputPath)
@@ -573,14 +320,13 @@ async function transcodeSegment({ inputPath, outputPath, width, height, startSec
     '-map', '[v]', '-map', '[a]', '-c:v', 'libx264', '-preset', 'medium', '-crf', '20',
     '-c:a', 'aac', '-b:a', '160k', '-ar', '48000', '-ac', '2', '-movflags', '+faststart', outputPath,
   )
-  await runMediaCommand(ffmpegPath, args)
+  await runMediaCommand(FFMPEG_PATH, args)
 }
 
 async function renderPresetSegment({ assignment, outputPath, cardPath, width, height }) {
-  const ffmpegPath = optionalBinaryPath('ffmpeg-static', 'ffmpeg')
   const durationSec = Math.min(8, Math.max(2, Number(assignment.duration_sec) || 4))
   await createPresetCard(assignment, width, height, cardPath)
-  await runMediaCommand(ffmpegPath, [
+  await runMediaCommand(FFMPEG_PATH, [
     '-hide_banner', '-loglevel', 'error', '-y', '-loop', '1', '-framerate', '30', '-t', String(durationSec), '-i', cardPath,
     '-f', 'lavfi', '-t', String(durationSec), '-i', 'anullsrc=channel_layout=stereo:sample_rate=48000',
     '-vf', normalizationFilter(width, height), '-map', '0:v:0', '-map', '1:a:0',
@@ -631,10 +377,11 @@ async function resolveExportSource(sourceUrl, downloadedSourcePath) {
 
 async function exportCleanHighlight(event, input) {
   const jobId = requireJobId(input?.job_id)
-  const sourceUrl = typeof input?.source_url === 'string' ? input.source_url : ''
   const highlight = input?.highlight
-  const startSec = Number(highlight?.start_sec)
-  const endSec = Number(highlight?.end_sec)
+  const frozen = Boolean(highlight?.clip_url)
+  const sourceUrl = frozen ? new URL(highlight.clip_url, input.source_url).toString() : input.source_url
+  const startSec = frozen ? 0 : Number(highlight?.start_sec)
+  const endSec = frozen ? Number(highlight.end_sec) - Number(highlight.start_sec) : Number(highlight?.end_sec)
   if (!highlight || !Number.isFinite(startSec) || !Number.isFinite(endSec) || startSec < 0 || endSec <= startSec) {
     throw new Error('高光片段时间范围无效')
   }
@@ -652,6 +399,10 @@ async function exportCleanHighlight(event, input) {
   try {
     const downloadedSourcePath = path.join(temporaryRoot, 'source.media')
     const { sourceInput, sourceMedia } = await resolveExportSource(sourceUrl, downloadedSourcePath)
+    if (frozen) {
+      await downloadSource(sourceUrl, selection.filePath)
+      return { canceled: false, output_path: selection.filePath, duration_sec: sourceMedia.duration_sec, job_id: jobId }
+    }
     const clipDuration = Math.min(endSec, sourceMedia.duration_sec || endSec) - startSec
     if (clipDuration <= 0) throw new Error('高光片段超出原片时长')
     await transcodeSegment({
@@ -679,10 +430,11 @@ async function exportCleanHighlight(event, input) {
 
 async function exportHighlight(event, input) {
   const jobId = requireJobId(input?.job_id)
-  const sourceUrl = typeof input?.source_url === 'string' ? input.source_url : ''
   const highlight = input?.highlight
-  const startSec = Number(highlight?.start_sec)
-  const endSec = Number(highlight?.end_sec)
+  const frozen = Boolean(highlight?.clip_url)
+  const sourceUrl = frozen ? new URL(highlight.clip_url, input.source_url).toString() : input.source_url
+  const startSec = frozen ? 0 : Number(highlight?.start_sec)
+  const endSec = frozen ? Number(highlight.end_sec) - Number(highlight.start_sec) : Number(highlight?.end_sec)
   if (!highlight || !Number.isFinite(startSec) || !Number.isFinite(endSec) || startSec < 0 || endSec <= startSec) {
     throw new Error('高光片段时间范围无效')
   }
@@ -738,8 +490,7 @@ async function exportHighlight(event, input) {
     }
 
     await writeFile(concatPath, "file 'highlight.mp4'\nfile 'advertisement.mp4'\n", 'utf8')
-    const ffmpegPath = optionalBinaryPath('ffmpeg-static', 'ffmpeg')
-    await runMediaCommand(ffmpegPath, [
+    await runMediaCommand(FFMPEG_PATH, [
       '-hide_banner', '-loglevel', 'error', '-y', '-f', 'concat', '-safe', '0', '-i', concatPath,
       '-c', 'copy', '-movflags', '+faststart', selection.filePath,
     ])
@@ -766,9 +517,6 @@ function registerIpcHandlers() {
     else window.maximize()
   })
   ipcMain.on('window:close', (event) => BrowserWindow.fromWebContents(event.sender)?.close())
-  ipcMain.handle('library:import-source', (_event, input) => importSource(input))
-  ipcMain.handle('library:save-job', (_event, input) => saveJob(input))
-  ipcMain.handle('library:list-jobs', () => listJobs())
   ipcMain.handle('ads:import-asset', (_event, input) => importAdAsset(input))
   ipcMain.handle('ads:list-assets', () => listAdAssets())
   ipcMain.handle('ads:delete-asset', (_event, assetId) => deleteAdAsset(assetId))
@@ -785,20 +533,7 @@ function registerMediaProtocol() {
         const asset = await getAdAsset(parts[0])
         return net.fetch(pathToFileURL(resolveAdAssetPath(asset)).toString(), { headers: request.headers })
       }
-      if (url.host !== 'jobs' || parts.length !== 2 || parts[1] !== 'source') {
-        return new Response('Not found', { status: 404 })
-      }
-      const stored = await readStoredJob(requireJobId(parts[0]))
-      const jobDirectory = path.resolve(getJobDirectory(stored.job_id))
-      const sourcePath = path.resolve(jobDirectory, stored.local_source_name)
-      const relativeSourcePath = path.relative(jobDirectory, sourcePath)
-      if (
-        !relativeSourcePath
-        || relativeSourcePath === '..'
-        || relativeSourcePath.startsWith(`..${path.sep}`)
-        || path.isAbsolute(relativeSourcePath)
-      ) return new Response('Forbidden', { status: 403 })
-      return net.fetch(pathToFileURL(sourcePath).toString(), { headers: request.headers })
+      return new Response('Not found', { status: 404 })
     } catch {
       return new Response('Not found', { status: 404 })
     }
@@ -829,7 +564,6 @@ function createWindow() {
 app.whenReady().then(async () => {
   registerMediaProtocol()
   registerIpcHandlers()
-  await ensureDefaultDemos()
   createWindow()
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) createWindow()

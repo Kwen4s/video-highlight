@@ -1,16 +1,8 @@
 from typing import Literal
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
 
 JobStatus = Literal["queued", "processing", "completed", "failed"]
-JobStage = Literal[
-    "orchestration",
-    "preprocessing",
-    "perception",
-    "fusion",
-    "reasoning",
-    "delivery",
-]
 ReviewStatus = Literal["pending", "accepted", "rejected", "revised"]
 
 
@@ -28,42 +20,39 @@ class Highlight(BaseModel):
     highlight_type: str
     description: str
     reason: str
+    clip_url: str = ""
     review_status: ReviewStatus = "pending"
 
 
-class AgentHighlight(Highlight):
-    clip_url: str = ""
+class AnalysisSummary(BaseModel):
+    scan_coverage: float = Field(ge=0, le=1)
+    pending_event_count: int = Field(ge=0)
+    pending_observation_count: int = Field(ge=0)
+    pending_proposal_count: int = Field(ge=0)
+    pending_review_count: int = Field(ge=0)
+    stop_reason: str
+    model_calls: int = Field(ge=0)
 
 
 class DetectionResult(BaseModel):
-    schema_version: Literal["1.0"] = "1.0"
+    schema_version: Literal["2.0"] = "2.0"
     job_id: str
     video: VideoSummary
+    completion: Literal["complete", "partial"]
+    message: str
+    analysis: AnalysisSummary
     highlights: list[Highlight]
 
-
-class AgentDetectionResult(BaseModel):
-    schema_version: Literal["1.0"] = "1.0"
-    job_id: str
-    video: VideoSummary
-    highlights: list[AgentHighlight]
-
-    def to_public_result(self) -> DetectionResult:
-        return DetectionResult(
-            schema_version=self.schema_version,
-            job_id=self.job_id,
-            video=self.video,
-            highlights=[
-                Highlight.model_validate(item.model_dump(exclude={"clip_url"}))
-                for item in self.highlights
-            ],
-        )
+    @model_validator(mode="after")
+    def publish_only_complete_selection(self):
+        if self.completion == "partial" and self.highlights:
+            raise ValueError("partial results cannot publish unselected highlights")
+        return self
 
 
 class JobResponse(BaseModel):
     job_id: str
     status: JobStatus
-    current_stage: JobStage
     original_name: str
     content_type: str
     size_bytes: int
@@ -72,7 +61,7 @@ class JobResponse(BaseModel):
     updated_at: str
     revision: int = 0
     attempt: int = Field(default=0, ge=0)
-    max_attempts: int = Field(default=3, ge=1, le=3)
+    progress: dict | None = None
     source_url: str | None = None
     error_message: str | None = None
     result: DetectionResult | None = None
@@ -101,8 +90,13 @@ class HighlightRangeEditRequest(BaseModel):
     revision: int = Field(ge=0)
 
 
-class DemoSessionRequest(BaseModel):
-    original_name: str = Field(min_length=1, max_length=255)
-    size_bytes: int = Field(ge=0)
-    language: Literal["zh", "en"] = "zh"
-    result: DetectionResult
+class DetectionOptions(BaseModel):
+    model_config = {"extra": "forbid", "allow_inf_nan": False}
+    instruction: str = Field(
+        default="挑选有看点、能独立看懂的短剧片段，保留必要铺垫和反应，剪辑简洁流畅。", min_length=1
+    )
+    max_highlights: int | None = Field(default=12, gt=0)
+    min_clip_sec: float = Field(default=3, gt=0)
+    max_clip_sec: float = Field(default=24, gt=0)
+    total_duration_sec: float | None = Field(default=None, gt=0)
+    allow_overlap: bool = True
