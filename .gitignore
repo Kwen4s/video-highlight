@@ -21,3 +21,4 @@ vh-frontend/vite.config.d.ts
 vh-backend/data/
 vh-backend/runtime/
 /vh-release/
+docs/
