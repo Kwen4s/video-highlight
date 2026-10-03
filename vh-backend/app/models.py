@@ -1,4 +1,5 @@
-from typing import Literal
+import json
+from typing import Any, Literal
 
 from pydantic import BaseModel, Field, model_validator
 
@@ -48,6 +49,30 @@ class DetectionResult(BaseModel):
         if self.completion == "partial" and self.highlights:
             raise ValueError("partial results cannot publish unselected highlights")
         return self
+
+
+def parse_detection_result(value: str | dict[str, Any]) -> DetectionResult:
+    """Load current results while keeping results written by schema 1.0 readable."""
+    data = json.loads(value) if isinstance(value, str) else dict(value)
+    if data.get("schema_version") == "1.0":
+        data = {
+            "schema_version": "2.0",
+            "job_id": data["job_id"],
+            "video": data["video"],
+            "completion": "complete",
+            "message": "历史分析结果（schema 1.0）",
+            "analysis": {
+                "scan_coverage": 1.0,
+                "pending_event_count": 0,
+                "pending_observation_count": 0,
+                "pending_proposal_count": 0,
+                "pending_review_count": 0,
+                "stop_reason": "legacy_schema_1.0",
+                "model_calls": 0,
+            },
+            "highlights": data.get("highlights", []),
+        }
+    return DetectionResult.model_validate(data)
 
 
 class JobResponse(BaseModel):

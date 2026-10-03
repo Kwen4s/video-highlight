@@ -25,6 +25,7 @@ from .models import (
     HighlightRangeEditRequest,
     JobDeletionRequest,
     JobResponse,
+    parse_detection_result,
 )
 from .repository import JobRepository
 
@@ -487,13 +488,11 @@ def encode_stream_event(payload: dict[str, Any]) -> bytes:
 def parse_result(row: dict[str, Any]) -> DetectionResult:
     if not row.get("result_json"):
         raise HTTPException(status_code=409, detail="任务结果尚未生成")
-    return DetectionResult.model_validate_json(row["result_json"])
+    return parse_detection_result(row["result_json"])
 
 
 def serialize_job(row: dict[str, Any]) -> JobResponse:
-    result = (
-        DetectionResult.model_validate_json(row["result_json"]) if row.get("result_json") else None
-    )
+    result = parse_detection_result(row["result_json"]) if row.get("result_json") else None
     return JobResponse(
         job_id=row["job_id"],
         status=row["status"],

@@ -191,6 +191,40 @@ def test_result_contains_only_intervals_and_editing_is_versioned(tmp_path) -> No
         assert stale.status_code == 409
 
 
+def test_legacy_schema_one_results_remain_readable_after_upgrade(tmp_path) -> None:
+    client, settings, repository, _runner = make_client(tmp_path)
+    with client:
+        create_completed_job(settings, repository)
+        legacy = sample_result()["highlights"]
+        with sqlite3.connect(settings.database_path) as connection:
+            connection.execute(
+                "UPDATE jobs SET result_json = ? WHERE job_id = ?",
+                (
+                    json.dumps(
+                        {
+                            "schema_version": "1.0",
+                            "job_id": "job_abcdefgh",
+                            "video": {
+                                "video_id": "job_abcdefgh",
+                                "title": "legacy",
+                                "duration_sec": 60,
+                            },
+                            "highlights": legacy,
+                        }
+                    ),
+                    "job_abcdefgh",
+                ),
+            )
+        response = client.get("/api/jobs/job_abcdefgh")
+
+    assert response.status_code == 200
+    body = response.json()
+    assert body["result"]["schema_version"] == "2.0"
+    assert body["result"]["completion"] == "complete"
+    assert body["result"]["analysis"]["stop_reason"] == "legacy_schema_1.0"
+    assert body["result"]["highlights"][0]["highlight_id"] == "hl_1"
+
+
 def test_highlight_range_edit_is_validated_and_versioned(tmp_path) -> None:
     client, settings, repository, _runner = make_client(tmp_path)
 
