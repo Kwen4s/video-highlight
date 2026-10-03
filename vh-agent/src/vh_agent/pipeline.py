@@ -1,14 +1,19 @@
 """The sole detection entry point: native video agent and frozen clip artifacts."""
 
 from collections.abc import Callable
+from contextlib import ExitStack
 from hashlib import sha256
 from pathlib import Path
 
 from .config import Settings
 from .models import AnalysisSummary, DetectionResult, DetectionTask, Highlight, VideoSummary
+from .providers.frame_text import FrameText
 from .providers.gemini_client import GeminiClient
 from .providers.local_proposals import LocalProposals
+from .providers.openai_client import OpenAIClient
 from .providers.retrieval import TranscriptSearch
+from .providers.video_perception import VideoPerception
+from .providers.video_search import QwenSearch
 from .runtime.agent import VideoAgent
 from .runtime.evidence import EvidenceStore
 from .storage import write_json
@@ -28,24 +33,57 @@ class HighlightDetectionService:
         settings = self.settings
         output = (settings.job_output_dir / task.job_id).resolve()
         output.mkdir(parents=True, exist_ok=True)
-        evidence = EvidenceStore(task.video_path, output / "media", page_sec=settings.page_sec)
+        evidence = EvidenceStore(
+            task.video_path, settings.media_cache_dir, page_sec=settings.page_sec
+        )
         transcript = TranscriptSearch(evidence, settings, task.subtitle_path, task.language)
         local_proposals = (
             LocalProposals(evidence, settings, task.language, task.video_id)
             if settings.local_checkpoint
             else None
         )
-        with GeminiClient(
-            settings.gemini_api_key,
-            settings.gemini_base_url,
-            settings.gemini_agent_model,
-            timeout=settings.request_timeout_sec,
-            seed=settings.generation_seed,
-        ) as client:
+        with ExitStack() as stack:
+            video_client = stack.enter_context(
+                GeminiClient(
+                    settings.gemini_api_key,
+                    settings.gemini_base_url,
+                    settings.gemini_video_model,
+                    timeout=settings.request_timeout_sec,
+                    seed=settings.generation_seed,
+                    thinking_level=settings.gemini_thinking_level,
+                )
+            )
+            client = stack.enter_context(
+                OpenAIClient(
+                    settings.openai_api_key,
+                    settings.openai_base_url,
+                    settings.openai_agent_model,
+                    effort=settings.openai_reasoning_effort,
+                    timeout=settings.request_timeout_sec,
+                )
+            )
+            search = (
+                QwenSearch(
+                    evidence,
+                    settings.qwen_embedding_url,
+                    settings.qwen_reranker_url,
+                    transcript if transcript.available else None,
+                    timeout=settings.request_timeout_sec,
+                )
+                if settings.qwen_embedding_url
+                else None
+            )
+            if search:
+                stack.callback(search.close)
+            frame_text = FrameText(settings, task.language)
             agent = VideoAgent(
                 client,
                 evidence,
                 output,
+                perception=VideoPerception(video_client, settings.video_fps, evidence),
+                frame_fps=settings.agent_frame_fps,
+                search=search,
+                frame_text=frame_text if frame_text.available else None,
                 task=task.instruction,
                 max_highlights=task.max_highlights,
                 min_clip_sec=task.min_clip_sec,

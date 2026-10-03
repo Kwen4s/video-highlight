@@ -2,12 +2,13 @@
 
 from __future__ import annotations
 
-import hashlib
+import copy
 from pathlib import Path
 
 from .contracts import (
     TOOL_INPUTS,
     EventInput,
+    FramesInput,
     InspectInput,
     ProposalInput,
     ReadInput,
@@ -24,13 +25,14 @@ from .finalization import (
     ReviewResult,
     SelectionResult,
     attach_media,
-    complete_review,
+    choose_clips,
+    confirm_clip,
     draft_plan,
     select_clips,
 )
 from .state import ReadMemory, identity
 
-MAX_OBSERVATION_BYTES = 8_000_000  # Base64 payload budget per observation.
+MAX_OBSERVATION_BYTES = 18_000_000  # Each audiovisual request stays below Gemini's 20 MB limit.
 
 
 class VideoTools:
@@ -48,6 +50,8 @@ class VideoTools:
         min_clip_sec: float = 3,
         transcript=None,
         local_proposals=None,
+        search=None,
+        frame_text=None,
     ) -> None:
         self.evidence = evidence
         self.output_dir = output_dir
@@ -56,6 +60,12 @@ class VideoTools:
         self.allow_overlap = allow_overlap
         self.transcript = transcript
         self.local_proposals = local_proposals
+        self.search = search
+        self.frame_text = frame_text
+        self.story_so_far = ""
+        self.inspections = {}
+        self.readings = {}
+        self.pending_frames = []
         self.proposals: dict[str, dict] = {}
         self.proposals_loaded = False
         self.max_clip_sec = max_clip_sec
@@ -72,6 +82,10 @@ class VideoTools:
 
     def checkpoint(self) -> dict:
         return {
+            "story_so_far": self.story_so_far,
+            "inspections": copy.deepcopy(self.inspections),
+            "readings": copy.deepcopy(self.readings),
+            "pending_frames": copy.deepcopy(self.pending_frames),
             "proposals": {k: dict(v) for k, v in self.proposals.items()},
             "proposals_loaded": self.proposals_loaded,
             "read_memory": self.read_memory.checkpoint(),
@@ -87,6 +101,10 @@ class VideoTools:
         }
 
     def restore(self, state: dict) -> None:
+        self.story_so_far = state["story_so_far"]
+        self.inspections = copy.deepcopy(state["inspections"])
+        self.readings = copy.deepcopy(state["readings"])
+        self.pending_frames = copy.deepcopy(state["pending_frames"])
         self.evidence.restore_pages([VideoPage.model_validate(p) for p in state["pages"]])
         self.events = {e.id: e for row in state["events"] if (e := EventRecord.model_validate(row))}
         self.plans = {
@@ -117,7 +135,7 @@ class VideoTools:
         )
         pending_pages = [p for p in pages if p.page_id not in self.completed_pages]
         unresolved = self.unresolved_events()
-        candidates = self._candidate_rows()
+        candidates = self.candidate_ledger()
         unacknowledged = self.unacknowledged_observations()
         ready_to_select = self.selection_ready()
         return {
@@ -135,10 +153,11 @@ class VideoTools:
             "pending_review_count": len(self.pending_reviews()),
             "capabilities": {
                 "transcript": self.transcript is not None,
+                "semantic_search": self.search is not None,
+                "read_frames": True,
+                "read_text": self.frame_text is not None,
                 "local_proposals": self.local_proposals is not None,
             },
-            "transcript_complete": self._transcript_complete(),
-            "local_proposals_loaded": self.local_proposals is None or self.proposals_loaded,
             "pending_event_count": len(unresolved),
             "pending_observation_count": len(set(self.observations) - self.acknowledged.keys()),
             "pending_event_ids": unresolved[:20],
@@ -164,65 +183,72 @@ class VideoTools:
         ]
 
     def selection_ready(self) -> bool:
-        return self.discovery_complete() and not self.unresolved_events()
+        return self.discovery_complete()
 
     def discovery_complete(self) -> bool:
         return (
             len(self.completed_pages) == len(self.evidence.pages)
-            and self._transcript_complete()
-            and (self.local_proposals is None or self.proposals_loaded)
             and not (set(self.observations) - self.acknowledged.keys())
             and not any(event.status == "pending" for event in self.events.values())
-            and not any(proposal["status"] == "pending" for proposal in self.proposals.values())
         )
 
-    def _transcript_complete(self) -> bool:
-        if self.transcript is None:
-            return True
-        full_query = identity({"query": "", "start_sec": 0.0, "end_sec": None})
-        return bool(self.read_memory.queries.get(full_query, {}).get("complete"))
-
     def _next_action(self, ready_to_select: bool, unacknowledged: list[VideoObservation]) -> str:
+        if self.finished:
+            return "分析已完成，最终取舍已保存，等待人工编辑。"
         if unacknowledged:
             return "用 record_observations 一次登记本轮收到的全部视频观察。"
         if set(self.observations) - self.acknowledged.keys():
             return "等待尚未送达的观察视频，观看后立即登记。"
         if len(self.completed_pages) < len(self.evidence.pages):
             return "系统将继续送入下一批视频页面。"
-        if not self._transcript_complete():
-            return "用 search_transcript 的空 query 分页读完全部可用台词。"
-        if self.local_proposals is not None and not self.proposals_loaded:
-            return "用 propose_highlights action=list 载入本地模型的完整位置线索池。"
+        if ready_to_select:
+            if self.selection is None:
+                return "用 select_highlights 从完整候选池初选；系统只制作并复核拟采用片段。"
+            if self.unresolved_events():
+                return "结合原片判断复核意见：核心看点受影响时修订；可交给编辑时确认采用，也可舍弃或替换。"
+            return "核对拟采用片段的实际复核结果，再用 select_highlights 确认交付。"
         if self.unresolved_events():
             return "处理 pending 事件、失败复核或未制作片段。"
-        if any(proposal["status"] == "pending" for proposal in self.proposals.values()):
-            return "处理尚未核验的本地位置线索。"
-        if not ready_to_select:
-            return "处理尚未通过成片复核的事件。"
-        return "用 select_highlights 提交每个待选片段的保留或舍弃决定。"
+        return "等待系统完成实际片段的独立观看。"
 
     def unresolved_events(self) -> list[str]:
         pending = []
+        selected = self._chosen_ids()
         for event in self.events.values():
-            if event.status in {"rejected", "merged"}:
+            if event.status == "pending":
+                pending.append(event.id)
+            if event.status != "supported" or event.id not in selected:
                 continue
             plan = self.plans.get(event.id)
-            if not self._selectable_plan(event, plan):
+            if (
+                plan is None
+                or plan.event_version != event.version
+                or plan.review is None
+                or plan.media_path is None
+                or plan.issues
+                or plan.status == "infeasible_duration"
+                or (plan.status != "ready" and plan.review.issues)
+            ):
                 pending.append(event.id)
         return pending
 
-    @staticmethod
-    def _selectable_plan(event: EventRecord, plan: ClipPlan | None) -> bool:
-        return bool(
-            event.status == "supported"
-            and plan is not None
-            and plan.event_version == event.version
-            and plan.status in {"draft", "ready"}
-            and plan.review is not None
-            and not plan.review.blocking_issues
-            and not plan.issues
-            and plan.media_path is not None
+    def _chosen_ids(self) -> set[str]:
+        return (
+            {c.event_id for c in self.selection.decisions if c.selected}
+            if self.selection
+            else set()
         )
+
+    def _plan(self, event: EventRecord) -> ClipPlan:
+        plan = self.plans.get(event.id)
+        if plan is None or plan.event_version != event.version:
+            plan = draft_plan(
+                event,
+                self.evidence.video_info.duration_sec,
+                max_clip_sec=self.max_clip_sec,
+                min_clip_sec=self.min_clip_sec,
+            )
+        return plan
 
     def mark_delivered(self, observations: list[VideoObservation]) -> None:
         self.delivered.update(o.observation_id for o in observations)
@@ -232,6 +258,7 @@ class VideoTools:
         *,
         max_items: int,
         max_encoded_bytes: int,
+        observation_size=None,
     ) -> list[VideoObservation]:
         """Prepare the next chronological page batch without spending an agent turn."""
         if max_items <= 0 or max_encoded_bytes <= 0:
@@ -256,7 +283,7 @@ class VideoTools:
             if page is None:
                 break
             observation = self.evidence.scan(page.page_id)
-            size = self._encoded_size(observation)
+            size = (observation_size or self._encoded_size)(observation)
             if size > MAX_OBSERVATION_BYTES:
                 self.evidence.split_page(page.page_id)
                 continue
@@ -268,34 +295,27 @@ class VideoTools:
             encoded_bytes += size
         return observations
 
-    def prepare_reviews(self) -> list[ClipPlan]:
-        """Render every resolved supported event once discovery has finished."""
+    def prepare_reviews(self) -> None:
+        """Only chosen candidates incur rendering and independent video review."""
         if not self.discovery_complete():
-            return []
-        for event in self.events.values():
-            if event.status != "supported":
+            return
+        for key in self._chosen_ids():
+            event = self.events.get(key)
+            if event is None or event.status != "supported":
                 continue
-            existing = self.plans.get(event.id)
-            if existing and existing.event_version == event.version:
+            plan = self._plan(event)
+            self.plans[key] = plan
+            if plan.media_path is not None or plan.status != "draft":
                 continue
-            plan = draft_plan(
-                event,
-                self.evidence.video_info.duration_sec,
+            media = self.evidence.render_clip(plan.start_sec, plan.end_sec)
+            self.plans[key] = attach_media(
+                plan,
+                start_sec=media.src_start_sec,
+                end_sec=media.src_end_sec,
+                media_path=media.path,
+                video_duration=self.evidence.video_info.duration_sec,
                 max_clip_sec=self.max_clip_sec,
-                min_clip_sec=self.min_clip_sec,
             )
-            if plan.status == "draft":
-                media = self.evidence.render_clip(plan.start_sec, plan.end_sec)
-                plan = attach_media(
-                    plan,
-                    start_sec=media.src_start_sec,
-                    end_sec=media.src_end_sec,
-                    media_path=media.path,
-                    video_duration=self.evidence.video_info.duration_sec,
-                    max_clip_sec=self.max_clip_sec,
-                )
-            self.plans[event.id] = plan
-        return self.pending_reviews()
 
     def execute(self, name: str, arguments: dict) -> tuple[dict, list[VideoObservation]]:
         if name not in TOOL_INPUTS:
@@ -307,25 +327,41 @@ class VideoTools:
             )
         args = TOOL_INPUTS[name].model_validate(arguments)
         if isinstance(args, SearchInput):
+            payload = args.model_dump(exclude={"mode"})
+            if args.mode == "semantic":
+                if self.search is None:
+                    raise ValueError("当前任务未配置语义检索，可使用 exact 查询字幕。")
+                return self.read_memory.record(args.model_dump(), self.search.search(**payload)), []
             if self.transcript is None:
                 raise ValueError("当前任务没有字幕检索工具，请直接观看视频。")
-            return self.read_memory.record(
-                args.model_dump(), self.transcript.search(**args.model_dump())
-            ), []
+            return self.read_memory.record(args.model_dump(), self.transcript.search(**payload)), []
         if isinstance(args, ProposalInput):
             return self._propose(args), []
         if isinstance(args, InspectInput):
             observation = self.evidence.inspect(args.start_sec, args.end_sec)
-            if args.sampling_fps is not None:
-                identity = hashlib.sha256(
-                    f"{observation.observation_id}:{args.sampling_fps}".encode()
-                ).hexdigest()[:24]
-                observation = observation.model_copy(
-                    update={"observation_id": f"obs_{identity}", "sampling_fps": args.sampling_fps}
-                )
+            if args.event_id and args.event_id not in self.events:
+                raise ValueError("关联事件不存在。")
+            signature = [
+                observation.observation_id,
+                args.question,
+                args.sampling_fps,
+                args.event_id,
+            ]
+            key = "obs_" + identity(signature)[:24]
+            observation = observation.model_copy(
+                update={"observation_id": key, "sampling_fps": args.sampling_fps}
+            )
             if self._encoded_size(observation) > MAX_OBSERVATION_BYTES:
                 raise ValueError("视频区间过大，请缩短 start_sec 到 end_sec 的范围后重试。")
+            self.inspections[key] = args.model_dump(mode="json")
             return self._observation(observation)
+        if isinstance(args, FramesInput):
+            if name == "read_text" and self.frame_text is None:
+                raise ValueError("当前任务没有配置可用 OCR。")
+            frames = self.evidence.frames(args.times, args.region)
+            result = self.frame_text.read(frames) if name == "read_text" else {"frames": frames}
+            self.pending_frames.extend(frames)
+            return result, []
         if isinstance(args, RecordInput):
             return self._record(args), []
         if isinstance(args, ReadInput):
@@ -342,9 +378,15 @@ class VideoTools:
 
     def declarations(self, required_observation_ids: list[str] | None = None):
         declarations = tool_declarations()
+        evidence_ids = sorted(self.delivered | set(required_observation_ids or []))
+        if evidence_ids:
+            for declaration in declarations:
+                definitions = declaration["parameters"].get("$defs", {})
+                if "RequiredSpan" in definitions:
+                    definitions["RequiredSpan"]["properties"]["evidence_id"]["enum"] = evidence_ids
         if required_observation_ids:
             record = next(d for d in declarations if d["name"] == "record_observations")
-            schema = record["parametersJsonSchema"]
+            schema = record["parameters"]
             schema["properties"]["observations"]["minItems"] = len(required_observation_ids)
             schema["properties"]["observations"]["maxItems"] = len(required_observation_ids)
             schema["$defs"]["ObservationRecord"]["properties"]["observation_id"]["enum"] = (
@@ -360,15 +402,22 @@ class VideoTools:
         # Keep repair actions available even when technical reviews are clean:
         # the main agent may still find a semantic mismatch.
         if self.selection_ready():
-            actions = {"select_highlights", "update_event", "inspect_interval", "read_state"}
-            if self.transcript is not None:
-                actions.add("search_transcript")
+            actions = {"select_highlights", "update_event", "inspect_video", "read_state"}
+            actions.add("record_observations")
+            if self.transcript is not None or self.search is not None:
+                actions.add("search_video")
+            actions.add("read_frames")
+            if self.frame_text is not None:
+                actions.add("read_text")
+            if self.local_proposals is not None:
+                actions.add("propose_highlights")
             return [d for d in declarations if d["name"] in actions]
 
         disabled = set()
-        disabled.add("record_observations")
-        if self.transcript is None:
-            disabled.add("search_transcript")
+        if self.transcript is None and self.search is None:
+            disabled.add("search_video")
+        if self.frame_text is None:
+            disabled.add("read_text")
         if self.local_proposals is None:
             disabled.add("propose_highlights")
         disabled.add("select_highlights")
@@ -385,7 +434,6 @@ class VideoTools:
             }
             self.proposals_loaded = True
             self.finished = False
-            self.selection = None
         if args.action == "resolve":
             proposal = self.proposals.get(args.proposal_id)
             observations = [
@@ -438,7 +486,6 @@ class VideoTools:
         self.observations[observation.observation_id] = observation
         if observation.observation_id not in self.acknowledged:
             self.finished = False
-            self.selection = None
         public = observation.model_dump(mode="json", exclude={"path"})
         public["status"] = "ok"
         public["time_mapping"] = "原片秒数 = src_start_sec + 本视频内秒数"
@@ -449,10 +496,12 @@ class VideoTools:
             if args.collection != "events" or args.event_id not in self.events:
                 raise ValueError("event_id 不存在或 collection 不是 events；请分页读取事件索引。")
             return self._event_view(self.events[args.event_id])
-        if args.collection == "events":
+        if args.collection == "readings":
+            rows = list(self.readings.values())
+        elif args.collection == "events":
             rows = [self._event_view(event) for event in self.events.values()]
         elif args.collection == "candidates":
-            rows = self._candidate_rows()
+            rows = self.candidate_ledger()
         elif args.collection == "observations":
             rows = [
                 {
@@ -476,25 +525,28 @@ class VideoTools:
             "next_offset": end if end < len(rows) else None,
         }
 
-    def _candidate_rows(self) -> list[dict]:
+    def candidate_ledger(self) -> list[dict]:
         rows = []
         for event in self.events.values():
-            plan = self.plans.get(event.id)
-            if not self._selectable_plan(event, plan):
+            if event.status != "supported":
                 continue
+            plan = self._plan(event)
             rows.append(
                 {
                     "event_id": event.id,
                     "event_version": event.version,
+                    "description": event.description,
+                    "reason": event.reason,
+                    "required_spans": [
+                        span.model_dump(mode="json") for span in event.required_spans
+                    ],
                     "start_sec": plan.start_sec,
                     "end_sec": plan.end_sec,
-                    "visible_event": plan.review.visible_event,
+                    "review": plan.review.model_dump(mode="json") if plan.review else None,
+                    "issues": plan.issues,
                 }
             )
         return rows
-
-    def candidate_ledger(self) -> list[dict]:
-        return self._candidate_rows()
 
     def _record(self, args: RecordInput) -> dict:
         expected_ids = {item.observation_id for item in self.unacknowledged_observations()}
@@ -503,6 +555,8 @@ class VideoTools:
             raise ValueError("observations 必须恰好登记本轮收到的全部 observation_id。")
         snapshot = self.checkpoint()
         try:
+            if args.story_so_far is not None:
+                self.story_so_far = args.story_so_far
             recorded: dict[str, list[str]] = {}
             for item in args.observations:
                 event_ids = []
@@ -517,10 +571,19 @@ class VideoTools:
                     "event_ids": event_ids,
                     "no_event_reason": item.no_event_reason if not event_ids else None,
                 }
-                observation = self.observations[item.observation_id]
-                if observation.page_id:
-                    self.completed_pages.add(observation.page_id)
                 recorded[item.observation_id] = event_ids
+            watched = sorted(
+                (self.observations[key].src_start_sec, self.observations[key].src_end_sec)
+                for key in self.acknowledged
+            )
+            for page in self.evidence.pages:
+                covered_end = page.core_start_sec
+                for start, end in watched:
+                    if start > covered_end + 1e-6:
+                        break
+                    covered_end = max(covered_end, end)
+                if covered_end >= page.core_end_sec - 1e-6:
+                    self.completed_pages.add(page.page_id)
         except ValueError:
             self.restore(snapshot)
             raise
@@ -534,12 +597,15 @@ class VideoTools:
         }
 
     def _update(self, args: UpdateInput) -> dict:
-        return self._save_event(args.event, existing_only=True)
+        snapshot = self.checkpoint()
+        try:
+            return self._save_event(args.event)
+        except ValueError:
+            self.restore(snapshot)
+            raise
 
-    def _save_event(self, submitted: EventInput, *, existing_only: bool = False) -> dict:
-        old = self.events.get(submitted.id) if submitted.id is not None else None
-        if existing_only and old is None:
-            raise ValueError("update_event 仅能修改已登记事件。")
+    def _save_event(self, submitted: EventInput) -> dict:
+        old = self.events.get(submitted.id)
         if old and submitted.expected_version != old.version:
             raise ValueError(
                 f"事件版本冲突；请读取最新记录后修改，当前 expected_version 应为 {old.version}。"
@@ -547,8 +613,6 @@ class VideoTools:
         if old is None and submitted.expected_version is not None:
             raise ValueError("新事件不填写 expected_version；请检查 event.id 是否正确。")
         values = submitted.model_dump(exclude={"expected_version"})
-        if values["id"] is None:
-            values.pop("id")
         values["version"] = old.version if old else 1
         event = EventRecord.model_validate(values)
         for span in event.required_spans:
@@ -561,13 +625,17 @@ class VideoTools:
                 span.start_sec < observation.src_start_sec - 1e-6
                 or span.end_sec > observation.src_end_sec + 1e-6
             ):
-                raise ValueError("证据区间超出了引用的观察范围；请补看对应视频，或修正原片时间。")
+                raise ValueError(
+                    f"required_spans 中 {span.role} 的 {span.start_sec:g}–{span.end_sec:g}s "
+                    f"超出 {span.evidence_id} 的 {observation.src_start_sec:g}–"
+                    f"{observation.src_end_sec:g}s；引用覆盖该区间的观察，或补看后修正时间。"
+                )
         if event.status == "rejected" and event.rejection_category == "clip_infeasible":
-            plan = self.plans.get(event.id)
+            plan = self._plan(old) if old and old.status == "supported" else None
             has_irreparable_review = bool(
                 plan
                 and plan.review
-                and any(issue.category != "mixed_focus" for issue in plan.review.blocking_issues)
+                and any(issue.category != "mixed_focus" for issue in plan.review.issues)
             )
             if plan is None or not (plan.status == "infeasible_duration" or has_irreparable_review):
                 raise ValueError(
@@ -619,9 +687,17 @@ class VideoTools:
         values["version"] = old.version + 1 if old else 1
         event = EventRecord.model_validate(values)
         self.events[event.id] = event
-        self.plans.pop(event.id, None)
+        plan = self.plans.get(event.id)
+        excluded_fields = {"version", "description", "reason"}
+        if (
+            plan
+            and old
+            and old.model_dump(exclude=excluded_fields) == event.model_dump(exclude=excluded_fields)
+        ):
+            self.plans[event.id] = plan.model_copy(update={"event_version": event.version})
+        else:
+            self.plans.pop(event.id, None)
         self.finished = False
-        self.selection = None
         return self._event_view(event)
 
     def _event_view(self, event: EventRecord) -> dict:
@@ -644,22 +720,21 @@ class VideoTools:
         if event.status == "pending":
             next_step = "补看视频或查找上下文，再用 update_event 更新事件判断。"
         elif event.status in {"rejected", "merged"}:
-            next_step = "该事件已处理；发现新证据时可用 update_event 修订。"
+            next_step = "该事件已排除；发现新证据时可用 update_event 修订。"
+        elif event.id not in self._chosen_ids():
+            next_step = "候选保留在完整池中，先判断采用价值；选中后系统才制作并复核。"
         elif preview and preview["status"] == "infeasible_duration":
             next_step = "建议边界当前不可成片；根据 draft_preview.issues 修订边界或必要证据，系统随后重新制作并复核。"
         elif plan is None:
-            next_step = "全片取证完成后，系统会制作片段并独立复核。"
+            next_step = "候选已初选，系统将制作片段并独立复核。"
         elif plan.status == "ready":
             next_step = "片段已复核并冻结，已进入当前完整候选池。"
         elif plan.issues or plan.status == "infeasible_duration":
             next_step = "根据 issues 补看或修订事件，系统随后重新制作并复核；确认无法成片时设为 rejected 并说明理由。"
         elif plan.review is None:
             next_step = "片段等待系统独立复核。"
-        elif plan.review.blocking_issues:
-            if any(issue.category == "mixed_focus" for issue in plan.review.blocking_issues):
-                next_step = "复核发现多个独立看点：收窄当前事件，补看并分别登记其他看点；系统随后重新制作并复核。"
-            else:
-                next_step = "复核发现具体剪辑缺陷：根据 blocking_issues 修订事件和边界，系统随后重新制作并复核；确认无法修复后排除事件。"
+        elif plan.review.issues:
+            next_step = "结合原片判断 review.issues 是否影响核心看点，决定修订、确认采用或舍弃；首尾微调交给编辑。"
         else:
             next_step = "依据 review.visible_event 在完整候选池中取舍；需要核对时补看并修订事件。"
         return {
@@ -678,47 +753,65 @@ class VideoTools:
 
     def _select(self, args: SelectInput) -> dict:
         if not self.selection_ready():
-            raise ValueError(
-                "分析尚未完成；请查看 progress，继续观看未完成页面、登记观察结论，并处理待查事件和位置线索。"
-            )
+            raise ValueError("分析尚未完成；请继续观看和登记原片，并处理待查事件。")
         snapshot = self.checkpoint()
         try:
-            for event in self.events.values():
-                plan = self.plans.get(event.id)
-                if (
-                    plan is not None
-                    and plan.status == "draft"
-                    and self._selectable_plan(event, plan)
-                ):
-                    self.plans[event.id] = complete_review(plan, event, plan.review)
-            selection = select_clips(
-                list(self.plans.values()),
+            plans = [self._plan(e) for e in self.events.values() if e.status == "supported"]
+            self.plans.update({p.event_id: p for p in plans})
+            selection = choose_clips(
+                plans,
                 list(self.events.values()),
                 self.max_highlights,
                 decisions=args.decisions,
                 total_duration=self.total_duration,
                 allow_overlap=self.allow_overlap,
             )
+            reviewed = all(
+                p.review is not None and not p.issues and p.media_path is not None
+                for p in selection.selected
+            )
+            if reviewed:
+                for plan in selection.selected:
+                    if plan.status == "draft":
+                        self.plans[plan.event_id] = confirm_clip(
+                            plan, self.events[plan.event_id], plan.review
+                        )
+                selection = select_clips(
+                    [
+                        p
+                        for p in self.plans.values()
+                        if self.events[p.event_id].status == "supported"
+                    ],
+                    list(self.events.values()),
+                    self.max_highlights,
+                    decisions=args.decisions,
+                    total_duration=self.total_duration,
+                    allow_overlap=self.allow_overlap,
+                )
         except ValueError:
             self.restore(snapshot)
             raise
         self.selection = selection
-        self.finished = True
-        return selection.model_dump(mode="json")
+        self.finished = reviewed
+        return {
+            **selection.model_dump(mode="json"),
+            "completion": "complete" if reviewed else "review_pending",
+        }
 
     def pending_reviews(self) -> list[ClipPlan]:
         return [
             p
             for p in self.plans.values()
-            if p.status == "draft" and p.review is None and p.media_path
+            if p.event_id in self._chosen_ids()
+            and p.status == "draft"
+            and p.review is None
+            and p.media_path
         ]
 
     def record_review(self, event_id: str, review: ReviewResult) -> None:
         plan = self.plans[event_id]
         duration = plan.end_sec - plan.start_sec
-        if any(
-            issue.at_sec is not None and issue.at_sec > duration for issue in review.blocking_issues
-        ):
+        if any(issue.at_sec is not None and issue.at_sec > duration for issue in review.issues):
             raise ValueError("复核缺陷时间超出了当前片段。")
         # Independent viewing supplies the facts used by the main agent's selection.
         self.plans[event_id] = ClipPlan.model_validate(
@@ -747,9 +840,7 @@ class VideoTools:
                         plan.start_sec,
                         plan.end_sec,
                         plan.status,
-                        plan.review.model_dump(exclude={"visible_event", "highlight_type"})
-                        if plan.review
-                        else None,
+                        plan.review.model_dump(exclude={"visible_event"}) if plan.review else None,
                     ]
                 )
             )
@@ -758,6 +849,13 @@ class VideoTools:
             for key, p in self.proposals.items()
         )
         facts.update(f"page:{page.page_id}" for page in self.evidence.pages)
+        if self.selection:
+            facts.add(
+                "selection:"
+                + identity(
+                    [[c.event_id, c.selected, c.duplicate_of] for c in self.selection.decisions]
+                )
+            )
         if self.finished:
             facts.add("finished")
         return facts

@@ -9,6 +9,7 @@ description = "Native-video ReAct highlight agent for short dramas"
 readme = "README.md"
 requires-python = ">=3.11,<3.13"
 dependencies = [
+  "openai>=2,<3",
   "httpx>=0.28,<1",
   "pysubs2>=1.8,<2",
   "numpy>=1.26,<3",
@@ -17,12 +18,13 @@ dependencies = [
   "pydantic-settings>=2.2,<3",
   "rich>=13.7,<15",
   "typer>=0.12,<1",
+  "scenedetect>=0.6.7,<0.7",
+  "opencv-contrib-python>=4.10,<4.11",
 ]
 
 [project.optional-dependencies]
 enhanced = [
   "faster-whisper>=1.1,<2",
-  "scenedetect[opencv]>=0.6.7,<0.7",
   "funasr>=1.4,<2",
   "modelscope>=1.25,<2",
   "torch>=2.8,<3",

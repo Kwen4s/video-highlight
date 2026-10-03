@@ -1,4 +1,4 @@
-"""Resumable Gemini 3.7 silver-label production for the short-drama corpus."""
+"""Resumable agent silver-label production for the short-drama corpus."""
 
 import json
 from pathlib import Path
@@ -10,7 +10,6 @@ from .storage import append_jsonl, read_jsonl, write_json
 
 DEFAULT_METADATA_DIR = Path("/data1/my_short_drama/metadata")
 DEFAULT_SILVER_DATASET_DIR = PROJECT_ROOT / "datasets" / "silver"
-SILVER_MODEL = "gemini-3.7-flash"
 SILVER_METHOD = "native_video_react"
 SILVER_ANNOTATION_REVISION = "event_v3"
 
@@ -56,8 +55,14 @@ def run_silver_labeling(
 
     pending = [record for record in records if str(record["video_id"]) not in completed]
     completed_count = len(completed)
-    _write_run_manifest(run_dir, records, completed_count, status="running")
     service = HighlightDetectionService(Settings(VH_JOB_OUTPUT_DIR=run_dir / "work"))
+    _write_run_manifest(
+        run_dir,
+        records,
+        completed_count,
+        status="running",
+        model=service.settings.openai_agent_model,
+    )
     errors_path = run_dir / "errors.jsonl"
     for index, record in enumerate(pending, start=1):
         video_id = str(record["video_id"])
@@ -91,13 +96,20 @@ def run_silver_labeling(
             )
             print(f"  failed: {type(exc).__name__}: {exc}", flush=True)
         finally:
-            _write_run_manifest(run_dir, records, completed_count, status="running")
+            _write_run_manifest(
+                run_dir,
+                records,
+                completed_count,
+                status="running",
+                model=service.settings.openai_agent_model,
+            )
 
     _write_run_manifest(
         run_dir,
         records,
         completed_count,
         status="complete" if completed_count == len(records) else "incomplete",
+        model=service.settings.openai_agent_model,
     )
     return annotations_path
 
@@ -146,13 +158,14 @@ def _write_run_manifest(
     completed: int,
     *,
     status: str,
+    model: str,
 ) -> None:
     payload = {
         "run_id": run_dir.name,
         "status": status,
         "current_annotation_revision": SILVER_ANNOTATION_REVISION,
         "annotation_method": SILVER_METHOD,
-        "model": SILVER_MODEL,
+        "model": model,
         "judge_policy": "independent_rendered_clip_review",
         "selection_policy": "explicit_editorial_selection_without_count_budget",
         "ordering": "duration_ascending",

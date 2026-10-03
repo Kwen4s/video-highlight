@@ -11,11 +11,13 @@ import bisect
 import hashlib
 import json
 import math
+import tempfile
 from itertools import pairwise
 from pathlib import Path
 from typing import Any
 from uuid import uuid4
 
+from PIL import Image
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from ..models import VideoInfo
@@ -227,6 +229,70 @@ class EvidenceStore:
     def render_clip(self, start_sec: float, end_sec: float) -> VideoObservation:
         """Return the very same file that inspection and final playback should use."""
         return self.inspect(start_sec, end_sec)
+
+    def frames(self, times: list[float], region=None, width: int = 1280) -> list[dict]:
+        """Extract actual displayed frames once, retaining source PTS and optional ROI."""
+        if any(not math.isfinite(t) or not 0 <= t < self.video_info.duration_sec for t in times):
+            raise ValueError("帧时间必须在原片范围内。")
+        indices = [max(0, bisect.bisect_right(self._frame_times, t) - 1) for t in times]
+        paths = {}
+        missing = []
+        folder = self.output_dir / "frames"
+        folder.mkdir(exist_ok=True)
+        for index in sorted(set(indices)):
+            key = hashlib.sha256(json.dumps([index, width, region]).encode()).hexdigest()[:24]
+            path = folder / f"{key}.jpg"
+            paths[index] = path
+            if not path.is_file():
+                missing.append(index)
+        if missing:
+            with tempfile.TemporaryDirectory(dir=folder) as temp:
+                selector = "+".join(f"eq(n,{index})" for index in missing)
+                _run(
+                    [
+                        "ffmpeg",
+                        "-v",
+                        "error",
+                        "-i",
+                        str(self.video_info.path),
+                        "-vf",
+                        f"select='{selector}',scale='min({width},iw)':-2",
+                        "-fps_mode",
+                        "vfr",
+                        "-frames:v",
+                        str(len(missing)),
+                        "-q:v",
+                        "2",
+                        str(Path(temp) / "%05d.jpg"),
+                    ]
+                )
+                decoded = sorted(Path(temp).glob("*.jpg"))
+                if len(decoded) != len(missing):
+                    raise ValueError("原片解码帧数与请求不一致。")
+                for index, source in zip(missing, decoded, strict=True):
+                    with Image.open(source) as image:
+                        image.load()
+                        if region:
+                            w, h = image.size
+                            image = image.crop(
+                                (
+                                    int(region[0] * w),
+                                    int(region[1] * h),
+                                    int(region[2] * w),
+                                    int(region[3] * h),
+                                )
+                            )
+                            image.save(source, quality=95)
+                    source.replace(paths[index])
+        return [
+            {
+                "requested_sec": t,
+                "timestamp_sec": self._frame_times[index],
+                "path": str(paths[index]),
+                "region": region,
+            }
+            for t, index in zip(times, indices, strict=True)
+        ]
 
     def _render(self, path: Path, start: float, end: float) -> None:
         absolute_start = self.source_start_time_sec + start

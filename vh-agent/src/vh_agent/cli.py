@@ -8,8 +8,6 @@ from .config import Settings
 from .evaluation import (
     DEFAULT_DATASET_DIR,
     DEFAULT_OUTPUT_DIR,
-    ComparisonKind,
-    compare_evaluations,
     run_evaluation,
     score_evaluation,
 )
@@ -117,18 +115,6 @@ def evaluate_score(
     )
 
 
-@evaluation_app.command("compare")
-def evaluate_compare(
-    comparison_id: str = typer.Option(..., "--comparison-id"),
-    run_ids: list[str] = typer.Option(..., "--run-id"),
-    output_dir: Path = typer.Option(DEFAULT_OUTPUT_DIR, file_okay=False),
-    kind: ComparisonKind = typer.Option(ComparisonKind.repeat, "--kind"),
-) -> None:
-    """Compare repeated runs or implementation revisions with identical inputs."""
-    report = compare_evaluations(comparison_id, run_ids, output_dir=output_dir, kind=kind)
-    console.print(f"report={report}")
-
-
 @label_app.command("run")
 def label_run(
     run_id: str = typer.Option("react_silver_v1", "--run-id"),
@@ -155,9 +141,10 @@ def label_run(
 
 @train_app.command("run")
 def train_run(
-    silver_run_id: str = typer.Option("gemini37_transition_v1", "--silver-run-id"),
-    annotations: Path | None = typer.Option(None, "--annotations"),
-    output_dir: Path = typer.Option(Path("outputs/highlight_model/seed_7_supv2"), "--output-dir"),
+    annotations: Path = typer.Option(
+        ..., "--annotations", exists=True, dir_okay=False, readable=True
+    ),
+    output_dir: Path = typer.Option(Path("outputs/highlight_model"), "--output-dir"),
     vision_model_path: Path = typer.Option(
         Path("/data1/modelscope_models/Qwen3-VL-Embedding-2B"),
         "--vision-model-path",
@@ -195,12 +182,9 @@ def train_run(
 
     if stage not in {"features", "train", "all"}:
         raise typer.BadParameter("stage must be features, train, or all")
-    source = annotations or DEFAULT_SILVER_DATASET_DIR / silver_run_id / "annotations.jsonl"
-    if not source.is_file():
-        raise typer.BadParameter(f"silver annotations not found: {source}")
     report = fit_highlight_model(
         HighlightModelConfig(
-            annotations=source,
+            annotations=annotations,
             output_dir=output_dir,
             vision_model_path=vision_model_path,
             audio_model_path=audio_model_path,

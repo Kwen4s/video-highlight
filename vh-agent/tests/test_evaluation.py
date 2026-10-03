@@ -5,7 +5,6 @@ import pytest
 
 from vh_agent import evaluation
 from vh_agent.evaluation import (
-    compare_evaluations,
     matching_hits,
     run_evaluation,
     score_evaluation,
@@ -107,6 +106,7 @@ def test_frozen_labels_partial_denominator_and_offline_rescore(dataset, tmp_path
     (dataset / "annotations.json").write_text("[]")
     assert score_evaluation("test", output_dir=output) == metrics
     assert "gemini_api_key" not in (output / "test/protocol.json").read_text()
+    assert "openai_api_key" not in (output / "test/protocol.json").read_text()
     assert (output / "test/source/runtime/agent.py").exists()
 
 
@@ -190,54 +190,6 @@ def test_shared_constraints_are_saved_and_not_inferred_from_gold(dataset, tmp_pa
     assert protocol["items"][0]["task"]["max_clip_sec"] == 30
     assert protocol["items"][0]["task"]["max_highlights"] is None
     assert score_evaluation("run", output_dir=tmp_path)["videos"] == 1
-
-
-def test_identical_runs_produce_persistent_stability_comparison(dataset, tmp_path, fake_service):
-    run_evaluation("left", dataset_dir=dataset, output_dir=tmp_path)
-    run_evaluation("right", dataset_dir=dataset, output_dir=tmp_path, video_ids=["v0"])
-    report = compare_evaluations("pair", ["left", "right"], output_dir=tmp_path)
-    comparison = json.loads((report.parent / "comparison.json").read_text())
-    pair = comparison["pairwise"][0]
-    assert pair["completion_agreement"] == 1
-    assert pair["jointly_complete"] == 1
-    assert pair["video_ids"] == ["v0"]
-    assert pair["output_agreement"]["0.50"]["output_f1"] == 1
-    with pytest.raises(ValueError, match="already exists"):
-        compare_evaluations("pair", ["left", "right"], output_dir=tmp_path)
-
-
-def test_revision_comparison_allows_code_changes_but_keeps_input_contract(
-    dataset, tmp_path, fake_service, monkeypatch
-):
-    run_evaluation("before", dataset_dir=dataset, output_dir=tmp_path)
-    monkeypatch.setattr(evaluation, "_code", lambda: {"runtime/agent.py": "revised agent"})
-    run_evaluation("after", dataset_dir=dataset, output_dir=tmp_path)
-    with pytest.raises(ValueError, match="identical Agent code"):
-        compare_evaluations("repeat", ["before", "after"], output_dir=tmp_path)
-    report = compare_evaluations(
-        "revision", ["before", "after"], output_dir=tmp_path, kind="revision"
-    )
-    comparison = json.loads((report.parent / "comparison.json").read_text())
-    assert comparison["kind"] == "revision"
-    assert len(set(comparison["agent_implementations"].values())) == 2
-    pair = comparison["pairwise"][0]
-    assert pair["left_event_metrics"]["0.50"] == pair["right_event_metrics"]["0.50"]
-    assert "事件精度" in report.read_text()
-
-    path = tmp_path / "after/protocol.json"
-    protocol = json.loads(path.read_text())
-    protocol["items"][0]["task"]["max_clip_sec"] = 15
-    write_json(path, protocol)
-    with pytest.raises(ValueError, match="protocol differs"):
-        compare_evaluations(
-            "different_task", ["before", "after"], output_dir=tmp_path, kind="revision"
-        )
-    protocol["settings"]["gemini_agent_model"] = "different_model"
-    write_json(path, protocol)
-    with pytest.raises(ValueError, match="identical settings"):
-        compare_evaluations(
-            "different_model", ["before", "after"], output_dir=tmp_path, kind="revision"
-        )
 
 
 def test_event_scoring_alternatives_optional_and_duplicates():

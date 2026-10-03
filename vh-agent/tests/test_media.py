@@ -51,10 +51,8 @@ def test_subtitle_ocr_batches_frames_without_losing_timestamps(monkeypatch, tmp_
             self.batch_sizes.append(len(input))
             return [
                 {
-                    "res": {
-                        "rec_texts": [f"subtitle-{len(self.batch_sizes)}-{index}"],
-                        "rec_scores": [0.9],
-                    }
+                    "rec_texts": [f"subtitle-{len(self.batch_sizes)}-{index}"],
+                    "rec_scores": [0.9],
                 }
                 for index, _image in enumerate(input)
             ]

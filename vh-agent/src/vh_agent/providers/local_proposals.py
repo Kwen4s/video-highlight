@@ -131,9 +131,7 @@ class LocalProposals:
                     "scenes": [s.model_dump(mode="json") for s in detect_scenes(info.path)],
                 },
             )
-        video = SilverVideo(
-            video_id, video_id, info.path, info.duration_sec, self.language, (), ()
-        )
+        video = SilverVideo(video_id, video_id, info.path, info.duration_sec, self.language, (), ())
         extractor = FrozenMomentFeatureExtractor(config)
         try:
             extractor.prepare([video])

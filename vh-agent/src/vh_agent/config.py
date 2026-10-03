@@ -1,4 +1,5 @@
 from pathlib import Path
+from typing import Literal
 
 from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -8,12 +9,25 @@ PROJECT_ROOT = Path(__file__).resolve().parents[2]
 
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=PROJECT_ROOT / ".env", extra="ignore")
+    openai_api_key: str = Field(default="", validation_alias="OPENAI_API_KEY")
+    openai_base_url: str = Field(
+        default="https://api.axionai.cc/v1", validation_alias="OPENAI_BASE_URL"
+    )
+    openai_agent_model: str = Field(default="gpt-6.1-sol", validation_alias="OPENAI_AGENT_MODEL")
+    openai_reasoning_effort: Literal["low", "medium", "high", "xhigh", "max"] = Field(
+        default="high", validation_alias="OPENAI_REASONING_EFFORT"
+    )
+    qwen_embedding_url: str | None = Field(default=None, validation_alias="QWEN_EMBEDDING_URL")
+    qwen_reranker_url: str | None = Field(default=None, validation_alias="QWEN_RERANKER_URL")
     gemini_api_key: str = Field(default="", validation_alias="GEMINI_API_KEY")
     gemini_base_url: str = Field(
-        default="https://yetoken.vip/v1", validation_alias="GEMINI_BASE_URL"
+        default="https://foxrouter.org/v1", validation_alias="GEMINI_BASE_URL"
     )
-    gemini_agent_model: str = Field(
-        default="gemini-3.7-flash", validation_alias="GEMINI_AGENT_MODEL"
+    gemini_video_model: str = Field(
+        default="gemini-3.8-flash", validation_alias="GEMINI_VIDEO_MODEL"
+    )
+    gemini_thinking_level: Literal["low", "medium", "high"] = Field(
+        default="high", validation_alias="GEMINI_THINKING_LEVEL"
     )
     generation_seed: int | None = Field(default=7, ge=0, validation_alias="VH_GENERATION_SEED")
     request_timeout_sec: float = Field(default=300, gt=0, validation_alias="VH_REQUEST_TIMEOUT_SEC")
@@ -23,8 +37,9 @@ class Settings(BaseSettings):
     )
     page_sec: float = Field(default=30, gt=0, validation_alias="VH_PAGE_SEC")
     video_fps: float = Field(default=4, gt=0, validation_alias="VH_VIDEO_FPS")
+    agent_frame_fps: float = Field(default=0.5, gt=0, validation_alias="VH_AGENT_FRAME_FPS")
     context_token_budget: int = Field(
-        default=100_000, gt=8192, validation_alias="VH_CONTEXT_TOKEN_BUDGET"
+        default=100_000, gt=16384, validation_alias="VH_CONTEXT_TOKEN_BUDGET"
     )
     context_byte_budget: int = Field(
         default=18_000_000, gt=0, lt=20_000_000, validation_alias="VH_CONTEXT_BYTE_BUDGET"

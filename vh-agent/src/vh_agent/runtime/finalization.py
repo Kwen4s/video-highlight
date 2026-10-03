@@ -25,7 +25,7 @@ class RequiredSpan(_Contract):
         min_length=1, description="实际看过的视频所返回的 observation_id；时间范围使用原片秒数。"
     )
     role: Literal["setup", "decisive", "reaction"] = Field(
-        description="该段对当前单一看点的作用：setup 必要铺垫，decisive 决定性变化，reaction 直接反应。"
+        description="setup 是理解所需的铺垫，decisive 是看点本身的核心台词或动作，reaction 是紧接的反应。"
     )
 
     @model_validator(mode="after")
@@ -38,25 +38,32 @@ class RequiredSpan(_Contract):
 class EventContent(_Contract):
     description: str = Field(
         min_length=1,
-        description="只描述一个可独立取舍的核心看点，说明人物、行动和决定性变化；另一个可单独采用的看点应新建事件。",
+        description="一个独立看点：人物做了什么，以及处境、关系、认知或情绪发生了什么变化。",
     )
     reason: str = Field(
         min_length=1, description="结合用户目标说明看点、待查问题，或排除、合并的理由。"
     )
-    required_spans: list[RequiredSpan] = Field(default_factory=list)
+    required_spans: list[RequiredSpan] = Field(
+        default_factory=list,
+        description="成片需要保留的原片区间；supported 候选至少一段 decisive 标出核心台词或动作。",
+    )
     status: Literal["pending", "supported", "rejected", "merged"] = Field(
         default="pending",
-        description="pending 待查；supported 已有视频依据、进入成片验证；rejected 仅表示事件证据无效、明确超出用户任务或无法形成合格片段；merged 已并入 merged_into 指定的事件。观看价值留到最终选择。",
+        description="pending 待查；supported 已有视频依据，等待采用取舍；rejected 证据无效、超出任务或无法成片；merged 并入另一事件。采用价值通过完整候选池的选择表达。",
     )
     rejection_category: (
         Literal["not_observed", "contradicted", "outside_request", "clip_infeasible"] | None
     ) = Field(
         default=None,
-        description="rejected 时必填：未在视频中发生、被后续证据否定、明确超出用户任务，或已生成片段但因时长/复核缺陷无法修复。低价值、开放悬念和剧情未结束不属于拒绝原因。",
+        description="rejected 时必填：not_observed 未发生，contradicted 被证据否定，outside_request 超出任务，clip_infeasible 实际片段因时长或复核缺陷无法修复。",
     )
     merged_into: str | None = None
-    proposed_start_sec: float | None = Field(default=None, ge=0)
-    proposed_end_sec: float | None = Field(default=None, gt=0)
+    proposed_start_sec: float | None = Field(
+        default=None, ge=0, description="建议粗剪起点，原片秒数；从理解看点所需的信息开始。"
+    )
+    proposed_end_sec: float | None = Field(
+        default=None, gt=0, description="建议粗剪终点，原片秒数；核心内容与直接反应表达清楚后结束。"
+    )
 
     @model_validator(mode="after")
     def validate_state(self) -> Self:
@@ -97,7 +104,7 @@ class ReviewIssue(_Contract):
     category: Literal["missing_context", "cutoff", "mixed_focus", "technical"] = Field(
         description="缺少必要上下文、台词/动作被截断、捆绑多个可独立采用的看点，或音画技术问题。"
     )
-    description: str = Field(min_length=1)
+    description: str = Field(min_length=1, description="说明这处问题怎样影响核心看点、台词或动作。")
     at_sec: float | None = Field(default=None, ge=0, description="可定位时填写片段内秒数。")
 
 
@@ -108,12 +115,9 @@ class ReviewResult(_Contract):
         min_length=1,
         description="描述本段的一个核心看点及实际变化，关键台词用原话；以看到、听到的内容为准。",
     )
-    highlight_type: str = Field(
-        min_length=1, description="根据片段实际呈现的看点，用简短词语概括类型。"
-    )
-    blocking_issues: list[ReviewIssue] = Field(
+    issues: list[ReviewIssue] = Field(
         default_factory=list,
-        description="只列阻碍采用的具体缺陷，包括多个独立看点被捆绑；剧情继续、悬念未揭晓、看点较弱不属于缺陷。",
+        description="观看时发现的具体问题，供主 Agent 结合原片决定是否修订；没有问题时返回空列表。",
     )
 
 
@@ -135,10 +139,8 @@ class ClipPlan(_Contract):
             raise ValueError("Clip must have a positive duration")
         if not _contains_required_spans(self):
             raise ValueError("Clip must contain every complete required evidence span")
-        if self.status == "ready" and (
-            self.review is None or not _review_passed(self.review) or self.issues
-        ):
-            raise ValueError("Ready clips require an accepted review with no open issues")
+        if self.status == "ready" and (self.review is None or self.issues):
+            raise ValueError("Ready clips require a recorded review and valid boundaries")
         return self
 
 
@@ -152,12 +154,24 @@ class SelectionChoice(_Contract):
         min_length=1,
         description="简短说明该段独立看点及采用价值，或舍弃原因；说明背景或重复内容与其他候选的关系。",
     )
+    description: str | None = Field(
+        default=None,
+        description="保留时填写交付给编辑的一句话事实，依据已核对材料，保留人物说法与确认事实的区别。",
+    )
+    highlight_type: str | None = Field(default=None, description="保留时用自然的短语概括看点。")
     duplicate_of: str | None = Field(
         default=None, description="内容重复时，引用本次保留的 event_id。"
     )
 
     @model_validator(mode="after")
     def validate_choice(self) -> Self:
+        if self.selected and not (
+            self.description
+            and self.description.strip()
+            and self.highlight_type
+            and self.highlight_type.strip()
+        ):
+            raise ValueError("Selected clips require a grounded description and highlight type")
         if not self.reason.strip():
             raise ValueError("Selection requires a nonblank reason")
         if self.duplicate_of and (self.selected or self.duplicate_of == self.event_id):
@@ -274,13 +288,8 @@ def attach_media(
     )
 
 
-def complete_review(plan: ClipPlan, event: EventRecord, review: ReviewResult) -> ClipPlan:
-    """Freeze a reviewed clip as part of the main agent's atomic selection.
-
-    The caller bases its editorial decisions on the reviewed ``visible_event``.
-    Reviews with concrete blocking defects remain drafts so the main agent can
-    obtain more evidence, revise the event, or explicitly reject it.
-    """
+def confirm_clip(plan: ClipPlan, event: EventRecord, review: ReviewResult) -> ClipPlan:
+    """Freeze the clip after the main agent judges the recorded video review."""
     mismatch = _event_mismatch(plan, event)
     if mismatch is not None:
         raise ValueError(f"Cannot review clip: {mismatch}")
@@ -288,23 +297,21 @@ def complete_review(plan: ClipPlan, event: EventRecord, review: ReviewResult) ->
         raise ValueError("An infeasible clip must be redrafted before review")
     if plan.status == "ready":
         raise ValueError("A frozen clip cannot be reviewed again without a new draft")
+    if plan.issues:
+        raise ValueError("Clip boundaries must be valid before confirmation")
     duration = plan.end_sec - plan.start_sec
-    if any(
-        issue.at_sec is not None and issue.at_sec > duration for issue in review.blocking_issues
-    ):
+    if any(issue.at_sec is not None and issue.at_sec > duration for issue in review.issues):
         raise ValueError("Review issue timestamp is outside the clip")
-    issues = [issue.description for issue in review.blocking_issues]
     return ClipPlan.model_validate(
         {
             **plan.model_dump(),
             "review": review.model_dump(),
-            "status": "ready" if _review_passed(review) else "draft",
-            "issues": list(dict.fromkeys(issues)),
+            "status": "ready",
         }
     )
 
 
-def select_clips(
+def choose_clips(
     plans: Sequence[ClipPlan],
     events: Sequence[EventRecord] | Mapping[str, EventRecord],
     max_highlights: int | None,
@@ -313,7 +320,7 @@ def select_clips(
     total_duration: float | None = None,
     allow_overlap: bool = True,
 ) -> SelectionResult:
-    """Validate an explicit editorial selection over the entire ready pool."""
+    """Validate editorial choices over the full candidate pool before rendering."""
     if max_highlights is not None and (
         isinstance(max_highlights, bool)
         or not isinstance(max_highlights, int)
@@ -326,7 +333,7 @@ def select_clips(
     event_by_id = {e.id: e for e in event_values}
     if len(event_by_id) != len(event_values):
         raise ValueError("The event pool must contain one current version per event ID")
-    pool = {p.event_id: p for p in plans if p.status == "ready"}
+    pool = {p.event_id: p for p in plans}
     if len({p.id for p in plans}) != len(plans):
         raise ValueError("Duplicate plan IDs")
     if len(decisions) != len(pool) or {d.event_id for d in decisions} != set(pool):
@@ -336,11 +343,12 @@ def select_clips(
         mismatch = "unknown_event" if event is None else _event_mismatch(plan, event)
         if mismatch:
             raise ValueError(mismatch)
-        if plan.review is None or not _review_passed(plan.review) or plan.issues:
-            raise ValueError("review_not_passed")
         if not _contains_required_spans(plan):
             raise ValueError("invalid_boundaries")
     selected = [pool[d.event_id] for d in decisions if d.selected]
+    for plan in selected:
+        if plan.status == "infeasible_duration":
+            raise ValueError(f"{plan.event_id} 超过片段时长约束，请修订边界或舍弃该候选。")
     selected_ids = {p.event_id for p in selected}
     if len({p.event_id for p in selected}) != len(selected):
         raise ValueError("An event may only be selected once")
@@ -364,8 +372,22 @@ def select_clips(
     )
 
 
-def _review_passed(review: ReviewResult) -> bool:
-    return not review.blocking_issues
+def select_clips(
+    plans, events, max_highlights, *, decisions, total_duration=None, allow_overlap=True
+):
+    """Publish only the current, independently reviewed media chosen by the agent."""
+    result = choose_clips(
+        plans,
+        events,
+        max_highlights,
+        decisions=decisions,
+        total_duration=total_duration,
+        allow_overlap=allow_overlap,
+    )
+    for plan in result.selected:
+        if plan.status != "ready" or plan.review is None or plan.issues or plan.media_path is None:
+            raise ValueError(f"{plan.event_id} 的保留片段尚未完成观看与确认，请核对后再提交。")
+    return result
 
 
 def _contains_required_spans(plan: ClipPlan) -> bool:

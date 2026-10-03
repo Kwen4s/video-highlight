@@ -5,8 +5,6 @@ import json
 import re
 import time
 from datetime import UTC, datetime
-from enum import StrEnum
-from itertools import combinations
 from math import ceil, isfinite, sqrt
 from pathlib import Path
 from statistics import median
@@ -20,11 +18,6 @@ PROJECT_ROOT = Path(__file__).resolve().parents[2]
 DEFAULT_DATASET_DIR = PROJECT_ROOT / "datasets" / "test"
 DEFAULT_OUTPUT_DIR = PROJECT_ROOT / "outputs" / "evaluations"
 THRESHOLDS = (0.3, 0.5, 0.7)
-
-
-class ComparisonKind(StrEnum):
-    repeat = "repeat"
-    revision = "revision"
 
 
 def segment_iou(left: dict, right: dict) -> float:
@@ -170,7 +163,9 @@ def _code():
 
 def _settings_profile(settings):
     # Credentials never enter the evaluation snapshot.
-    return settings.model_dump(mode="json", exclude={"gemini_api_key", "job_output_dir"})
+    return settings.model_dump(
+        mode="json", exclude={"gemini_api_key", "openai_api_key", "job_output_dir"}
+    )
 
 
 def _validate_dataset(rows: list[dict], annotations: list[dict], allowed: set[str]) -> tuple:
@@ -471,7 +466,7 @@ def score_evaluation(run_id: str, *, output_dir: Path = DEFAULT_OUTPUT_DIR) -> d
         request_durations = [
             row["elapsed_sec"]
             for row in trace
-            if row.get("kind") in {"model", "clip_review"}
+            if row.get("kind") in {"model", "clip_review", "perception_model"}
             and isinstance(row.get("elapsed_sec"), (int, float))
         ]
         attempt_durations = [attempt.get("elapsed_sec") for attempt in execution["attempts"]]
@@ -771,186 +766,3 @@ def score_evaluation(run_id: str, *, output_dir: Path = DEFAULT_OUTPUT_DIR) -> d
             lines += ["", f"执行错误：{d['attempts'][-1]['error']}"]
     (run_dir / "report.md").write_text("\n".join(lines) + "\n")
     return metrics
-
-
-def _comparison_item(item: dict) -> dict:
-    return {
-        "video_id": item["video_id"],
-        "video_sha256": item["video_sha256"],
-        "task": item["task"],
-        "annotation": item["annotation"],
-    }
-
-
-def _agent_source_digest(run_dir: Path) -> str:
-    source = run_dir / "source"
-    files = {
-        str(path.relative_to(source)): path.read_text()
-        for path in sorted(source.rglob("*.py"))
-        if path.name not in {"cli.py", "evaluation.py"}
-    }
-    return hashlib.sha256(json.dumps(files, sort_keys=True).encode()).hexdigest()
-
-
-def compare_evaluations(
-    comparison_id: str,
-    run_ids: list[str],
-    *,
-    output_dir: Path = DEFAULT_OUTPUT_DIR,
-    kind: ComparisonKind = ComparisonKind.repeat,
-) -> Path:
-    """Compare identical inputs for repeated runs or an implementation revision."""
-    kind = ComparisonKind(kind)
-    if len(run_ids) < 2 or len(set(run_ids)) != len(run_ids):
-        raise ValueError("Comparison needs at least two distinct run IDs")
-    comparison_dir = _run_dir(Path(output_dir) / "comparisons", comparison_id)
-    if comparison_dir.exists():
-        raise ValueError("Comparison already exists; use a new comparison_id")
-
-    protocols = {
-        run_id: json.loads((_run_dir(output_dir, run_id) / "protocol.json").read_text())
-        for run_id in run_ids
-    }
-    settings = [protocols[run_id]["settings"] for run_id in run_ids]
-    agent_digests = [_agent_source_digest(_run_dir(output_dir, run_id)) for run_id in run_ids]
-    if any(value != settings[0] for value in settings[1:]):
-        raise ValueError("Comparison requires identical settings")
-    if kind == ComparisonKind.repeat and any(
-        value != agent_digests[0] for value in agent_digests[1:]
-    ):
-        raise ValueError("Stability comparison requires identical Agent code")
-    protocol_items = {
-        run_id: {item["video_id"]: item for item in protocols[run_id]["items"]}
-        for run_id in run_ids
-    }
-    metrics = {run_id: score_evaluation(run_id, output_dir=output_dir) for run_id in run_ids}
-    pairwise = []
-    for left_id, right_id in combinations(run_ids, 2):
-        left = {row["video_id"]: row for row in metrics[left_id]["details"]}
-        right = {row["video_id"]: row for row in metrics[right_id]["details"]}
-        common_ids = sorted(set(left) & set(right))
-        if not common_ids:
-            raise ValueError("Comparison runs have no videos in common")
-        for video_id in common_ids:
-            if _comparison_item(protocol_items[left_id][video_id]) != _comparison_item(
-                protocol_items[right_id][video_id]
-            ):
-                raise ValueError(f"Comparison protocol differs for video {video_id}")
-        status_agreements = 0
-        completion_agreements = 0
-        jointly_complete = 0
-        empty_pairs = 0
-        count_differences = []
-        threshold_totals = {
-            f"{threshold:.2f}": {
-                "matches": 0,
-                "left_predictions": 0,
-                "right_predictions": 0,
-                "matched_ious": [],
-            }
-            for threshold in THRESHOLDS
-        }
-        for video_id in common_ids:
-            left_row = left[video_id]
-            right_row = right[video_id]
-            status_agreements += left_row["status"] == right_row["status"]
-            left_complete = left_row["status"] == "complete"
-            right_complete = right_row["status"] == "complete"
-            completion_agreements += left_complete == right_complete
-            if not (left_complete and right_complete):
-                continue
-            jointly_complete += 1
-            left_predictions = left_row["predictions"]
-            right_predictions = right_row["predictions"]
-            empty_pairs += not left_predictions and not right_predictions
-            count_differences.append(abs(len(left_predictions) - len(right_predictions)))
-            for threshold in THRESHOLDS:
-                key = f"{threshold:.2f}"
-                pairs = matching_pairs(left_predictions, right_predictions, threshold)
-                threshold_totals[key]["matches"] += len(pairs)
-                threshold_totals[key]["left_predictions"] += len(left_predictions)
-                threshold_totals[key]["right_predictions"] += len(right_predictions)
-                threshold_totals[key]["matched_ious"].extend(pair["iou"] for pair in pairs)
-        agreements = {}
-        for key, values in threshold_totals.items():
-            denominator = values["left_predictions"] + values["right_predictions"]
-            agreements[key] = {
-                "matches": values["matches"],
-                "left_predictions": values["left_predictions"],
-                "right_predictions": values["right_predictions"],
-                "output_f1": 2 * values["matches"] / denominator if denominator else None,
-                "mean_matched_iou": (
-                    sum(values["matched_ious"]) / len(values["matched_ious"])
-                    if values["matched_ious"]
-                    else None
-                ),
-            }
-        left_common = [left[video_id] for video_id in common_ids]
-        right_common = [right[video_id] for video_id in common_ids]
-        pairwise.append(
-            {
-                "left": left_id,
-                "right": right_id,
-                "video_ids": common_ids,
-                "videos": len(common_ids),
-                "exact_status_agreement": status_agreements / len(common_ids),
-                "completion_agreement": completion_agreements / len(common_ids),
-                "jointly_complete": jointly_complete,
-                "jointly_complete_empty_outputs": empty_pairs,
-                "mean_output_count_difference": (
-                    sum(count_differences) / len(count_differences) if count_differences else None
-                ),
-                "left_event_metrics": {
-                    key: _aggregate_event_metrics(left_common, key) for key in threshold_totals
-                },
-                "right_event_metrics": {
-                    key: _aggregate_event_metrics(right_common, key) for key in threshold_totals
-                },
-                "output_agreement": agreements,
-            }
-        )
-    result = {
-        "schema_version": 3,
-        "comparison_id": comparison_id,
-        "kind": kind.value,
-        "created_at": datetime.now(UTC).isoformat(),
-        "run_ids": run_ids,
-        "agent_implementations": dict(zip(run_ids, agent_digests, strict=True)),
-        "pairwise": pairwise,
-    }
-    write_json(comparison_dir / "comparison.json", result)
-    purpose = "重复运行稳定性" if kind == ComparisonKind.repeat else "实现改动对照"
-    code_requirement = (
-        "Agent 代码相同" if kind == ComparisonKind.repeat else "Agent 代码允许不同，逐轮保存指纹"
-    )
-    lines = [
-        f"# Agent {purpose}：{comparison_id}",
-        "",
-        f"每一对只比较共有且视频、任务、标注、配置完全一致的样本；{code_requirement}。输出一致性不代表正确，事件指标也不替代人工采用率。",
-        "",
-        "| 运行对 | 完成一致率 | 共同完成 | 事件精度（左/右） | 事件召回（左/右） | 平均数量差 | IoU≥0.5 输出 F1 | 匹配边界 IoU |",
-        "|---|---:|---:|---:|---:|---:|---:|---:|",
-    ]
-    for row in pairwise:
-        agreement = row["output_agreement"]["0.50"]
-        output_f1 = "—" if agreement["output_f1"] is None else f"{agreement['output_f1']:.3f}"
-        mean_iou = (
-            "—" if agreement["mean_matched_iou"] is None else f"{agreement['mean_matched_iou']:.3f}"
-        )
-        mean_difference = (
-            "—"
-            if row["mean_output_count_difference"] is None
-            else f"{row['mean_output_count_difference']:.2f}"
-        )
-        left_recall = row["left_event_metrics"]["0.50"]["recall"]
-        right_recall = row["right_event_metrics"]["0.50"]["recall"]
-        left_precision = row["left_event_metrics"]["0.50"]["precision"]
-        right_precision = row["right_event_metrics"]["0.50"]["precision"]
-        lines.append(
-            f"| {row['left']} / {row['right']} | {row['completion_agreement']:.3f} | "
-            f"{row['jointly_complete']}/{row['videos']} | "
-            f"{left_precision:.3f}/{right_precision:.3f} | {left_recall:.3f}/{right_recall:.3f} | "
-            f"{mean_difference} | {output_f1} | {mean_iou} |"
-        )
-    (comparison_dir / "report.md").write_text("\n".join(lines) + "\n")
-    return comparison_dir / "report.md"

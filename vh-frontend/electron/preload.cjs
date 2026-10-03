@@ -6,16 +6,6 @@ contextBridge.exposeInMainWorld('desktopWindow', {
   close: () => ipcRenderer.send('window:close'),
 })
 
-contextBridge.exposeInMainWorld('localLibrary', {
-  importSource: (file, input) => {
-    const sourcePath = webUtils.getPathForFile(file)
-    if (!sourcePath) return Promise.reject(new Error('无法读取所选文件的本地路径'))
-    return ipcRenderer.invoke('library:import-source', { ...input, sourcePath })
-  },
-  saveJob: (job) => ipcRenderer.invoke('library:save-job', job),
-  listJobs: () => ipcRenderer.invoke('library:list-jobs'),
-})
-
 contextBridge.exposeInMainWorld('adStudio', {
   importAsset: (file, kind) => {
     const sourcePath = webUtils.getPathForFile(file)

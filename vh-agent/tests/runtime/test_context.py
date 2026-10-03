@@ -2,38 +2,72 @@ import json
 
 import pytest
 
-from vh_agent.providers.gemini_client import text_part
-from vh_agent.runtime.context import Conversation, estimate
+from vh_agent.runtime.context import Conversation, estimate, hydrate, image_part, text_part
 from vh_agent.runtime.state import ProgressMemory, ReadMemory
 
 
-def test_rotation_keeps_committed_facts_without_orphan_function_response():
+def test_rotation_keeps_facts_without_orphan_native_outputs():
+    history = [
+        {"role": "user", "content": [text_part("x" * 8000)]},
+        {"type": "function_call", "call_id": "call_1", "name": "search_video", "arguments": "{}"},
+    ]
+    conversation = Conversation(history)
+    output = {"type": "function_call_output", "call_id": "call_1", "output": "a"}
+    facts = {"last_tool_results": [output], "story_so_far": "已有剧情"}
+    result = conversation.prepare(facts, [output], token_budget=2000, byte_budget=2000)
+    assert len(result) == 1
+    assert json.loads(result[0]["content"][0]["text"]) == facts
+    assert conversation.segment == 1 and estimate(result)[0] < 2000
+
+
+def test_native_encrypted_reasoning_and_call_ids_survive_checkpoint():
     conversation = Conversation(
         [
-            {"role": "user", "parts": [text_part("x" * 8000)]},
-            {
-                "role": "model",
-                "parts": [
-                    {"functionCall": {"name": "search_transcript"}, "thoughtSignature": "original"}
-                ],
-            },
+            {"type": "reasoning", "encrypted_content": "opaque"},
+            {"type": "function_call", "call_id": "call_1", "name": "read_state", "arguments": "{}"},
         ]
     )
-    response = {"functionResponse": {"name": "search_transcript", "response": {"matches": ["a"]}}}
-    facts = {"transcript_memory": {"rows": ["a"]}, "last_tool_results": [response]}
-    contents = conversation.prepare(facts, [response], token_budget=2000, byte_budget=2000)
-    assert len(contents) == 1
-    assert json.loads(contents[0]["parts"][0]["text"]) == facts
-    assert all("functionResponse" not in p for c in contents for p in c["parts"])
-    assert conversation.segment == 1
-    assert estimate(contents)[0] < 2000
+    restored = Conversation(**json.loads(json.dumps(conversation.checkpoint())))
+    result = restored.prepare(
+        {},
+        [{"type": "function_call_output", "call_id": "call_1", "output": "{}"}],
+        token_budget=2000,
+        byte_budget=2000,
+    )
+    assert result[0]["encrypted_content"] == "opaque" and result[2]["call_id"] == "call_1"
 
 
-def test_single_context_over_budget_fails_without_silently_truncating():
+def test_native_tool_result_is_sent_once_until_history_rotates():
+    conversation = Conversation(
+        [{"type": "function_call", "call_id": "call_1", "name": "read_state", "arguments": "{}"}]
+    )
+    result = {"events": [{"id": "event_1"}]}
+    output = {"type": "function_call_output", "call_id": "call_1", "output": json.dumps(result)}
+    context = {
+        "story_so_far": "当前剧情",
+        "last_tool_results": [{"tool": "read_state", "result": result}],
+    }
+    request = conversation.prepare(context, [output], token_budget=2000, byte_budget=2000)
+    assert request[1] == output
+    assert "last_tool_results" not in json.loads(request[-1]["content"][0]["text"])
+
+
+def test_over_budget_does_not_truncate_committed_facts():
     conversation = Conversation()
     with pytest.raises(ValueError, match="预算"):
-        conversation.prepare({"fact": "x" * 5000}, [], token_budget=1000, byte_budget=1000)
+        conversation.prepare({"facts": "x" * 5000}, [], token_budget=1000, byte_budget=1000)
     assert conversation.contents == []
+
+
+def test_image_reference_is_durable_and_detects_changed_media(tmp_path):
+    path = tmp_path / "frame.jpg"
+    path.write_bytes(b"image")
+    items = [{"role": "user", "content": [image_part(path)]}]
+    assert hydrate(items)[0]["content"][0]["image_url"].startswith("data:image/jpeg;base64,")
+    assert "image_ref" in items[0]["content"][0]
+    path.write_bytes(b"changed")
+    with pytest.raises(ValueError, match="已改变"):
+        hydrate(items)
 
 
 def test_query_coverage_is_by_rows_not_last_page_and_survives_restore():
@@ -70,31 +104,3 @@ def test_progress_oscillation_and_restore_do_not_create_new_information():
     resumed = ProgressMemory.restore(progress.checkpoint())
     assert resumed.record({"event:supported"}) == 0
     assert resumed.stagnant_steps == 2
-
-
-def test_rotation_prioritizes_requested_media_and_reports_nonresident_observations(tmp_path):
-    from types import SimpleNamespace
-
-    from vh_agent.runtime.context import media_part
-
-    path = tmp_path / "video.mp4"
-    path.write_bytes(b"video")
-    old = SimpleNamespace(path=path, observation_id="old", sampling_fps=4, duration_sec=33)
-    new = SimpleNamespace(path=path, observation_id="new", sampling_fps=4, duration_sec=17)
-    conversation = Conversation([{"role": "user", "parts": [media_part(old, 4)]}])
-    result = conversation.prepare(
-        {"unrecorded": ["old", "new"]},
-        [media_part(new, 4)],
-        token_budget=90_000,
-        byte_budget=18_000_000,
-        replay_parts=[media_part(old, 4)],
-    )
-    refs = [
-        p["video_ref"]["observation_id"]
-        for p in conversation.contents[0]["parts"]
-        if "video_ref" in p
-    ]
-    assert refs == ["new"]
-    note = json.loads(result[0]["parts"][-1]["text"])
-    assert note["read_again_observation_ids"] == ["old"]
-    assert note["visible_observation_ids"] == ["new"]

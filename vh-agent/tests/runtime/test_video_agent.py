@@ -1,9 +1,14 @@
-import base64
+"""End-to-end state machine checks with separate controller and video observers."""
+
+import copy
 import json
 from types import SimpleNamespace
 
 import pytest
 
+from vh_agent.providers.gemini_client import GeminiClientError
+from vh_agent.providers.openai_client import OpenAIClientError
+from vh_agent.providers.video_perception import VideoPerception
 from vh_agent.runtime.agent import VideoAgent
 from vh_agent.runtime.evidence import VideoObservation, VideoPage
 
@@ -12,48 +17,94 @@ def call(name, **args):
     return {"name": name, "args": args}
 
 
-class FakeGemini:
-    model = "test-model"
-    endpoint = "https://example.invalid/v1beta/models/test-model:generateContent"
+class Controller:
+    model, effort, endpoint = "test-sol", "high", "https://example.invalid/v1/responses"
 
     def __init__(self, actions):
-        self.actions = iter(actions)
-        self.requests = []
+        self.actions, self.requests = iter(actions), []
 
-    def generate(self, system, parts, tools=None, **kwargs):
-        self.requests.append({"system": system, "parts": parts, "tools": tools, **kwargs})
-        if tools and tools[0]["name"] == "submit_review":
-            function = call(
-                "submit_review",
-                visible_event="男子展示证件后获准进入。",
-                highlight_type="identity_reveal",
-                blocking_issues=[],
-            )
-        else:
-            function = next(self.actions)
-            if isinstance(function, Exception):
-                raise function
-        calls = function if isinstance(function, list) else ([function] if function else [])
+    def generate(self, system, inputs, *, tools, **kwargs):
+        self.requests.append(
+            copy.deepcopy({"system": system, "inputs": inputs, "tools": tools, **kwargs})
+        )
+        action = next(self.actions)
+        if isinstance(action, Exception):
+            raise action
+        calls = action if isinstance(action, list) else ([action] if action else [])
+        calls = [{**c, "id": f"call_{len(self.requests)}_{i}"} for i, c in enumerate(calls)]
         return {
             "function_calls": calls,
-            "text": "" if function else "All done",
-            "content": {
-                "role": "model",
-                "parts": [
-                    {"functionCall": item, "thoughtSignature": "opaque-signature"} for item in calls
-                ]
-                if function
-                else [{"text": "All done"}],
-            },
+            "output": [
+                {
+                    "type": "reasoning",
+                    "id": "r",
+                    "summary": [],
+                    "encrypted_content": "opaque-reasoning",
+                },
+                *[
+                    {
+                        "type": "function_call",
+                        "call_id": c["id"],
+                        "name": c["name"],
+                        "arguments": json.dumps(c["args"]),
+                    }
+                    for c in calls
+                ],
+            ],
             "usage": {},
-            "model_version": "test-model",
+            "model_version": self.model,
+            "response_id": "response_test",
+            "first_event_sec": 0.1,
         }
+
+
+class Observer:
+    seed = 7
+    thinking_level = "high"
+    model, endpoint = "test-video", "https://example.invalid/generateContent"
+
+    def __init__(self, uncertainties=None, review_issues=None):
+        self.requests, self.fail_review, self.fail_observation = [], None, None
+        self.uncertainties = uncertainties or []
+        self.review_issues = review_issues or []
+
+    def generate(self, system, parts, *, schema, **kwargs):
+        self.requests.append({"system": system, "parts": parts, "schema": schema, **kwargs})
+        if schema["title"] == "ReviewResult":
+            if self.fail_review:
+                failure, self.fail_review = self.fail_review, None
+                raise failure
+            args = {
+                "visible_event": "男子展示证件后获准进入。",
+                "issues": self.review_issues,
+            }
+        else:
+            if self.fail_observation:
+                failure, self.fail_observation = self.fail_observation, None
+                raise failure
+            origin = json.loads(parts[0]["text"])["src_start_sec"]
+            args = {
+                "answer": "原片中可见人物动作。",
+                "items": [
+                    {
+                        "start_sec": origin,
+                        "end_sec": origin + 1,
+                        "kind": "action",
+                        "content": "人物行动",
+                        "speaker": None,
+                    }
+                ],
+                "uncertainties": self.uncertainties,
+            }
+        return {"json": args, "usage": {}, "model_version": self.model, "thinking_returned": True}
 
 
 @pytest.fixture
 def evidence(tmp_path):
     media = tmp_path / "media.mp4"
-    media.write_bytes(b"test media payload")
+    media.write_bytes(b"video")
+    frame = tmp_path / "frame.jpg"
+    frame.write_bytes(b"image")
     pages = [
         VideoPage(
             page_id=f"page_{i}",
@@ -86,40 +137,46 @@ def evidence(tmp_path):
         media_id="test_media",
         video_info=SimpleNamespace(duration_sec=20),
         pages=pages,
-        scan=lambda page_id: observation(
-            0 if page_id == "page_0" else 10, 10 if page_id == "page_0" else 20, page_id
+        scan=lambda key: observation(
+            int(key.split("_")[1]) * 10, (int(key.split("_")[1]) + 1) * 10, key
         ),
         inspect=observation,
         render_clip=observation,
+        frames=lambda times, **kw: [
+            {"path": str(frame), "timestamp_sec": t, "region": None} for t in times
+        ],
     )
     store.restore_pages = lambda restored: setattr(store, "pages", restored)
     return store
 
 
-def highlight_actions():
-    event = {
-        "id": "entry",
-        "description": "男子展示证件后获准进入。",
-        "reason": "证件改变阻拦决定。",
-        "status": "supported",
-        "required_spans": [
-            {"start_sec": 3, "end_sec": 6, "evidence_id": "obs_page_0", "role": "decisive"},
-        ],
-    }
-    return [
+def actions():
+    entries = [
         call(
             "record_observations",
             observations=[
                 {
-                    "findings": [event],
                     "observation_id": "obs_page_0",
+                    "findings": [
+                        {
+                            "id": "entry",
+                            "description": "男子展示证件后获准进入。",
+                            "reason": "证件改变阻拦决定。",
+                            "status": "supported",
+                            "required_spans": [
+                                {
+                                    "start_sec": 3,
+                                    "end_sec": 6,
+                                    "evidence_id": "obs_page_0",
+                                    "role": "decisive",
+                                }
+                            ],
+                        }
+                    ],
                 },
-                {
-                    "findings": [],
-                    "observation_id": "obs_page_1",
-                    "no_event_reason": "无新增事件",
-                },
+                {"observation_id": "obs_page_1", "no_event_reason": "无新增事件"},
             ],
+            story_so_far="男子被阻拦，展示证件后获准进入。",
         ),
         call(
             "select_highlights",
@@ -128,470 +185,238 @@ def highlight_actions():
                     "event_id": "entry",
                     "score": 0.8,
                     "selected": True,
-                    "reason": "开场冲突和身份反转都清楚，适合优先采用。",
+                    "description": "男子展示证件后获准进入。",
+                    "highlight_type": "身份揭示",
+                    "reason": "独立的处境变化。",
                 }
             ],
         ),
     ]
 
+    return [*entries, copy.deepcopy(entries[-1])]
 
-def test_native_tool_loop_reviews_and_publishes_same_media(evidence, tmp_path):
-    actions = highlight_actions()
-    actions[0]["args"]["observations"][0]["findings"][0]["description"] = (
-        "男子展示伪造的证件后获准进入。"
+
+def agent(client, evidence, output, observer=None, **kwargs):
+    return VideoAgent(
+        client,
+        evidence,
+        output,
+        perception=VideoPerception(observer or Observer(), 4, evidence),
+        **kwargs,
     )
-    actions[0]["args"]["observations"][0]["findings"][0]["reason"] = "伪造身份骗过保安。"
-    actions[1]["args"]["decisions"][0]["score"] = 0.42
-    client = FakeGemini(actions)
-    result = VideoAgent(client, evidence, tmp_path).run()
+
+
+def context(request):
+    return json.loads(request["inputs"][-1]["content"][0]["text"])
+
+
+def test_complete_uses_raw_frames_separate_review_and_full_candidate_pool(evidence, tmp_path):
+    script = actions()
+    script[0]["args"]["observations"][1] = {
+        "observation_id": "obs_page_1",
+        "findings": [
+            {
+                "id": "late_reveal",
+                "description": "人物展示另一项证据。",
+                "reason": "后半段的重要揭示。",
+                "status": "supported",
+                "required_spans": [
+                    {
+                        "start_sec": 12,
+                        "end_sec": 15,
+                        "evidence_id": "obs_page_1",
+                        "role": "decisive",
+                    }
+                ],
+            }
+        ],
+    }
+    for selection in script[1:]:
+        selection["args"]["decisions"].append(
+            {
+                "event_id": "late_reveal",
+                "score": 0.95,
+                "selected": True,
+                "description": "人物展示另一项证据。",
+                "highlight_type": "证据揭示",
+                "reason": "关键证据直接改变判断。",
+            }
+        )
+    controller, observer = (
+        Controller(script),
+        Observer(
+            ["画面右侧人物的身份未确认。"],
+            [
+                {
+                    "category": "technical",
+                    "description": "首帧保留上一镜头字幕，核心看点完整。",
+                    "at_sec": 0,
+                }
+            ],
+        ),
+    )
+    result = agent(controller, evidence, tmp_path, observer).run()
     assert result["completion"] == "complete"
     assert result["analysis"]["scan_coverage"] == 1
     assert result["analysis"]["pending_event_count"] == 0
-    assert len(result["highlights"]) == 1
-    assert result["highlights"][0]["clip_path"] == "media.mp4"
-    assert result["highlights"][0]["start_sec"] == 3
-    assert result["highlights"][0]["reason"] == "开场冲突和身份反转都清楚，适合优先采用。"
-    assert result["highlights"][0]["review_status"] == "accepted"
-    # Public facts come from viewing the actual clip, not an earlier interpretation.
-    assert result["highlights"][0]["description"] == "男子展示证件后获准进入。"
-    assert result["highlights"][0]["highlight_type"] == "identity_reveal"
-    assert result["highlights"][0]["score"] == 0.42
-    # Review gets actual video in a fresh context; no event proposal or history leaks into it.
-    review = next(r for r in client.requests if r["tools"][0]["name"] == "submit_review")
+    assert [item["start_sec"] for item in result["highlights"]] == [12, 3]
+    assert result["highlights"][1]["description"] == "男子展示证件后获准进入。"
+    assert all(item["review_status"] == "pending" for item in result["highlights"])
+    assert (tmp_path / result["highlights"][0]["clip_path"]).read_bytes() == (
+        tmp_path / "media.mp4"
+    ).read_bytes()
+    assert any(p["type"] == "input_image" for p in controller.requests[0]["inputs"][0]["content"])
+    assert len(controller.requests) == 3
+    review = next(r for r in observer.requests if r["schema"]["title"] == "ReviewResult")
+    assert any(
+        p.get("image_url", {}).get("url", "").startswith("data:video/mp4;") for p in review["parts"]
+    )
     assert "history" not in review
-    assert "男子展示证件" not in json.dumps(review["parts"], ensure_ascii=False)
-    assert any("inlineData" in part for part in review["parts"])
-    second_agent_turn = client.requests[2]
-    assert second_agent_turn["history"] is None
-    assert not any("functionResponse" in part for part in second_agent_turn["parts"])
-    current_state = json.loads(second_agent_turn["parts"][0]["text"])
-    candidates = current_state["selection_ledger"]["candidates"]
-    assert len(candidates) == 1
-    assert candidates[0]["event_id"] == "entry"
-    assert candidates[0]["visible_event"] == "男子展示证件后获准进入。"
-    assert "伪造" not in json.dumps(current_state, ensure_ascii=False)
-    assert "伪造身份骗过保安" not in json.dumps(current_state, ensure_ascii=False)
-    assert "working_events" not in current_state
-    assert {tool["name"] for tool in second_agent_turn["tools"]} == {
-        "select_highlights",
-        "update_event",
-        "inspect_interval",
-        "read_state",
-    }
-    assert "opaque-signature" not in (tmp_path / "trace.jsonl").read_text()
+    assert "story_so_far" not in json.dumps(review)
+    selection = controller.requests[1]
+    assert len(selection["inputs"]) == 1  # New selection segment has no orphan tool result.
+    pool = context(selection)["selection_ledger"]["candidates"]
+    assert context(selection)["story_so_far"] == "男子被阻拦，展示证件后获准进入。"
+    assert {item["event_id"] for item in pool} == {"entry", "late_reveal"}
+    assert context(selection)["source_notes"] == [
+        {
+            "observation_id": "obs_page_0",
+            "src_start_sec": 0,
+            "src_end_sec": 10,
+            "uncertainties": ["画面右侧人物的身份未确认。"],
+        },
+        {
+            "observation_id": "obs_page_1",
+            "src_start_sec": 10,
+            "src_end_sec": 20,
+            "uncertainties": ["画面右侧人物的身份未确认。"],
+        },
+    ]
+    assert "opaque-reasoning" not in (tmp_path / "trace.jsonl").read_text()
+    assert all(
+        "timestamp" in json.loads(line)
+        for line in (tmp_path / "trace.jsonl").read_text().splitlines()
+    )
 
 
-def test_explicit_stop_and_resume_keeps_all_events(evidence, tmp_path):
-    client = FakeGemini(highlight_actions())
-    partial = VideoAgent(client, evidence, tmp_path).run(max_turns=1)
-    assert partial["completion"] == "partial"
-    assert partial["analysis"]["pending_event_count"] == 0
-    assert partial["analysis"]["candidate_count"] == 1
-    assert partial["analysis"]["stop_reason"] == "turn_limit"
-    result = VideoAgent(client, evidence, tmp_path).run(resume=True)
+def test_stop_and_resume_reuses_observations_and_review(evidence, tmp_path):
+    controller, observer = Controller(actions()), Observer()
+    partial = agent(controller, evidence, tmp_path, observer).run(max_turns=2)
+    assert partial["completion"] == "partial" and partial["highlights"] == []
+    assert json.loads((tmp_path / "state.json").read_text())["tools"]["story_so_far"] == (
+        "男子被阻拦，展示证件后获准进入。"
+    )
+    calls = len(observer.requests)
+    result = agent(controller, evidence, tmp_path, observer).run(resume=True)
     assert result["completion"] == "complete"
-    assert len(result["highlights"]) == 1
+    assert len(observer.requests) == calls
 
 
-def test_partial_retains_reviewed_plans_without_publishing_unselected_clips(evidence, tmp_path):
-    result = VideoAgent(FakeGemini(highlight_actions()), evidence, tmp_path).run(max_turns=1)
-    assert result["completion"] == "partial"
-    assert result["analysis"]["scan_coverage"] == 1
-    assert result["highlights"] == []
-    state = json.loads((tmp_path / "state.json").read_text())
-    assert state["tools"]["plans"][0]["status"] == "draft"
-    assert state["tools"]["plans"][0]["review"] is not None
-
-
-def test_failed_delivery_does_not_mark_page_observed_and_can_resume(evidence, tmp_path):
-    client = FakeGemini([TimeoutError("network timeout")])
-    partial = VideoAgent(client, evidence, tmp_path).run()
-    assert partial["completion"] == "partial"
+def test_failed_controller_delivery_retains_identical_request_and_perception(evidence, tmp_path):
+    controller = Controller([OpenAIClientError("disconnected"), *actions()])
+    observer = Observer()
+    partial = agent(controller, evidence, tmp_path, observer).run()
     assert partial["analysis"]["scan_coverage"] == 0
     saved = json.loads((tmp_path / "state.json").read_text())
-    assert saved["tools"]["delivered"] == []
-    assert saved["pending_observation_ids"] == ["obs_page_0", "obs_page_1"]
-    no_events = call(
-        "record_observations",
-        observations=[
-            {"observation_id": "obs_page_0", "no_event_reason": "无事件"},
-            {"observation_id": "obs_page_1", "no_event_reason": "无事件"},
-        ],
-    )
-    resumed_client = FakeGemini([no_events, call("select_highlights", decisions=[])])
-    result = VideoAgent(resumed_client, evidence, tmp_path).run(resume=True)
+    assert saved["request_ready"] and saved["tools"]["delivered"] == []
+    assert len(saved["tools"]["readings"]) == 2
+    result = agent(controller, evidence, tmp_path, observer).run(resume=True)
     assert result["completion"] == "complete"
-    assert result["highlights"] == []
-    assert any("inlineData" in p for p in resumed_client.requests[0]["parts"])
+    assert controller.requests[0] == controller.requests[1]
+    assert len([r for r in observer.requests if r["schema"]["title"] == "VideoReading"]) == 2
 
 
-def test_no_progress_loop_stops_as_partial(evidence, tmp_path):
-    bad = call("read_state", event_id="unknown", collection="events")
-    result = VideoAgent(FakeGemini([bad] * 3), evidence, tmp_path, max_stagnant_steps=3).run()
-    assert result["completion"] == "partial"
-    assert result["analysis"]["stop_reason"] == "repeated_action_without_progress"
-    assert result["analysis"]["turns"] == 3
+@pytest.mark.parametrize("failure_phase", ["analysis", "video_observation", "clip_review"])
+def test_retry_is_same_request_and_mutation_is_not_replayed(
+    evidence, tmp_path, monkeypatch, failure_phase
+):
+    monkeypatch.setattr("vh_agent.runtime.agent.time.sleep", lambda _: None)
+    observer = Observer()
+    controller = Controller(
+        [OpenAIClientError("temporary", retryable=True), *actions()]
+        if failure_phase == "analysis"
+        else actions()
+    )
+    if failure_phase == "video_observation":
+        observer.fail_observation = GeminiClientError("temporary", retryable=True)
+    elif failure_phase == "clip_review":
+        observer.fail_review = GeminiClientError("temporary", retryable=True)
+    result = agent(controller, evidence, tmp_path, observer).run()
+    assert result["completion"] == "complete"
+    assert result["analysis"]["model_calls"] == len(controller.requests) + len(observer.requests)
+    if failure_phase == "analysis":
+        assert controller.requests[0] == controller.requests[1]
+    traces = [json.loads(s) for s in (tmp_path / "trace.jsonl").read_text().splitlines()]
+    assert sum(r.get("name") == "record_observations" for r in traces) == 1
+    errors = [r for r in traces if r["kind"] == "request_error"]
+    assert len(errors) == 1 and errors[0]["phase"] == failure_phase
 
 
-def test_text_completion_cannot_forge_task_complete(evidence, tmp_path):
-    result = VideoAgent(FakeGemini([None]), evidence, tmp_path).run()
+def test_review_failure_preserves_observations_for_resume(evidence, tmp_path):
+    observer = Observer()
+    observer.fail_review = GeminiClientError("review failed")
+    controller = Controller(actions())
+    partial = agent(controller, evidence, tmp_path, observer).run()
+    assert partial["completion"] == "partial"
+    state = json.loads((tmp_path / "state.json").read_text())
+    assert state["tools"]["plans"][0]["review"] is None
+    assert (
+        agent(controller, evidence, tmp_path, observer).run(resume=True)["completion"] == "complete"
+    )
+
+
+def test_text_only_response_does_not_forge_completion(evidence, tmp_path):
+    result = agent(Controller([None]), evidence, tmp_path).run()
     assert result["completion"] == "partial"
     assert result["analysis"]["stop_reason"] == "missing_tool_call"
-    records = [json.loads(line) for line in (tmp_path / "trace.jsonl").read_text().splitlines()]
-    assert records[-1] == {"kind": "missing_tool_call", "turn": 1, "text": "All done"}
 
 
-def test_resume_rejects_changed_model_or_constraints(evidence, tmp_path):
-    client = FakeGemini(highlight_actions()[:1])
-    VideoAgent(client, evidence, tmp_path).run(max_turns=1)
+def test_duplicate_batch_cannot_commit(evidence, tmp_path):
+    controller = Controller([[actions()[0], actions()[0]]])
+    runtime = agent(controller, evidence, tmp_path)
+    result = runtime.run(max_turns=1)
+    assert result["completion"] == "partial"
+    assert runtime.tools.completed_pages == set() and runtime.tools.events == {}
+
+
+def test_bad_arguments_expose_fields_without_dumping_inputs(evidence, tmp_path):
+    controller = Controller([actions()[0], call("inspect_video", start_sec=0, question="检查台词")])
+    agent(controller, evidence, tmp_path).run(max_turns=2)
+    traces = [json.loads(s) for s in (tmp_path / "trace.jsonl").read_text().splitlines()]
+    error = next(r["result"] for r in traces if r["kind"] == "tool" and r["error"])
+    assert any(f["path"] == "end_sec" for f in error["fields"])
+    assert "input" not in str(error)
+
+
+def test_received_call_and_completed_choice_survive_export_crash(evidence, tmp_path, monkeypatch):
+    from vh_agent.runtime import agent as module
+
+    original = module.write_json
+
+    def interrupt(path, value):
+        if path.name == "selection.json":
+            raise KeyboardInterrupt
+        original(path, value)
+
+    monkeypatch.setattr(module, "write_json", interrupt)
+    with pytest.raises(KeyboardInterrupt):
+        agent(Controller(actions()), evidence, tmp_path).run()
+    monkeypatch.setattr(module, "write_json", original)
+    controller = Controller([])
+    assert agent(controller, evidence, tmp_path).run(resume=True)["completion"] == "complete"
+    assert controller.requests == []
+
+
+def test_changed_profile_and_existing_run_are_rejected(evidence, tmp_path):
+    agent(Controller(actions()), evidence, tmp_path).run(max_turns=1)
     with pytest.raises(ValueError, match="same video"):
-        VideoAgent(client, evidence, tmp_path, video_fps=8).run(resume=True)
+        agent(Controller([]), evidence, tmp_path, max_clip_sec=20).run(resume=True)
+    with pytest.raises(ValueError, match="already"):
+        agent(Controller([]), evidence, tmp_path).run()
 
 
-def test_existing_output_is_not_overwritten(evidence, tmp_path):
-    client = FakeGemini([None])
-    VideoAgent(client, evidence, tmp_path).run()
-    with pytest.raises(ValueError, match="--resume"):
-        VideoAgent(client, evidence, tmp_path).run()
-
-
-def test_reading_observations_does_not_erase_working_events(evidence, tmp_path):
-    actions = highlight_actions()[:1]
-    actions[0]["args"]["observations"][0]["findings"][0]["status"] = "pending"
-    client = FakeGemini(actions)
-    agent = VideoAgent(client, evidence, tmp_path)
-    agent.run(max_turns=1)
-    context = agent._context()
-    assert context["working_events"][0]["event"]["id"] == "entry"
-    assert context["source_observations"][0]["observation_id"] == "obs_page_0"
-    assert context["source_observations"][0]["record"]["event_ids"] == ["entry"]
-    resumed = VideoAgent(FakeGemini([]), evidence, tmp_path)
-    resumed._restore()
-    assert resumed._context()["working_events"] == context["working_events"]
-
-
-def test_context_refreshes_and_acknowledged_video_is_not_added_again(evidence, tmp_path):
-    client = FakeGemini(highlight_actions())
-    agent = VideoAgent(client, evidence, tmp_path)
-    agent.run(max_turns=2)
-    # Independent reviews must be visible without an extra read_state call.
-    agent_requests = [
-        request for request in client.requests if request["tools"][0]["name"] != "submit_review"
-    ]
-    second = agent_requests[1]
-    assert second["history"] is None
-    current = json.loads(second["parts"][0]["text"])
-    assert current["progress"]["scan_coverage"] == 1
-    assert current["selection_ledger"]["candidates"][0]["visible_event"]
-    assert current["phase"] == "selection"
-    assert not any("inlineData" in p for p in second["parts"])
-
-
-def test_main_agent_can_repair_semantic_mismatch_after_clean_review(evidence, tmp_path):
-    actions = highlight_actions()
-    corrected = dict(actions[0]["args"]["observations"][0]["findings"][0])
-    corrected.update(
-        description="男子展示证件后获准进入，纠正了最初的人物身份判断。",
-        expected_version=1,
-    )
-    client = FakeGemini([actions[0], call("update_event", event=corrected), actions[1]])
-    result = VideoAgent(client, evidence, tmp_path).run()
-    assert result["completion"] == "complete"
-    assert result["highlights"][0]["description"] == "男子展示证件后获准进入。"
-    reviews = [r for r in client.requests if r["tools"][0]["name"] == "submit_review"]
-    assert len(reviews) == 2
-    final_state = json.loads(client.requests[-1]["parts"][0]["text"])
-    candidate = final_state["selection_ledger"]["candidates"][0]
-    assert candidate["event_version"] == 2
-    state = json.loads((tmp_path / "state.json").read_text())
-    assert state["tools"]["events"][0]["description"] == corrected["description"]
-    assert candidate["visible_event"] == result["highlights"][0]["description"]
-
-
-def test_selection_recheck_keeps_media_and_facts_after_registration_and_resume(evidence, tmp_path):
-    actions = highlight_actions()
-    note = "核对证件展示，没有看到伪造行为；没有新增候选。"
-    client = FakeGemini(
-        [
-            actions[0],
-            call("inspect_interval", start_sec=3, end_sec=8, question="核对证件是否伪造"),
-            call(
-                "record_observations",
-                observations=[
-                    {
-                        "observation_id": "obs_3.0_8.0",
-                        "no_event_reason": note,
-                    }
-                ],
-            ),
-            actions[1],
-        ]
-    )
-    partial = VideoAgent(client, evidence, tmp_path).run(max_turns=2)
-    assert partial["completion"] == "partial"
-    complete = VideoAgent(client, evidence, tmp_path).run(resume=True)
-    assert complete["completion"] == "complete"
-    final = client.requests[-1]
-    context = json.loads(final["parts"][0]["text"])
-    assert context["phase"] == "selection"
-    assert any("inlineData" in p for c in final["history"] for p in c["parts"])
-    assert context["inspection_memory"]["records"][0]["record"]["no_event_reason"] == note
-    assert context["inspection_memory"]["total"] == 1
-
-
-def test_selection_repair_keeps_session_and_exposes_latest_review_issues(evidence, tmp_path):
-    actions = highlight_actions()
-    original = actions[0]["args"]["observations"][0]["findings"][0]
-    corrected = {**original, "expected_version": 1, "proposed_start_sec": 2}
-    repaired = {**corrected, "expected_version": 2, "proposed_start_sec": 1}
-
-    class RepairClient(FakeGemini):
-        review_count = 0
-
-        def generate(self, system, parts, tools=None, **kwargs):
-            reply = super().generate(system, parts, tools=tools, **kwargs)
-            if tools[0]["name"] == "submit_review":
-                self.review_count += 1
-                if self.review_count == 2:
-                    reply["function_calls"][0]["args"]["blocking_issues"] = [
-                        {
-                            "category": "cutoff",
-                            "description": "开头台词被截断",
-                            "at_sec": 0,
-                        }
-                    ]
-            return reply
-
-    client = RepairClient(
-        [
-            actions[0],
-            call("update_event", event=corrected),
-            call("update_event", event=repaired),
-            actions[1],
-        ]
-    )
-    result = VideoAgent(client, evidence, tmp_path).run()
-    assert result["completion"] == "complete"
-    request = [r for r in client.requests if r["tools"][0]["name"] != "submit_review"][2]
-    context = json.loads(request["parts"][0]["text"])
-    assert context["phase"] == "selection"
-    assert request["history"]
-    issue = context["repair_events"][0]["clip"]["review"]["blocking_issues"][0]
-    assert issue["category"] == "cutoff"
-    assert context["repair_events"][0]["event"]["version"] == 2
-
-
-def test_failed_parallel_review_preserves_success_and_resume_only_reviews_missing(
-    evidence, tmp_path, monkeypatch
-):
-    from vh_agent.providers.gemini_client import GeminiClientError
-
-    actions = highlight_actions()
-    second_event = {
-        **actions[0]["args"]["observations"][0]["findings"][0],
-        "id": "second_entry",
-        "required_spans": [
-            {"start_sec": 13, "end_sec": 16, "evidence_id": "obs_page_1", "role": "decisive"}
-        ],
-    }
-    actions[0]["args"]["observations"][1] = {
-        "observation_id": "obs_page_1",
-        "findings": [second_event],
-    }
-    actions[1]["args"]["decisions"].append(
-        {"event_id": "second_entry", "score": 0.8, "selected": True, "reason": "另一个独立看点。"}
-    )
-
-    def render(start, end):
-        path = tmp_path / f"clip_{start}.mp4"
-        path.write_bytes(str(start).encode())
-        return evidence.inspect(start, end).model_copy(update={"path": path})
-
-    monkeypatch.setattr(evidence, "render_clip", render)
-
-    class FailingReviewClient(FakeGemini):
-        def __init__(self):
-            super().__init__(actions)
-            self.reviewed = []
-
-        def generate(self, system, parts, tools=None, **kwargs):
-            if tools[0]["name"] == "submit_review":
-                start = float(base64.b64decode(parts[1]["inlineData"]["data"]))
-                self.reviewed.append(start)
-                if start == 13 and self.reviewed.count(13) == 1:
-                    raise GeminiClientError("Review request failed")
-            return super().generate(system, parts, tools=tools, **kwargs)
-
-    client = FailingReviewClient()
-    partial = VideoAgent(client, evidence, tmp_path).run()
-    assert partial["completion"] == "partial"
-    saved = json.loads((tmp_path / "state.json").read_text())
-    plans = {plan["event_id"]: plan for plan in saved["tools"]["plans"]}
-    assert plans["entry"]["review"] is not None
-    assert plans["second_entry"]["review"] is None
-
-    complete = VideoAgent(client, evidence, tmp_path).run(resume=True)
-    assert complete["completion"] == "complete"
-    assert len(complete["highlights"]) == 2
-    assert sorted(client.reviewed) == [3, 13, 13]
-
-
-def test_video_delivery_exposes_only_the_matching_record_tool(evidence, tmp_path):
-    client = FakeGemini(highlight_actions()[:1])
-    VideoAgent(client, evidence, tmp_path).run(max_turns=1)
-    declarations = client.requests[0]["tools"]
-    assert [declaration["name"] for declaration in declarations] == ["record_observations"]
-    schema = declarations[0]["parametersJsonSchema"]
-    observation_schema = schema["$defs"]["ObservationRecord"]
-    assert observation_schema["properties"]["observation_id"]["enum"] == [
-        "obs_page_0",
-        "obs_page_1",
-    ]
-    event_fields = schema["$defs"]["EventInput"]["properties"]
-    assert "expected_version" in event_fields
-    assert "version" not in event_fields
-    assert client.requests[0]["tool_config"]["functionCallingConfig"] == {
-        "mode": "ANY",
-        "allowedFunctionNames": ["record_observations"],
-    }
-
-
-def test_multiple_tool_calls_are_rejected_as_one_model_action(evidence, tmp_path):
-    batch = highlight_actions()[0]
-    client = FakeGemini([[batch, batch]])
-    agent = VideoAgent(client, evidence, tmp_path)
-    result = agent.run(max_turns=1)
-    assert result["completion"] == "partial"
-    assert len(agent.tools.observations) == 2
-    assert agent.tools.completed_pages == set()
-    assert agent.progress_memory.stagnant_steps == 1
-    state = json.loads((tmp_path / "state.json").read_text())
-    assert state["pending_calls"] == []
-    assert state["reject_pending_batch"] is False
-    traces = [json.loads(line) for line in (tmp_path / "trace.jsonl").read_text().splitlines()]
-    assert [row["kind"] for row in traces].count("tool_batch_rejected") == 1
-    assert not any(row["kind"] == "tool" for row in traces)
-
-
-def test_validation_error_returns_field_paths_without_dumping_inputs(evidence, tmp_path):
-    no_events = call(
-        "record_observations",
-        observations=[
-            {"observation_id": "obs_page_0", "no_event_reason": "无事件"},
-            {"observation_id": "obs_page_1", "no_event_reason": "无事件"},
-        ],
-    )
-    client = FakeGemini([no_events, call("inspect_interval", start_sec=0, question="查看结尾")])
-    agent = VideoAgent(client, evidence, tmp_path)
-    agent.run(max_turns=2)
-    trace = [json.loads(line) for line in (tmp_path / "trace.jsonl").read_text().splitlines()]
-    result = next(row["result"] for row in trace if row["kind"] == "tool" and row["error"])
-    assert result["status"] == "invalid_tool_request"
-    assert result["fields"] == [{"path": "end_sec", "code": "missing", "message": "Field required"}]
-    assert "input_value" not in json.dumps(result)
-    assert "errors.pydantic.dev" not in json.dumps(result)
-
-
-def test_analysis_history_survives_resume_and_selection_starts_fresh(
-    evidence, tmp_path, monkeypatch
-):
-    monkeypatch.setattr("vh_agent.runtime.agent.MAX_PAGE_BATCH_ITEMS", 1)
-    actions = highlight_actions()
-    records = actions[0]["args"]["observations"]
-    client = FakeGemini(
-        [
-            call("record_observations", observations=[records[0]]),
-            call("record_observations", observations=[records[1]]),
-            actions[1],
-        ]
-    )
-    VideoAgent(client, evidence, tmp_path).run(max_turns=2)
-    agent_requests = [
-        request for request in client.requests if request["tools"][0]["name"] != "submit_review"
-    ]
-    analysis_request = agent_requests[-1]
-    models = [c for c in analysis_request["history"] if c["role"] == "model"]
-    assert models
-    assert all(c["parts"][0]["thoughtSignature"] == "opaque-signature" for c in models)
-    state = json.loads((tmp_path / "state.json").read_text())
-    assert "inlineData" not in json.dumps(state)
-    assert "video_ref" in json.dumps(state["conversation"])
-    assert state["pending_calls"] == []
-    assert state["conversation"]["phase"] == "analysis"
-    result = VideoAgent(client, evidence, tmp_path).run(resume=True)
-    assert result["completion"] == "complete"
-    assert client.requests[-1]["history"] is None
-    assert json.loads(client.requests[-1]["parts"][0]["text"])["phase"] == "selection"
-    state = json.loads((tmp_path / "state.json").read_text())
-    assert state["conversation"]["phase"] == "selection"
-    assert len(state["tools"]["observations"]) == 2
-
-
-def test_selection_request_resume_reuses_exact_fresh_view(evidence, tmp_path):
-    actions = highlight_actions()
-    client = FakeGemini([actions[0], TimeoutError("selection interrupted")])
-    result = VideoAgent(client, evidence, tmp_path).run()
-    assert result["completion"] == "partial"
-    failed = client.requests[-1]
-    assert failed["history"] is None
-    assert json.loads(failed["parts"][0]["text"])["phase"] == "selection"
-    state = json.loads((tmp_path / "state.json").read_text())
-    assert state["request_ready"]
-    assert state["conversation"]["phase"] == "selection"
-    resumed_client = FakeGemini([actions[1]])
-    result = VideoAgent(resumed_client, evidence, tmp_path).run(resume=True)
-    assert result["completion"] == "complete"
-    assert resumed_client.requests[0] == failed
-
-
-def test_resume_keeps_stagnation_instead_of_resetting_it(evidence, tmp_path):
-    bad = call("read_state", collection="events", event_id="missing")
-    VideoAgent(FakeGemini([bad, bad]), evidence, tmp_path, max_stagnant_steps=3).run(max_turns=2)
-    client = FakeGemini([bad])
-    result = VideoAgent(client, evidence, tmp_path, max_stagnant_steps=3).run(resume=True)
-    assert result["analysis"]["stop_reason"] == "repeated_action_without_progress"
-    assert result["analysis"]["turns"] == 3
-    assert len(client.requests) == 1
-
-
-def test_committed_selection_is_not_executed_again_after_interruption(
-    evidence, tmp_path, monkeypatch
-):
-    agent = VideoAgent(FakeGemini(highlight_actions()), evidence, tmp_path)
-    original_trace = agent._trace
-
-    def interrupt_after_commit(kind, **data):
-        original_trace(kind, **data)
-        if kind == "tool" and data["name"] == "select_highlights":
-            raise KeyboardInterrupt()
-
-    monkeypatch.setattr(agent, "_trace", interrupt_after_commit)
-    partial = agent.run()
-    assert partial["analysis"]["stop_reason"] == "user_stopped"
-    client = FakeGemini([])
-    resumed = VideoAgent(client, evidence, tmp_path)
-    assert resumed.run(resume=True)["completion"] == "complete"
-    assert resumed.tools.plans["entry"].status == "ready"
-    traces = [json.loads(line) for line in (tmp_path / "trace.jsonl").read_text().splitlines()]
-    assert len([row for row in traces if row.get("name") == "select_highlights"]) == 1
-
-
-def test_received_call_survives_stop_before_execution(evidence, tmp_path, monkeypatch):
-    agent = VideoAgent(FakeGemini(highlight_actions()[:1]), evidence, tmp_path)
-    monkeypatch.setattr(
-        agent.tools, "execute", lambda *args: (_ for _ in ()).throw(KeyboardInterrupt())
-    )
-    agent.run()
-    saved = json.loads((tmp_path / "state.json").read_text())
-    assert saved["pending_calls"][0]["name"] == "record_observations"
-    client = FakeGemini(highlight_actions()[1:])
-    resumed = VideoAgent(client, evidence, tmp_path)
-    resumed.run(resume=True, max_turns=1)
-    assert resumed.tools.progress()["scan_coverage"] == 1
-    assert resumed.turn == 2
-
-
-def test_long_scan_rotates_context_without_losing_coverage(evidence, tmp_path):
+def test_long_scan_rotates_native_history_and_preserves_every_page(evidence, tmp_path):
+    evidence.video_info.duration_sec = 300
     evidence.pages = [
         VideoPage(
             page_id=f"page_{i}",
@@ -602,99 +427,145 @@ def test_long_scan_rotates_context_without_losing_coverage(evidence, tmp_path):
         )
         for i in range(30)
     ]
-    evidence.video_info.duration_sec = 300
+    entries = [
+        call(
+            "record_observations",
+            observations=[
+                {"observation_id": f"obs_page_{j}", "no_event_reason": "无候选"}
+                for j in range(i, i + 2)
+            ],
+        )
+        for i in range(0, 30, 2)
+    ]
+    controller = Controller([*entries, call("select_highlights", decisions=[])])
+    runtime = agent(controller, evidence, tmp_path, context_token_budget=50000)
+    result = runtime.run()
+    assert result["completion"] == "complete" and result["analysis"]["scan_coverage"] == 1
+    assert runtime.conversation.segment > 1
+    assert len(runtime.tools.acknowledged) == 30
 
-    def scan(page_id):
-        page = next(p for p in evidence.pages if p.page_id == page_id)
-        return evidence.inspect(page.read_start_sec, page.read_end_sec, page_id)
 
-    evidence.scan = scan
-    actions = []
-    for offset in range(0, len(evidence.pages), 2):
-        actions.append(
+def test_record_binding_includes_earlier_delivered_but_unregistered_observations(
+    evidence, tmp_path
+):
+    controller = Controller(
+        [
             call(
                 "record_observations",
                 observations=[
-                    {
-                        "observation_id": f"obs_{page.page_id}",
-                        "no_event_reason": "无事件",
-                    }
-                    for page in evidence.pages[offset : offset + 2]
+                    {"observation_id": "obs_page_0", "findings": [], "no_event_reason": None}
                 ],
+            ),
+            *actions(),
+        ]
+    )
+    runtime = agent(controller, evidence, tmp_path, context_token_budget=50000)
+    runtime.run()
+    schema = controller.requests[1]["tools"][0]["parameters"]
+    assert set(schema["$defs"]["ObservationRecord"]["properties"]["observation_id"]["enum"]) == {
+        "obs_page_0",
+        "obs_page_1",
+    }
+    assert set(schema["$defs"]["RequiredSpan"]["properties"]["evidence_id"]["enum"]) == {
+        "obs_page_0",
+        "obs_page_1",
+    }
+    assert context(controller.requests[1])["unrecorded_readings"] == []
+
+
+def test_complete_input_budget_splits_pages_without_losing_coverage(evidence, tmp_path):
+    class VerboseObserver(Observer):
+        def generate(self, *args, **kwargs):
+            result = super().generate(*args, **kwargs)
+            if kwargs["schema"]["title"] == "VideoReading":
+                result["json"]["answer"] = "观察内容" * 3000
+            return result
+
+    controller = Controller(
+        [
+            call(
+                "record_observations",
+                observations=[{"observation_id": f"obs_page_{i}", "no_event_reason": "无独立看点"}],
             )
-        )
-    actions.append(call("select_highlights", decisions=[]))
-    client = FakeGemini(actions)
-    agent = VideoAgent(client, evidence, tmp_path)
-    result = agent.run()
+            for i in range(2)
+        ]
+        + [call("select_highlights", decisions=[])]
+    )
+    runtime = agent(controller, evidence, tmp_path, VerboseObserver(), context_token_budget=50000)
+    result = runtime.run()
     assert result["completion"] == "complete"
     assert result["analysis"]["scan_coverage"] == 1
-    assert len(agent.tools.acknowledged) == 30
-    assert agent.conversation.segment > 1
-    assert agent.pending_calls == []
+    assert len(controller.requests) == 3
+    assert set(runtime.tools.acknowledged) == {"obs_page_0", "obs_page_1"}
+    for request in controller.requests[:2]:
+        images = [
+            p
+            for item in request["inputs"]
+            for p in item.get("content", [])
+            if p.get("type") == "input_image"
+        ]
+        assert len(images) == 5
 
 
-def test_transient_retry_uses_identical_request_and_does_not_repeat_tools(
-    evidence, tmp_path, monkeypatch
+def test_observations_use_source_time_and_reviews_use_playback_time(evidence):
+    observer = Observer()
+    perception = VideoPerception(observer, 4, evidence)
+    observation = evidence.inspect(10, 15)
+    reading = perception.observe(observation, "核对动作")
+    request = observer.requests[0]
+    frames = [
+        part
+        for part in request["parts"]
+        if part.get("image_url", {}).get("url", "").startswith("data:image/jpeg;")
+    ]
+    assert len(frames) == 20
+    metadata = json.loads(request["parts"][0]["text"])
+    assert (metadata["src_start_sec"], metadata["src_end_sec"]) == (10, 15)
+    labels = [p["text"] for p in request["parts"] if p.get("text", "").startswith("原片帧")]
+    assert labels[0] == "原片帧 10.000 秒" and labels[-1] == "原片帧 14.750 秒"
+    assert (reading["items"][0]["start_sec"], reading["items"][0]["end_sec"]) == (10, 11)
+    cached = perception.observe(observation, "核对动作")
+    assert cached["cache_hit"] and cached["items"] == reading["items"]
+    repeated_material = perception.observe(evidence.inspect(0, 5), "核对动作")
+    assert not repeated_material["cache_hit"]
+    assert repeated_material["items"][0]["start_sec"] == 0
+    perception.review(observation.path, "挑选高光", start_sec=10, end_sec=15, fps=4)
+    labels = [
+        p["text"]
+        for p in observer.requests[-1]["parts"]
+        if p.get("text", "").startswith("本段原帧")
+    ]
+    assert labels[0] == "本段原帧 0.000 秒" and labels[-1] == "本段原帧 4.750 秒"
+
+
+def test_supplied_subtitles_are_delivered_with_pages_without_an_extra_agent_turn(
+    evidence, tmp_path
 ):
-    from vh_agent.providers.gemini_client import GeminiClientError
+    import pysubs2
 
-    monkeypatch.setattr("vh_agent.runtime.agent.time.sleep", lambda _: None)
-    actions = highlight_actions()
-    client = FakeGemini([GeminiClientError("temporary empty response", retryable=True), *actions])
-    result = VideoAgent(client, evidence, tmp_path).run()
-    assert result["completion"] == "complete"
-    assert client.requests[0] == client.requests[1]
-    trace = [json.loads(line) for line in (tmp_path / "trace.jsonl").read_text().splitlines()]
-    assert len([r for r in trace if r.get("name") == "record_observations"]) == 1
-    assert len([r for r in trace if r["kind"] == "request_error"]) == 1
+    from vh_agent.providers.retrieval import TranscriptSearch
 
-
-def test_request_retry_budget_stops_and_retains_exact_pending_request(
-    evidence, tmp_path, monkeypatch
-):
-    from vh_agent.providers.gemini_client import GeminiClientError
-
-    monkeypatch.setattr("vh_agent.runtime.agent.time.sleep", lambda _: None)
-    client = FakeGemini([GeminiClientError("temporary", retryable=True)] * 2)
-    result = VideoAgent(client, evidence, tmp_path, max_request_attempts=2).run()
-    assert result["completion"] == "partial"
-    assert result["analysis"]["model_calls"] == 2
-    assert client.requests[0] == client.requests[1]
-    state = json.loads((tmp_path / "state.json").read_text())
-    assert state["request_ready"]
-
-
-def test_completed_resume_reuses_committed_choice_without_model_calls(evidence, tmp_path):
-    first = VideoAgent(FakeGemini(highlight_actions()), evidence, tmp_path).run()
-    assert first["completion"] == "complete"
-    client = FakeGemini([])
-    resumed = VideoAgent(client, evidence, tmp_path).run(resume=True)
-    assert resumed["highlights"] == first["highlights"]
-    assert not client.requests
-
-
-def test_crash_after_selection_commit_before_export_resumes_without_reselection(
-    evidence, tmp_path, monkeypatch
-):
-    from vh_agent.runtime import agent as runtime
-
-    original = runtime.write_json
-
-    def interrupt_export(path, value):
-        if path.name == "selection.json":
-            raise KeyboardInterrupt
-        original(path, value)
-
-    monkeypatch.setattr(runtime, "write_json", interrupt_export)
-    with pytest.raises(KeyboardInterrupt):
-        VideoAgent(FakeGemini(highlight_actions()), evidence, tmp_path).run()
-    state = json.loads((tmp_path / "state.json").read_text())
-    assert state["tools"]["finished"]
-    assert state["tools"]["selection"]["selected"][0]["id"] == "clip_entry"
-    monkeypatch.setattr(runtime, "write_json", original)
-    client = FakeGemini([])
-    result = VideoAgent(client, evidence, tmp_path).run(resume=True)
-    assert result["completion"] == "complete"
-    assert [h["id"] for h in result["highlights"]] == ["clip_entry"]
-    assert not client.requests
+    subtitles = pysubs2.SSAFile()
+    subtitles.events = [
+        pysubs2.SSAEvent(start=1000 + index * 50, end=1040 + index * 50, text=f"台词{index}")
+        for index in range(121)
+    ]
+    path = tmp_path / "dialogue.srt"
+    subtitles.save(str(path))
+    evidence.output_dir = tmp_path
+    settings = SimpleNamespace(
+        asr_model=tmp_path / "asr", asr_compute_type="float16", asr_device="cpu"
+    )
+    transcript = TranscriptSearch(evidence, settings, path, "zh")
+    controller = Controller(actions())
+    detector = agent(controller, evidence, tmp_path, transcript=transcript)
+    result = detector.run()
+    assert result["completion"] == "complete" and len(controller.requests) == 3
+    packets = [
+        json.loads(part["text"])
+        for part in controller.requests[0]["inputs"][0]["content"][1:]
+        if part.get("type") == "input_text" and part["text"].startswith("{")
+    ]
+    assert [row["text"] for row in packets[0]["transcript"]] == [f"台词{i}" for i in range(121)]
+    assert packets[1]["transcript"] == []
+    assert len(detector.tools.read_memory.rows) == 121

@@ -11,7 +11,7 @@ from vh_agent.runtime.finalization import (
     ReviewResult,
     SelectionChoice,
     attach_media,
-    complete_review,
+    confirm_clip,
     draft_plan,
     select_clips,
 )
@@ -38,15 +38,15 @@ def review(**updates):
     return ReviewResult(
         **{
             "visible_event": "The character reveals her identity",
-            "highlight_type": "identity_reveal",
-            "blocking_issues": [],
+            "issues": [],
             **updates,
         }
     )
 
 
 def ready(item, video_duration=1000):
-    return complete_review(draft_plan(item, video_duration), item, review())
+    plan = draft_plan(item, video_duration).model_copy(update={"media_path": Path("reviewed.mp4")})
+    return confirm_clip(plan, item, review())
 
 
 def test_pending_and_rejected_events_can_have_no_evidence():
@@ -112,7 +112,7 @@ def test_overlong_evidence_is_infeasible_without_cutting_any_span():
     assert (plan.start_sec, plan.end_sec) == (1, 30)
     assert plan.issues
     with pytest.raises(ValueError, match="infeasible"):
-        complete_review(plan, item, review())
+        confirm_clip(plan, item, review())
 
 
 def test_overlong_proposed_context_requires_an_explicit_revision():
@@ -139,7 +139,7 @@ def test_draft_rejects_out_of_video_evidence_and_context():
 def test_successful_review_freezes_the_same_boundaries():
     item = event()
     plan = draft_plan(item, 30)
-    accepted = complete_review(plan, item, review())
+    accepted = confirm_clip(plan, item, review())
     assert accepted.status == "ready"
     assert accepted.review.visible_event == review().visible_event
     assert (accepted.start_sec, accepted.end_sec) == (plan.start_sec, plan.end_sec)
@@ -147,7 +147,7 @@ def test_successful_review_freezes_the_same_boundaries():
     with pytest.raises(ValidationError, match="frozen"):
         accepted.end_sec = 13
     with pytest.raises(ValueError, match="frozen"):
-        complete_review(accepted, item, review())
+        confirm_clip(accepted, item, review())
 
 
 @pytest.mark.parametrize(
@@ -158,35 +158,42 @@ def test_successful_review_freezes_the_same_boundaries():
         ReviewIssue(category="technical", description="The audio is inaudible"),
     ],
 )
-def test_failed_review_preserves_observation_and_returns_a_draft(issue):
+def test_recorded_review_feedback_needs_editorial_confirmation(issue):
     item = event()
-    observed = review(blocking_issues=[issue])
-    plan = complete_review(draft_plan(item, 30), item, observed)
+    observed = review(issues=[issue])
+    plan = draft_plan(item, 30).model_copy(
+        update={"review": observed, "media_path": Path("clip.mp4")}
+    )
     assert plan.status == "draft"
     assert plan.review == observed
-    assert plan.issues
-    with pytest.raises(ValueError, match="every candidate"):
+    with pytest.raises(ValueError, match="尚未完成观看与确认"):
         select_clips([plan], [item], 12, decisions=[choice(plan)])
 
 
-def test_multiple_independent_hooks_are_a_blocking_clip_issue():
+def test_review_focus_feedback_is_preserved_for_editorial_decision():
     item = event()
     observed = review(
-        blocking_issues=[
+        issues=[
             ReviewIssue(
                 category="mixed_focus",
                 description="The clip combines an identity reveal with a separate retaliation",
             )
         ]
     )
-    plan = complete_review(draft_plan(item, 30), item, observed)
+    plan = draft_plan(item, 30).model_copy(update={"review": observed})
     assert plan.status == "draft"
-    assert plan.issues == ["The clip combines an identity reveal with a separate retaliation"]
+    assert plan.review.issues == observed.issues
 
 
 def choice(plan, selected=True, score=0.8, **kw):
     return SelectionChoice(
-        event_id=plan.event_id, selected=selected, score=score, reason="Editorial judgment", **kw
+        description="Actual clip event",
+        highlight_type="Reveal",
+        event_id=plan.event_id,
+        selected=selected,
+        score=score,
+        reason="Editorial judgment",
+        **kw,
     )
 
 
@@ -287,9 +294,9 @@ def test_unknown_and_duplicate_event_pool_entries_are_errors():
         select_clips([plan, plan], [item], None, decisions=[choice(plan)])
 
 
-def test_cannot_construct_a_ready_plan_without_a_passing_review():
+def test_cannot_construct_a_ready_plan_without_a_recorded_review():
     plan = draft_plan(event(), 30)
-    with pytest.raises(ValidationError, match="accepted review"):
+    with pytest.raises(ValidationError, match="recorded review"):
         ClipPlan.model_validate({**plan.model_dump(), "status": "ready"})
 
 
@@ -309,7 +316,7 @@ def test_actual_media_boundaries_invalidate_review_and_preserve_required_spans()
     assert rendered.media_path == Path("clip.mp4")
     assert (rendered.start_sec, rendered.end_sec) == (9.96, 15.04)
     assert rendered.required_spans == plan.required_spans
-    assert complete_review(rendered, item, review()).status == "ready"
+    assert confirm_clip(rendered, item, review()).status == "ready"
 
 
 def test_frame_alignment_over_duration_limit_is_infeasible_without_trimming():

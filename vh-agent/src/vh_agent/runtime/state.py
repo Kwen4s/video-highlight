@@ -41,9 +41,9 @@ class ReadMemory:
             "query_id": key,
             "new_row_ids": new_ids,
             "query_complete": previous["complete"],
-            "reading_note": "本次有新字幕。"
+            "reading_note": "本次有新材料。"
             if new_ids
-            else "本次没有新增字幕；已读内容可从 read_state 获取。",
+            else "本次没有新增材料；已读内容可从 read_state 获取。",
         }
 
     def checkpoint(self):

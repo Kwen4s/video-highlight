@@ -18,7 +18,7 @@ from .config import Settings
 from .conversation import ConversationAgentError, HighlightConversationAgent
 from .editing import validate_highlight_range
 from .models import (
-    DemoSessionRequest,
+    DetectionOptions,
     DetectionResult,
     EditMessageRequest,
     EditMessageResponse,
@@ -40,7 +40,6 @@ VIDEO_MEDIA_TYPES = {
 }
 CHUNK_SIZE = 1024 * 1024
 DELETE_RETRY_DELAYS_SEC = (0.0, 0.1, 0.25, 0.5, 1.0)
-DEMO_JOB_IDS = frozenset({"job_demo_citypulse", "job_demo_launchfilm"})
 STREAM_REPLY_CHUNK_SIZE = 4
 STREAM_REPLY_DELAY_SEC = 0.02
 
@@ -103,6 +102,13 @@ def create_app(
         application.state.settings = app_settings
         application.state.repository = app_repository
         application.state.runner = app_runner
+        for row in app_repository.list():
+            if row["status"] == "queued":
+                app_runner.enqueue(row["job_id"])
+            elif row["status"] == "processing":
+                app_repository.set_status(
+                    row["job_id"], "failed", error_message="服务重启中断了分析，可从检查点继续"
+                )
         yield
         shutdown = getattr(app_runner, "shutdown", None)
         if shutdown:
@@ -120,6 +126,13 @@ def create_app(
         allow_headers=["*"],
     )
 
+    def serialize(row):
+        response = serialize_job(row)
+        path = app_settings.jobs_dir / row["job_id"] / "progress.json"
+        if path.is_file():
+            response.progress = json.loads(path.read_text())
+        return response
+
     @application.get("/health")
     def health() -> dict[str, str]:
         return {"status": "ok"}
@@ -129,6 +142,8 @@ def create_app(
         file: Annotated[UploadFile, File()],
         job_id: Annotated[str, Form()],
         language: Annotated[str, Form()] = "zh",
+        options: Annotated[str, Form()] = "{}",
+        subtitles: Annotated[UploadFile | None, File()] = None,
     ) -> JobResponse:
         if not JOB_ID_PATTERN.fullmatch(job_id):
             raise HTTPException(status_code=422, detail="无效的任务编号")
@@ -137,6 +152,12 @@ def create_app(
         if app_repository.get(job_id):
             raise HTTPException(status_code=409, detail="任务已存在")
 
+        try:
+            task_options = DetectionOptions.model_validate_json(options)
+            if task_options.min_clip_sec > task_options.max_clip_sec:
+                raise ValueError("最短时长不能超过最长时长")
+        except ValueError as exc:
+            raise HTTPException(status_code=422, detail=str(exc)) from exc
         original_name = Path(file.filename or "video.mp4").name
         extension = Path(original_name).suffix.lower()
         if extension not in ALLOWED_EXTENSIONS:
@@ -157,6 +178,23 @@ def create_app(
                         raise HTTPException(status_code=413, detail="视频文件超过上传大小限制")
                     sink.write(chunk)
             partial_path.replace(target_path)
+            task_values = task_options.model_dump(mode="json")
+            if subtitles:
+                suffix = Path(subtitles.filename or "").suffix.lower()
+                if suffix not in {".srt", ".vtt", ".ass", ".ssa", ".sub"}:
+                    raise HTTPException(status_code=422, detail="不支持的字幕格式")
+                subtitle_path = source_dir / f"subtitles{suffix}"
+                with subtitle_path.open("wb") as stream:
+                    subtitle_size = 0
+                    while chunk := await subtitles.read(CHUNK_SIZE):
+                        subtitle_size += len(chunk)
+                        if subtitle_size > app_settings.max_upload_bytes:
+                            raise HTTPException(status_code=413, detail="字幕超过上传限制")
+                        stream.write(chunk)
+                task_values["subtitle_path"] = str(subtitle_path)
+            (job_dir / "task.json").write_text(
+                json.dumps(task_values, ensure_ascii=False), encoding="utf-8"
+            )
             row = app_repository.create(
                 job_id=job_id,
                 original_name=original_name,
@@ -164,7 +202,6 @@ def create_app(
                 content_type=file.content_type or "application/octet-stream",
                 size_bytes=size_bytes,
                 language=language,
-                max_attempts=app_settings.agent_max_attempts,
             )
         except Exception:
             partial_path.unlink(missing_ok=True)
@@ -175,45 +212,52 @@ def create_app(
             raise
         finally:
             await file.close()
+            if subtitles:
+                await subtitles.close()
 
         app_runner.enqueue(job_id)
-        return serialize_job(row)
+        return serialize(row)
 
     @application.get("/api/jobs", response_model=list[JobResponse])
     def list_jobs() -> list[JobResponse]:
-        return [serialize_job(row) for row in app_repository.list()]
-
-    @application.post("/api/demo-jobs/{job_id}/session", response_model=JobResponse)
-    def open_demo_session(job_id: str, request: DemoSessionRequest) -> JobResponse:
-        if job_id not in DEMO_JOB_IDS:
-            raise HTTPException(status_code=404, detail="演示任务不存在")
-        if request.result.job_id != job_id or request.result.video.video_id != job_id:
-            raise HTTPException(status_code=422, detail="演示结果与任务编号不匹配")
-        if len(request.result.highlights) > 50:
-            raise HTTPException(status_code=422, detail="演示高光数量超出限制")
-        for item in request.result.highlights:
-            range_error = validate_highlight_range(
-                item.start_sec,
-                item.end_sec,
-                request.result.video.duration_sec,
-            )
-            if range_error:
-                raise HTTPException(status_code=422, detail=range_error)
-        if request.size_bytes > app_settings.max_upload_bytes:
-            raise HTTPException(status_code=422, detail="演示视频大小超出限制")
-
-        row = app_repository.open_demo_session(
-            job_id=job_id,
-            original_name=Path(request.original_name).name,
-            size_bytes=request.size_bytes,
-            language=request.language,
-            result=request.result.model_dump(mode="json"),
-        )
-        return serialize_job(row)
+        return [serialize(row) for row in app_repository.list()]
 
     @application.get("/api/jobs/{job_id}", response_model=JobResponse)
     def get_job(job_id: str) -> JobResponse:
-        return serialize_job(require_job(app_repository, job_id))
+        return serialize(require_job(app_repository, job_id))
+
+    @application.post("/api/jobs/{job_id}/resume", response_model=JobResponse)
+    def resume_job(job_id: str):
+        row = require_job(app_repository, job_id)
+        if row["result_json"] and parse_result(row).completion == "complete":
+            raise HTTPException(status_code=409, detail="分析已经完成")
+        if not (app_settings.jobs_dir / job_id / "state.json").is_file():
+            raise HTTPException(status_code=409, detail="没有可恢复的检查点")
+        if not app_repository.queue_resume(job_id):
+            raise HTTPException(status_code=409, detail="任务正在运行或结果已经编辑")
+        app_runner.enqueue(job_id)
+        return serialize(require_job(app_repository, job_id))
+
+    @application.head("/api/jobs/{job_id}/clips/{highlight_id}", include_in_schema=False)
+    @application.get("/api/jobs/{job_id}/clips/{highlight_id}")
+    def get_frozen_clip(job_id: str, highlight_id: str):
+        result = parse_result(require_job(app_repository, job_id))
+        item = next((h for h in result.highlights if h.highlight_id == highlight_id), None)
+        if item is None or not item.clip_url:
+            raise HTTPException(status_code=404, detail="该片段没有冻结成片")
+        root = (app_settings.jobs_dir / job_id).resolve()
+        manifest_path = root / "clips.json"
+        if not manifest_path.is_file():
+            raise HTTPException(status_code=404, detail="成片记录不存在")
+        record = json.loads(manifest_path.read_text()).get(highlight_id)
+        if not record or (record["start_sec"], record["end_sec"]) != (item.start_sec, item.end_sec):
+            raise HTTPException(status_code=404, detail="边界已修改，原成片不再适用")
+        path = (root / record["path"]).resolve()
+        if not path.is_relative_to(root) or not path.is_file():
+            raise HTTPException(status_code=404, detail="成片文件不存在")
+        return FileResponse(
+            path, media_type="video/mp4", headers={"Cache-Control": "private, no-store"}
+        )
 
     @application.get("/api/jobs/{job_id}/source", response_class=FileResponse)
     @application.head(
@@ -271,7 +315,7 @@ def create_app(
         start_sec = round(request.start_sec, 3)
         end_sec = round(request.end_sec, 3)
         if target.start_sec == start_sec and target.end_sec == end_sec:
-            return serialize_job(row)
+            return serialize(row)
         target.start_sec = start_sec
         target.end_sec = end_sec
         target.review_status = "revised"
@@ -282,7 +326,7 @@ def create_app(
         )
         if not replaced:
             raise HTTPException(status_code=409, detail="结果版本已更新，请重新载入后再编辑")
-        return serialize_job(require_job(app_repository, job_id))
+        return serialize(require_job(app_repository, job_id))
 
     @application.post(
         "/api/jobs/{job_id}/messages",
@@ -341,7 +385,7 @@ def create_app(
             raise HTTPException(status_code=409, detail="结果版本已更新，请重新载入后再编辑")
 
         return EditMessageResponse(
-            job=serialize_job(require_job(app_repository, job_id)),
+            job=serialize(require_job(app_repository, job_id)),
             reply=reply,
             changed=changed,
         )
@@ -437,9 +481,7 @@ def validate_edit_request(row: dict[str, Any], request: EditMessageRequest) -> N
 
 
 def encode_stream_event(payload: dict[str, Any]) -> bytes:
-    return (json.dumps(payload, ensure_ascii=False, separators=(",", ":")) + "\n").encode(
-        "utf-8"
-    )
+    return (json.dumps(payload, ensure_ascii=False, separators=(",", ":")) + "\n").encode("utf-8")
 
 
 def parse_result(row: dict[str, Any]) -> DetectionResult:
@@ -450,17 +492,11 @@ def parse_result(row: dict[str, Any]) -> DetectionResult:
 
 def serialize_job(row: dict[str, Any]) -> JobResponse:
     result = (
-        DetectionResult.model_validate_json(row["result_json"])
-        if row.get("result_json")
-        else None
+        DetectionResult.model_validate_json(row["result_json"]) if row.get("result_json") else None
     )
     return JobResponse(
         job_id=row["job_id"],
         status=row["status"],
-        current_stage=row.get(
-            "current_stage",
-            "delivery" if row["status"] == "completed" else "orchestration",
-        ),
         original_name=row["original_name"],
         content_type=row["content_type"],
         size_bytes=row["size_bytes"],
@@ -469,10 +505,10 @@ def serialize_job(row: dict[str, Any]) -> JobResponse:
         updated_at=row["updated_at"],
         revision=row.get("revision", 0),
         attempt=row.get("attempt", 0),
-        max_attempts=row.get("max_attempts", 3),
         source_url=(f"/api/jobs/{row['job_id']}/source" if row.get("stored_name") else None),
         error_message=row["error_message"],
         result=result,
     )
+
 
 app = create_app()

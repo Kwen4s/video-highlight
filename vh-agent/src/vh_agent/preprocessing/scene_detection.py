@@ -1,20 +1,11 @@
 from pathlib import Path
 
+from scenedetect import AdaptiveDetector, detect
+
 from ..models import SceneSegment
 
 
-class SceneDetectionUnavailable(RuntimeError):
-    pass
-
-
 def detect_scenes(video_path: Path) -> list[SceneSegment]:
-    try:
-        from scenedetect import AdaptiveDetector, detect
-    except ImportError as exc:
-        raise SceneDetectionUnavailable(
-            "PySceneDetect is not installed; install the enhanced dependencies"
-        ) from exc
-
     pairs = detect(
         str(video_path),
         AdaptiveDetector(

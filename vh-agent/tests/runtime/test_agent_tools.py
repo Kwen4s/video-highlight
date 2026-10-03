@@ -3,13 +3,14 @@
 import hashlib
 import json
 from pathlib import Path
+from types import SimpleNamespace
 
 import pytest
 
 from vh_agent.models import VideoInfo
 from vh_agent.runtime.contracts import EventInput
 from vh_agent.runtime.evidence import VideoObservation, VideoPage
-from vh_agent.runtime.finalization import EventRecord, RequiredSpan, ReviewResult, complete_review
+from vh_agent.runtime.finalization import EventRecord, RequiredSpan, ReviewResult, confirm_clip
 from vh_agent.runtime.tools import VideoTools
 
 
@@ -178,19 +179,35 @@ def review(**updates):
     return ReviewResult.model_validate(
         {
             "visible_event": "The character reveals her identity",
-            "highlight_type": "identity_reveal",
-            "blocking_issues": [],
+            "issues": [],
             **updates,
         }
     )
 
 
+def choose_for_review(tools, *event_ids):
+    decisions = [
+        {
+            "event_id": e.id,
+            "selected": e.id in event_ids,
+            "score": 0.8,
+            "reason": "Test editorial choice",
+            "description": e.description if e.id in event_ids else None,
+            "highlight_type": "Identity reveal" if e.id in event_ids else None,
+        }
+        for e in tools.events.values()
+        if e.status == "supported"
+    ]
+    return execute(tools, "select_highlights", decisions=decisions)[0]
+
+
 def prepare_ready(tools, event):
     upsert(tools, event)
+    choose_for_review(tools, event.id)
     tools.prepare_reviews()
     tools.record_review(event.id, review())
     plan = tools.plans[event.id]
-    tools.plans[event.id] = complete_review(plan, tools.events[event.id], plan.review)
+    tools.plans[event.id] = confirm_clip(plan, tools.events[event.id], plan.review)
     return tools.plans[event.id]
 
 
@@ -232,7 +249,7 @@ def test_observation_records_discovered_events_before_earning_page_coverage(tool
     item = supported_event(media[0])
     observe(tools, media[0], conclusion="A supported identity reveal occurs", events=[item])
     assert tools.events[item.id].status == "supported"
-    assert tools.unresolved_events() == [item.id]
+    assert tools.unresolved_events() == []
     assert tools.progress()["scan_coverage"] == 0.5
     assert len(tools.events) == 1
 
@@ -256,7 +273,7 @@ def test_observation_batch_rollback_restores_prior_event_version_and_frozen_clip
     original = supported_event(original_observation)
     original_plan = prepare_ready(tools, original)
     _, media = execute(
-        tools, "inspect_interval", start_sec=20, end_sec=25, question="Check a possible update"
+        tools, "inspect_video", start_sec=20, end_sec=25, question="Check a possible update"
     )
     tools.mark_delivered(media)
     changed = supported_event(media[0], start=20, end=24, description="A corrected identity reveal")
@@ -274,7 +291,7 @@ def test_boundary_recheck_can_update_event_without_forcing_new_required_footage(
     original = supported_event(observation, proposed_start_sec=5, proposed_end_sec=15)
     prepare_ready(tools, original)
     _, media = execute(
-        tools, "inspect_interval", start_sec=10, end_sec=18, question="核对结尾应在哪里停下"
+        tools, "inspect_video", start_sec=10, end_sec=18, question="核对结尾应在哪里停下"
     )
     tools.mark_delivered(media)
     changed = original.model_copy(update={"proposed_end_sec": 12})
@@ -305,9 +322,10 @@ def test_full_video_with_no_events_completes_normally(tools):
     cover_all_pages(tools)
     result, media = execute(tools, "select_highlights", decisions=[])
     assert media == []
-    assert result == {"selected": [], "decisions": []}
+    assert result == {"selected": [], "decisions": [], "completion": "complete"}
     assert tools.finished
     assert tools.progress()["scan_coverage"] == 1
+    assert tools.progress()["next_action"] == "分析已完成，最终取舍已保存，等待人工编辑。"
 
 
 def test_infeasible_duration_requires_explicit_event_disposition(tools):
@@ -318,10 +336,10 @@ def test_infeasible_duration_requires_explicit_event_disposition(tools):
     assert view["draft_preview"]["status"] == "infeasible_duration"
     assert view["draft_preview"]["duration_sec"] == 28
     tools.prepare_reviews()
-    assert tools.plans[item.id].status == "infeasible_duration"
+    assert tools._plan(item).status == "infeasible_duration"
     assert tools.evidence.render_calls == 0
-    assert tools.unresolved_events() == [item.id]
-    with pytest.raises(ValueError, match="尚未完成"):
+    assert tools.unresolved_events() == []
+    with pytest.raises(ValueError, match="every candidate"):
         execute(tools, "select_highlights", decisions=[])
     upsert(
         tools,
@@ -344,7 +362,7 @@ def test_new_unacknowledged_inspection_blocks_completion_even_after_full_scan(to
     cover_all_pages(tools)
     _, media = execute(
         tools,
-        "inspect_interval",
+        "inspect_video",
         start_sec=5,
         end_sec=12,
         question="Does the reaction finish the event?",
@@ -364,7 +382,7 @@ def test_new_unacknowledged_inspection_blocks_completion_even_after_full_scan(to
 def test_required_spans_must_reference_delivered_evidence_within_its_actual_range(tools):
     _, media = execute(
         tools,
-        "inspect_interval",
+        "inspect_video",
         start_sec=5,
         end_sec=12,
         question="Inspect the reveal",
@@ -391,6 +409,7 @@ def test_selection_accepts_review_and_freezes_clip_atomically(tools):
     observation = cover_all_pages(tools)[0]
     item = supported_event(observation)
     upsert(tools, item)
+    choose_for_review(tools, item.id)
     tools.prepare_reviews()
     assert [plan.event_id for plan in tools.pending_reviews()] == [item.id]
     tools.record_review(item.id, review())
@@ -399,7 +418,9 @@ def test_selection_accepts_review_and_freezes_clip_atomically(tools):
     assert {declaration["name"] for declaration in tools.declarations()} == {
         "select_highlights",
         "update_event",
-        "inspect_interval",
+        "inspect_video",
+        "read_frames",
+        "record_observations",
         "read_state",
     }
     current, _ = execute(tools, "read_state", event_id=item.id)
@@ -407,7 +428,16 @@ def test_selection_accepts_review_and_freezes_clip_atomically(tools):
     execute(
         tools,
         "select_highlights",
-        decisions=[{"event_id": "event_1", "score": 0.8, "selected": True, "reason": "Useful"}],
+        decisions=[
+            {
+                "event_id": "event_1",
+                "score": 0.8,
+                "selected": True,
+                "description": "实际片段中发生的事件",
+                "highlight_type": "变化",
+                "reason": "Useful",
+            }
+        ],
     )
     assert tools.plans[item.id].status == "ready"
     assert tools.finished
@@ -420,9 +450,20 @@ def test_event_update_uses_server_version_and_invalidates_frozen_clip(tools):
     execute(
         tools,
         "select_highlights",
-        decisions=[{"event_id": plan.event_id, "score": 0.8, "selected": True, "reason": "Useful"}],
+        decisions=[
+            {
+                "event_id": plan.event_id,
+                "score": 0.8,
+                "selected": True,
+                "description": "实际片段中发生的事件",
+                "highlight_type": "变化",
+                "reason": "Useful",
+            }
+        ],
     )
-    changed = supported_event(observation, version=999, description="Corrected identity reveal")
+    changed = supported_event(
+        observation, version=999, description="Corrected identity reveal", proposed_end_sec=12
+    )
     with pytest.raises(ValueError, match="版本冲突"):
         upsert(tools, changed, expected_version=999)
     assert tools.plans[item.id].status == "ready"
@@ -431,7 +472,7 @@ def test_event_update_uses_server_version_and_invalidates_frozen_clip(tools):
     assert item.id not in tools.plans
     assert not tools.finished
     assert tools.unresolved_events() == [item.id]
-    with pytest.raises(ValueError, match="尚未完成"):
+    with pytest.raises(ValueError, match="every candidate"):
         execute(tools, "select_highlights", decisions=[])
 
 
@@ -448,11 +489,12 @@ def test_irreparable_blocking_review_can_be_explicitly_rejected(tools):
     observation = cover_all_pages(tools)[0]
     item = supported_event(observation)
     upsert(tools, item)
+    choose_for_review(tools, item.id)
     tools.prepare_reviews()
     tools.record_review(
         item.id,
         review(
-            blocking_issues=[
+            issues=[
                 {"category": "missing_context", "description": "The relationship is unexplained"}
             ],
         ),
@@ -491,11 +533,12 @@ def test_mixed_focus_review_requires_splitting_instead_of_rejecting_the_event(to
     observation = cover_all_pages(tools)[0]
     item = supported_event(observation)
     upsert(tools, item)
+    choose_for_review(tools, item.id)
     tools.prepare_reviews()
     tools.record_review(
         item.id,
         review(
-            blocking_issues=[
+            issues=[
                 {
                     "category": "mixed_focus",
                     "description": "The clip combines two independently usable reveals",
@@ -533,6 +576,8 @@ def test_all_twenty_ready_events_participate_before_output_cap_twelve(tools):
                 "event_id": f"event_{i:02d}",
                 "score": 0.8,
                 "selected": i >= 8,
+                "description": "Actual event",
+                "highlight_type": "Change",
                 "reason": "Editorial choice",
             }
             for i in reversed(range(20))
@@ -562,16 +607,20 @@ def test_selection_receives_the_complete_candidate_pool_without_a_read_roundtrip
     ]
     candidates = tools.candidate_ledger()
     assert len(candidates) == 20
-    assert candidates[0]["visible_event"] == review().visible_event
+    assert candidates[0]["review"]["visible_event"] == review().visible_event
     assert set(candidates[0]) == {
         "event_id",
         "event_version",
         "start_sec",
         "end_sec",
-        "visible_event",
+        "description",
+        "reason",
+        "required_spans",
+        "review",
+        "issues",
     }
-    assert "early interpretation" not in json.dumps(candidates)
-    assert "unsupported claim" not in json.dumps(candidates)
+    assert candidates[0]["description"] == "An early interpretation to verify"
+    assert candidates[0]["review"]["visible_event"] == review().visible_event
     decisions = [
         {
             "event_id": plan.event_id,
@@ -590,7 +639,7 @@ def test_completed_page_must_be_revisited_with_interval_tool(tools):
     assert tools.scan_next_observations(max_items=1, max_encoded_bytes=14_000_000) == []
     _, media = execute(
         tools,
-        "inspect_interval",
+        "inspect_video",
         start_sec=observation.src_start_sec,
         end_sec=observation.src_end_sec,
         question="重新核对人物反应",
@@ -611,6 +660,7 @@ def test_checkpoint_restores_pending_media_and_review_work_without_false_coverag
     item = supported_event(media[0])
     upsert(restored, item)
     cover_all_pages(restored)
+    choose_for_review(restored, item.id)
     restored.prepare_reviews()
 
     resumed = VideoTools(tools.evidence, tools.output_dir)
@@ -656,7 +706,7 @@ def test_oversized_inspection_checks_base64_size_and_does_not_register_observati
     tools.evidence.bytes_per_second = 2
     # Forty raw bytes fit the limit, but the 56-byte base64 representation does not.
     with pytest.raises(ValueError, match="区间过大"):
-        execute(tools, "inspect_interval", start_sec=0, end_sec=20, question="Read the scene")
+        execute(tools, "inspect_video", start_sec=0, end_sec=20, question="Read the scene")
     assert tools.observations == {}
     assert tools.progress()["pending_observation_count"] == 0
     assert tools.progress()["scan_coverage"] == 0
@@ -699,10 +749,11 @@ def test_failed_render_remains_retryable_and_never_creates_a_ready_plan(tools):
     observation = cover_all_pages(tools)[0]
     item = supported_event(observation)
     upsert(tools, item)
+    choose_for_review(tools, item.id)
     tools.evidence.fail_next_render = True
     with pytest.raises(ValueError, match="render interrupted"):
         tools.prepare_reviews()
-    assert item.id not in tools.plans
+    assert tools.plans[item.id].status == "draft" and tools.plans[item.id].media_path is None
     assert tools.unresolved_events() == [item.id]
     tools.prepare_reviews()
     assert tools.plans[item.id].status == "draft"
@@ -797,29 +848,26 @@ def test_local_proposals_do_not_use_output_cap_and_require_native_inspection(too
         reason="No qualifying event visible",
     )
     assert tools.progress()["pending_proposal_count"] == 24
-    with pytest.raises(ValueError, match="尚未完成"):
-        execute(tools, "select_highlights", decisions=[])
+    execute(tools, "select_highlights", decisions=[])
+    assert tools.finished
     restored = VideoTools(tools.evidence, tools.output_dir)
     restored.restore(tools.checkpoint())
     assert len(restored.proposals) == 25
 
 
-def test_enabled_local_proposal_source_must_be_loaded_before_selection(tools):
+def test_local_proposals_remain_optional_and_available_after_full_scan(tools):
     tools.local_proposals = list
     cover_all_pages(tools)
-    with pytest.raises(ValueError, match="尚未完成"):
-        execute(tools, "select_highlights", decisions=[])
-    assert tools.progress()["local_proposals_loaded"] is False
-    execute(tools, "propose_highlights", action="list")
-    assert tools.progress()["local_proposals_loaded"] is True
+    assert "propose_highlights" in {tool["name"] for tool in tools.declarations()}
+    assert not tools.proposals_loaded
     execute(tools, "select_highlights", decisions=[])
     assert tools.finished
 
 
 def test_explicit_dense_inspection_has_distinct_observation_identity(tools):
-    normal, _ = execute(tools, "inspect_interval", start_sec=1, end_sec=4, question="look")
+    normal, _ = execute(tools, "inspect_video", start_sec=1, end_sec=4, question="look")
     dense, _ = execute(
-        tools, "inspect_interval", start_sec=1, end_sec=4, question="fast action", sampling_fps=20
+        tools, "inspect_video", start_sec=1, end_sec=4, question="fast action", sampling_fps=20
     )
     assert normal["observation_id"] != dense["observation_id"]
     assert dense["sampling_fps"] == 20
@@ -847,20 +895,31 @@ def test_two_findings_are_saved_and_linked_in_one_observation(tools):
     second = supported_event(observations[0], identifier="second", start=15, end=20)
     observe(tools, observations[0], events=[first, second])
     assert tools.acknowledged[observations[0].observation_id]["event_ids"] == ["first", "second"]
-    assert tools.unresolved_events() == ["first", "second"]
+    assert tools.unresolved_events() == []
     assert tools.progress()["scan_coverage"] == 0.5
 
 
-def test_reason_rewrite_does_not_count_as_progress(tools):
+def test_wording_revision_reuses_review_and_does_not_count_as_new_information(tools):
     observation = cover_all_pages(tools)[0]
     event = supported_event(observation)
-    upsert(tools, event)
+    original_plan = prepare_ready(tools, event)
     before = tools.information_facts()
-    upsert(tools, event.model_copy(update={"reason": "Another wording"}), expected_version=1)
+    upsert(
+        tools,
+        event.model_copy(
+            update={"reason": "Another wording", "description": "A clearer description"}
+        ),
+        expected_version=1,
+    )
     assert tools.information_facts() == before
+    revised = tools.plans[event.id]
+    assert revised.review == original_plan.review and revised.media_path == original_plan.media_path
+    assert revised.event_version == tools.events[event.id].version == 2
+    tools.prepare_reviews()
+    assert tools.pending_reviews() == []
 
 
-def test_enabled_transcript_must_be_read_to_completion_before_selection(tools):
+def test_partial_text_lookup_does_not_block_completed_video_selection(tools):
     from types import SimpleNamespace
 
     rows = [
@@ -878,12 +937,7 @@ def test_enabled_transcript_must_be_read_to_completion_before_selection(tools):
 
     tools.transcript = SimpleNamespace(search=search)
     cover_all_pages(tools)
-    assert tools.progress()["transcript_complete"] is False
-    execute(tools, "search_transcript", query="", offset=0, limit=1)
-    with pytest.raises(ValueError, match="尚未完成"):
-        execute(tools, "select_highlights", decisions=[])
-    execute(tools, "search_transcript", query="", offset=1, limit=1)
-    assert tools.progress()["transcript_complete"] is True
+    execute(tools, "search_video", mode="exact", query="", offset=0, limit=1)
     execute(tools, "select_highlights", decisions=[])
     assert tools.finished
 
@@ -899,12 +953,12 @@ def test_transcript_memory_survives_checkpoint_and_equivalent_queries(tools):
         }
     )
     tools.transcript = transcript
-    first, _ = execute(tools, "search_transcript")
+    first, _ = execute(tools, "search_video", mode="exact")
     assert first["new_row_ids"] == ["line_1"]
     restored = VideoTools(tools.evidence, tools.output_dir, transcript=transcript)
     restored.restore(json.loads(json.dumps(tools.checkpoint())))
     before = restored.information_facts()
-    repeated, _ = execute(restored, "search_transcript", query="", offset=0, limit=100)
+    repeated, _ = execute(restored, "search_video", mode="exact", query="", offset=0, limit=100)
     assert repeated["new_row_ids"] == []
     assert repeated["query_complete"]
     assert restored.information_facts() == before
@@ -926,13 +980,27 @@ def test_explicit_selection_restores_and_failed_selection_does_not_commit(tools)
             tools,
             "select_highlights",
             decisions=[
-                {"event_id": p.event_id, "score": 0.8, "selected": True, "reason": "Useful"}
+                {
+                    "event_id": p.event_id,
+                    "score": 0.8,
+                    "selected": True,
+                    "description": "实际片段中发生的事件",
+                    "highlight_type": "变化",
+                    "reason": "Useful",
+                }
                 for p in plans
             ],
         )
     assert tools.checkpoint() == before
     decisions = [
-        {"event_id": p.event_id, "score": 0.8, "selected": i == 1, "reason": "Editorial choice"}
+        {
+            "event_id": p.event_id,
+            "score": 0.8,
+            "selected": i == 1,
+            "description": "Actual event",
+            "highlight_type": "Change",
+            "reason": "Editorial choice",
+        }
         for i, p in enumerate(plans)
     ]
     execute(tools, "select_highlights", decisions=decisions)
@@ -963,3 +1031,119 @@ def test_ready_review_does_not_force_selection(tools):
     )
     assert not result["selected"]
     assert tools.events[item.id].status == "supported"
+
+
+def test_different_questions_share_media_and_keep_distinct_records(tools):
+    first, _ = execute(tools, "inspect_video", start_sec=5, end_sec=10, question="看清药瓶文字")
+    second, _ = execute(
+        tools, "inspect_video", start_sec=5, end_sec=10, question="确认拿药后的表情"
+    )
+    assert first["observation_id"] != second["observation_id"]
+    a, b = (tools.observations[r["observation_id"]] for r in (first, second))
+    assert a.path == b.path
+    assert tools.inspections[a.observation_id]["question"] == "看清药瓶文字"
+    assert tools.inspections[b.observation_id]["question"] == "确认拿药后的表情"
+
+
+def test_frame_view_and_text_read_share_source_frames_but_only_text_uses_ocr(tools):
+    frames = [{"timestamp_sec": 5.0, "path": "frame.jpg"}]
+    tools.evidence.frames = lambda times, region: frames
+    reads = []
+
+    def read(source):
+        reads.append(source)
+        return {"frames": [{**source[0], "text_lines": [{"text": "医院报告"}]}]}
+
+    tools.frame_text = SimpleNamespace(read=read)
+    picture, _ = execute(tools, "read_frames", times=[5])
+    assert picture["frames"] == frames and reads == []
+    text, _ = execute(tools, "read_text", times=[5])
+    assert reads == [frames]
+    assert text["frames"][0]["text_lines"][0]["text"] == "医院报告"
+
+
+def test_acknowledged_overlap_covers_tiny_tail_without_rewatching(tools):
+    tools.evidence.video_info = tools.evidence.video_info.model_copy(update={"duration_sec": 60.04})
+    tools.evidence.pages[1] = tools.evidence.pages[1].model_copy(update={"read_end_sec": 60.04})
+    tools.evidence.pages.append(
+        VideoPage(
+            page_id="tail",
+            core_start_sec=60,
+            core_end_sec=60.04,
+            read_start_sec=57,
+            read_end_sec=60.04,
+        )
+    )
+    cover_all_pages(tools)
+    assert tools.completed_pages == {"page_0", "page_1", "tail"}
+    assert len(tools.observations) == 2
+
+
+def test_weak_candidate_can_be_omitted_without_repairing_its_cutoff(tools):
+    observation = cover_all_pages(tools)[0]
+    good = supported_event(observation, identifier="good")
+    prepare_ready(tools, good)
+    weak = supported_event(observation, identifier="weak", start=15, end=20)
+    upsert(tools, weak)
+    choose_for_review(tools, "good", "weak")
+    tools.prepare_reviews()
+    tools.record_review(
+        "weak",
+        review(issues=[{"category": "cutoff", "description": "核心句子未结束", "at_sec": 5}]),
+    )
+    assert tools.selection_ready()
+    assert {r["event_id"] for r in tools.candidate_ledger()} == {"good", "weak"}
+    result, _ = execute(
+        tools,
+        "select_highlights",
+        decisions=[
+            {
+                "event_id": "good",
+                "selected": True,
+                "score": 0.8,
+                "reason": "有独立看点",
+                "description": "展示证件后获准进入",
+                "highlight_type": "身份揭示",
+            },
+            {"event_id": "weak", "selected": False, "score": 0.2, "reason": "普通背景"},
+        ],
+    )
+    assert tools.finished and [p["event_id"] for p in result["selected"]] == ["good"]
+    assert tools.plans["weak"].review.issues
+    assert tools.progress()["pending_event_count"] == 0
+
+
+def test_initial_choice_renders_only_selected_and_can_reconsider_omitted_candidate(tools):
+    observation = cover_all_pages(tools)[0]
+    first = supported_event(observation, identifier="first")
+    second = supported_event(observation, identifier="second", start=15, end=20)
+    upsert(tools, first)
+    upsert(tools, second)
+    assert tools.selection_ready() and len(tools.candidate_ledger()) == 2
+    tools.prepare_reviews()
+    assert tools.evidence.render_calls == 0
+    result = choose_for_review(tools, "first")
+    assert result["completion"] == "review_pending" and not tools.finished
+    tools.prepare_reviews()
+    assert tools.evidence.render_calls == 1
+    assert tools.plans["second"].media_path is None
+    tools.record_review("first", review())
+    result = choose_for_review(tools, "second")
+    assert result["completion"] == "review_pending" and not tools.finished
+    tools.prepare_reviews()
+    assert tools.evidence.render_calls == 2
+    assert tools.plans["first"].review == review()
+    tools.record_review("second", review())
+    result = choose_for_review(tools, "second")
+    assert tools.finished and result["completion"] == "complete"
+    assert [p["event_id"] for p in result["selected"]] == ["second"]
+    assert tools.progress()["next_action"] == "分析已完成，最终取舍已保存，等待人工编辑。"
+
+
+def test_reading_candidates_does_not_mutate_checkpoint_or_render_media(tools):
+    observation = cover_all_pages(tools)[0]
+    upsert(tools, supported_event(observation))
+    before = tools.checkpoint()
+    assert len(tools.candidate_ledger()) == 1
+    tools.progress()
+    assert tools.checkpoint() == before and tools.evidence.render_calls == 0

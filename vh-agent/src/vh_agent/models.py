@@ -4,6 +4,8 @@ from uuid import uuid4
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
+from .prompts import DEFAULT_TASK
+
 ReviewStatus = Literal["pending", "accepted", "rejected", "revised"]
 
 
@@ -16,7 +18,7 @@ class DetectionTask(BaseModel):
         pattern=r"^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$",
     )
     language: str | None = None
-    instruction: str = "挑选有看点、能独立看懂的短剧片段，保留必要铺垫和反应，剪辑简洁流畅。"
+    instruction: str = DEFAULT_TASK
     subtitle_path: Path | None = None
     max_highlights: int | None = Field(default=12, gt=0)
     min_clip_sec: float = Field(default=3, gt=0)
