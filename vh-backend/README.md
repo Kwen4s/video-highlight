@@ -13,10 +13,18 @@ uv sync --group dev
 uv run uvicorn app.main:app --host 127.0.0.1 --port 8777
 ```
 
-服务器需要接受其他机器的 Electron 连接时，监听所有网卡：
+服务器首次安装依赖后，日常启动和重启直接复用现有 `.venv`：
 
-```powershell
-uv run uvicorn app.main:app --host 0.0.0.0 --port 8777
+```bash
+cd /home/tnx/video-highlight/vh-backend
+./scripts/restart_backend.sh
+```
+
+完全停止服务：
+
+```bash
+cd /home/tnx/video-highlight/vh-backend
+./scripts/stop_backend.sh
 ```
 
 此时前端将 `VITE_API_BASE_URL` 配置为服务器的实际 IP 或域名，不要配置为 `0.0.0.0`。`vh-frontend` 的 `npm run dev` 只启动桌面前端，不会代为启动本服务。

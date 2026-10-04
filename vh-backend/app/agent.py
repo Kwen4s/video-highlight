@@ -4,7 +4,7 @@ from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
 from .config import Settings
-from .models import DetectionResult
+from .models import DetectionResult, parse_detection_result
 from .repository import JobRepository
 
 
@@ -72,7 +72,7 @@ class AgentInvoker:
         result_path = job_dir / "result.json"
         if not result_path.is_file():
             raise RuntimeError("vh-agent did not produce result.json")
-        result = DetectionResult.model_validate_json(result_path.read_text(encoding="utf-8"))
+        result = parse_detection_result(result_path.read_text(encoding="utf-8"))
         if result.job_id != job_id:
             raise RuntimeError("vh-agent returned a mismatched job id")
         if (completed.returncode == 0) != (result.completion == "complete"):
