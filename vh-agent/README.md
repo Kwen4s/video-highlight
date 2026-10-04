@@ -61,7 +61,11 @@ selection.json   全部候选的采用或排除理由
 
 观察、提问、候选与片段边界统一使用原片秒数。独立观看成片时，缺陷位置使用该成片的播放秒数。
 
-检查点保存已提交动作与待执行调用。`--resume` 要求输入、模型、代码和约束一致；连接故障只重试同一请求，并记录每次尝试。未完成时返回 `partial` 和退出码 2，待定候选保留在状态里，公开高光为空。完成可以输出零条，不为填满数量制造片段。
+检查点保存已提交动作与待执行调用。`--resume` 核对视频、模型、提示词与任务约束，请求和日志代码的修复不会使已保存观察失效。连接故障只重试同一请求，逐次记录耗时，以及 DNS、TLS、代理或连接错误的异常类型与系统错误码。Gemini 直接访问配置的网关，不继承终端中的代理环境变量。
+
+旧版使用整份源码指纹的检查点需要新开任务；新版检查点按明确的任务配置恢复。
+
+未完成时返回 `partial`，待定候选保留在状态里，公开高光为空。执行异常退出码为 1，后端按现有接口显示分析失败，并允许从检查点继续；主动暂停等中途停止退出码为 2。完成可以输出零条，不为填满数量制造片段。
 
 会话按处理阶段和上下文预算切换；完整剧情与检索记录保持持久化，可分页回查。每批尚未登记的观察完成保存后，才继续取证。修改候选使该片段的旧复核失效；其他片段继续复用。
 
@@ -71,11 +75,16 @@ selection.json   全部候选的采用或排除理由
 uv run vh evaluate run --run-id quality_run --task-file configs/evaluation/agent_quality.json
 uv run vh evaluate score --run-id quality_run
 uv run vh evaluate run --run-id quality_run --resume
-uv run vh label run --run-id silver_run
-uv run vh train run --annotations datasets/silver/silver_run/annotations.jsonl
+uv run vh train run --annotations ../vh-data/outputs/snapshots/round-003/annotations.jsonl
 uv run vh train run --help
 uv run pytest -q
 uv run ruff check src tests
 ```
 
 评测冻结视频、标注、配置和源码，报告事件发现、关键证据覆盖、边界、完成率、无效工具调用和耗时。现有 20 条视频包含 10 条 AI 复核标签与 10 条银标，等待人工确认；默认评测 10 条 AI 复核视频，`--include-silver` 加入银标。详见 [评测与人工复核](docs/evaluation.md)。全部测试中的本地训练用例需要 enhanced 依赖。
+
+本地检测模型的训练标注统一由 [vh-data](../vh-data/README.md) 生产：两次独立观看、统一选片复核、按短剧固定分组，再导出不可覆盖的训练快照。训练只学习明确标出的正负片段；验证组选权重，测试组只在选完后评估。
+
+检测任务是提供高光候选的粗边界与分数。标注优先选择 15 秒以内的看点，几秒的动作或反应也可保留；模型学习实际标注长度，解码仅裁到视频范围并去重。候选池保持完整，Agent 决定最终采用。Qwen 特征描述人物、动作、对白、情绪与场景，覆盖不同观看价值；视觉与音频编码器冻结，只训练检测网络。
+
+`--stage all` 提取特征并训练，`--stage features` 单独准备特征，`--stage train` 核对特征配置后训练。修改特征提示或模型配置后先重新提取。当前权重格式为 schema 5，新数据从头训练检测网络。

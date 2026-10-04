@@ -415,6 +415,52 @@ def test_changed_profile_and_existing_run_are_rejected(evidence, tmp_path):
         agent(Controller([]), evidence, tmp_path).run()
 
 
+def test_resume_checks_prompt_content_and_has_no_source_hash(evidence, tmp_path, monkeypatch):
+    controller, observer = Controller(actions()), Observer()
+    agent(controller, evidence, tmp_path, observer).run(max_turns=1)
+    path = tmp_path / "state.json"
+    state = json.loads(path.read_text())
+    assert "implementation_hash" not in state["profile"]
+    with monkeypatch.context() as patch:
+        patch.setattr("vh_agent.runtime.agent.ANALYSIS_PROMPT", "修改后的高光判断标准")
+        with pytest.raises(ValueError, match="same video, model, prompt"):
+            agent(controller, evidence, tmp_path, observer).run(resume=True)
+    assert (
+        agent(controller, evidence, tmp_path, observer).run(resume=True)["completion"] == "complete"
+    )
+
+
+def test_failed_video_batch_exhausts_retries_and_resumes_saved_peer(
+    evidence, tmp_path, monkeypatch
+):
+    monkeypatch.setattr("vh_agent.runtime.agent.time.sleep", lambda _: None)
+
+    class DisconnectedObserver(Observer):
+        def generate(self, system, parts, *, schema, **kwargs):
+            if schema["title"] == "VideoReading" and json.loads(parts[0]["text"])["src_start_sec"]:
+                self.requests.append({"system": system, "parts": parts, "schema": schema})
+                raise GeminiClientError("Gemini DNS resolution failed", retryable=True)
+            return super().generate(system, parts, schema=schema, **kwargs)
+
+    controller = Controller(actions())
+    runtime = agent(controller, evidence, tmp_path, DisconnectedObserver())
+    result = runtime.run()
+    assert result["completion"] == "partial" and result["highlights"] == []
+    assert result["analysis"]["stop_reason"] == "execution_error"
+    assert result["analysis"]["scan_coverage"] == 0
+    assert controller.requests == []
+    saved = json.loads((tmp_path / "state.json").read_text())
+    assert set(saved["tools"]["readings"]) == {"obs_page_0"}
+    trace = [json.loads(line) for line in (tmp_path / "trace.jsonl").read_text().splitlines()]
+    errors = [row for row in trace if row["kind"] == "request_error"]
+    assert len(errors) == 3 and all(row["elapsed_sec"] >= 0 for row in errors)
+    observer = Observer()
+    resumed = agent(controller, evidence, tmp_path, observer).run(resume=True)
+    assert resumed["completion"] == "complete"
+    readings = [r for r in observer.requests if r["schema"]["title"] == "VideoReading"]
+    assert len(readings) == 1 and json.loads(readings[0]["parts"][0]["text"])["src_start_sec"] == 10
+
+
 def test_long_scan_rotates_native_history_and_preserves_every_page(evidence, tmp_path):
     evidence.video_info.duration_sec = 300
     evidence.pages = [

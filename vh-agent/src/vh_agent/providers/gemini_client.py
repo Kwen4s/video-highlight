@@ -3,12 +3,14 @@
 import base64
 import json
 import mimetypes
+import socket
+import ssl
 from pathlib import Path
 from typing import Any, Self
 from urllib.parse import urlsplit
 
 import httpx
-from openai import APIConnectionError, APIStatusError, APITimeoutError, OpenAI
+from openai import APIConnectionError, APIStatusError, APITimeoutError, DefaultHttpxClient, OpenAI
 
 MAX_INLINE_REQUEST_BYTES = 20_000_000
 
@@ -17,6 +19,39 @@ class GeminiClientError(RuntimeError):
     def __init__(self, message: str, *, retryable: bool = False):
         super().__init__(message)
         self.retryable = retryable
+
+
+def _connection_failure(exc: Exception) -> str:
+    """Describe library exception types and OS codes without echoing request data."""
+    causes = []
+    seen = set()
+    current = exc
+    while current is not None and id(current) not in seen:
+        seen.add(id(current))
+        causes.append(current)
+        current = current.__cause__ or current.__context__
+    category = "connection"
+    for error_type, name in (
+        (socket.gaierror, "DNS resolution"),
+        (ssl.SSLError, "TLS"),
+        (httpx.ProxyError, "proxy"),
+        (httpx.ConnectTimeout, "connect timeout"),
+        (httpx.ReadTimeout, "read timeout"),
+        (httpx.WriteTimeout, "write timeout"),
+        (httpx.PoolTimeout, "connection pool timeout"),
+        (ConnectionRefusedError, "connection refused"),
+    ):
+        if any(isinstance(cause, error_type) for cause in causes):
+            category = name
+            break
+    details = " -> ".join(type(cause).__name__ for cause in causes)
+    for cause in causes:
+        if isinstance(cause, OSError) and isinstance(cause.errno, int):
+            details += f"; errno={cause.errno}"
+        verify_code = getattr(cause, "verify_code", None)
+        if isinstance(cause, ssl.SSLCertVerificationError) and isinstance(verify_code, int):
+            details += f"; verify_code={verify_code}"
+    return f"Gemini {category} failed ({details})"
 
 
 def text_part(text: str) -> dict[str, Any]:
@@ -79,7 +114,9 @@ class GeminiClient:
             base_url=base_url,
             timeout=timeout,
             max_retries=0,
-            http_client=http_client,
+            http_client=http_client
+            if http_client is not None
+            else DefaultHttpxClient(trust_env=False),
         )
 
     def __enter__(self) -> Self:
@@ -91,7 +128,14 @@ class GeminiClient:
     def generate(self, system, parts, *, schema, max_output_tokens=8192):
         if not parts or max_output_tokens <= 0:
             raise ValueError("Input parts and a positive output budget are required")
-        messages = [{"role": "system", "content": system}, {"role": "user", "content": parts}]
+        instructions = (
+            f"{system}\n直接返回 JSON 对象，不加 Markdown 代码围栏。JSON 结构：\n"
+            + json.dumps(schema, ensure_ascii=False)
+        )
+        messages = [
+            {"role": "system", "content": instructions},
+            {"role": "user", "content": parts},
+        ]
         payload = {
             "model": self.model,
             "messages": messages,
@@ -114,10 +158,7 @@ class GeminiClient:
                 retryable=exc.status_code in {408, 429} or exc.status_code >= 500,
             ) from None
         except (APIConnectionError, APITimeoutError, httpx.HTTPError) as exc:
-            cause = type(exc.__cause__ or exc).__name__
-            raise GeminiClientError(
-                f"Gemini request disconnected ({cause})", retryable=True
-            ) from None
+            raise GeminiClientError(_connection_failure(exc), retryable=True) from None
         if not response.choices:
             raise GeminiClientError("Gemini response has no choices")
         choice = response.choices[0]

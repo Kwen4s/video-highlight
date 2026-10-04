@@ -17,7 +17,6 @@ class LossOutput:
     total: Tensor
     event: Tensor
     boundary: Tensor
-    anchor: Tensor
     quality: Tensor
     ranking: Tensor
 
@@ -65,27 +64,6 @@ def highlight_localization_loss(output: TransitionOutput, targets: EpisodeTarget
     else:
         boundary_loss = torch.zeros((), device=device)
 
-    anchor_mask = targets.anchor_mask.to(device) & boundary_mask[:, None]
-    if anchor_mask.any():
-        target_positions = targets.anchor_positions.to(device)
-        position_loss = F.smooth_l1_loss(
-            output.anchor_positions[anchor_mask],
-            target_positions[anchor_mask],
-            reduction="mean",
-            beta=1.0,
-        )
-    else:
-        position_loss = torch.zeros((), device=device)
-    if boundary_mask.any():
-        presence_probability = output.anchor_presence[boundary_mask].float().clamp(1e-6, 1.0 - 1e-6)
-        presence_loss = F.binary_cross_entropy_with_logits(
-            torch.logit(presence_probability),
-            targets.anchor_mask.to(device)[boundary_mask].float(),
-        )
-    else:
-        presence_loss = torch.zeros((), device=device)
-    anchor_loss = position_loss + 0.25 * presence_loss
-
     labeled_segments = targets.segments.to(device)
     if len(labeled_segments):
         quality_target = _pairwise_temporal_iou(predicted_segments.detach(), labeled_segments).amax(
@@ -97,7 +75,7 @@ def highlight_localization_loss(output: TransitionOutput, targets: EpisodeTarget
         output.segment_quality_logits,
         quality_target,
         sample_weight,
-        positive_mask=quality_target >= 0.3,
+        positive_mask=(quality_target >= 0.3) & ~targets.ignore_mask.to(device),
         negative_mask=(quality_target < 0.1) & ~targets.ignore_mask.to(device),
     )
     combined_score = F.logsigmoid(output.event_logits) + F.logsigmoid(output.segment_quality_logits)
@@ -116,7 +94,6 @@ def highlight_localization_loss(output: TransitionOutput, targets: EpisodeTarget
     total = (
         event_loss
         + 0.5 * boundary_loss
-        + 0.25 * anchor_loss
         + 0.5 * quality_loss
         + 0.5 * ranking_loss
     )
@@ -124,7 +101,6 @@ def highlight_localization_loss(output: TransitionOutput, targets: EpisodeTarget
         total,
         event_loss,
         boundary_loss,
-        anchor_loss,
         quality_loss,
         ranking_loss,
     )

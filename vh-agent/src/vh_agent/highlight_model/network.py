@@ -313,14 +313,8 @@ class NarrativeTransitionLocalizer(nn.Module):
         dropout: float,
         max_before_sec: int,
         max_after_sec: int,
-        max_center_offset_sec: float = 8.0,
-        min_segment_duration_sec: float = 6.0,
-        max_segment_duration_sec: float = 24.0,
     ) -> None:
         super().__init__()
-        self.max_center_offset_sec = max_center_offset_sec
-        self.min_segment_duration_sec = min_segment_duration_sec
-        self.max_segment_duration_sec = max_segment_duration_sec
         self.vision_projection = nn.Sequential(
             nn.LayerNorm(vision_dim),
             nn.Linear(vision_dim, model_dim),

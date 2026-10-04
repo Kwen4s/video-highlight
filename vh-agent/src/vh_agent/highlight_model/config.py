@@ -4,6 +4,8 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Literal
 
+CHECKPOINT_SCHEMA = 5
+
 
 @dataclass(frozen=True)
 class HighlightModelConfig:
@@ -34,11 +36,7 @@ class HighlightModelConfig:
     max_before_sec: int = 32
     max_after_sec: int = 8
     nms_iou: float = 0.4
-    max_center_offset_sec: float = 8.0
-    min_segment_duration_sec: float = 6.0
-    max_segment_duration_sec: float = 24.0
     score_threshold: float = 0.05
-    max_highlights: int = 12
     seed: int = 7
     init_checkpoint: Path | None = None
     finetune_heads: bool = False

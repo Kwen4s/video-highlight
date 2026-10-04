@@ -14,18 +14,15 @@ from .evaluation import (
 from .models import DetectionResult, DetectionTask
 from .pipeline import HighlightDetectionService
 from .preprocessing.media import probe_video
-from .silver_labeling import (
-    DEFAULT_METADATA_DIR,
-    DEFAULT_SILVER_DATASET_DIR,
-    run_silver_labeling,
-)
 
-app = typer.Typer(no_args_is_help=True, help="Short-drama highlight detection pipeline")
+app = typer.Typer(
+    no_args_is_help=True,
+    help="Short-drama highlight detection pipeline",
+    pretty_exceptions_show_locals=False,
+)
 evaluation_app = typer.Typer(no_args_is_help=True, help="Run and score the test dataset")
-label_app = typer.Typer(no_args_is_help=True, help="Produce resumable silver labels")
 train_app = typer.Typer(no_args_is_help=True, help="Train the local multimodal highlighter")
 app.add_typer(evaluation_app, name="evaluate")
-app.add_typer(label_app, name="label")
 app.add_typer(train_app, name="train")
 console = Console()
 
@@ -53,7 +50,7 @@ def run(
     resume: bool = typer.Option(False, "--resume"),
     verbose: bool = typer.Option(False, "--verbose", help="显示逐步工具进度"),
 ) -> None:
-    """Analyze video with the agent; exit 2 preserves a resumable partial result."""
+    """Analyze a video; interrupted execution exits 1 with its checkpoint saved."""
     values = json.loads(task_file.read_text()) if task_file else {}
     values.update(video_path=video, resume=resume)
     for key, value in {
@@ -75,6 +72,9 @@ def run(
     console.print(f"completion={result.completion}, highlights={len(result.highlights)}")
     console.print(f"result={settings.job_output_dir / result.job_id / 'result.json'}")
     if result.completion != "complete":
+        console.print(f"分析尚未完成（{result.analysis.stop_reason}），可从检查点继续。")
+        if result.analysis.stop_reason == "execution_error":
+            raise typer.Exit(code=1)
         raise typer.Exit(code=2)
 
 
@@ -113,30 +113,6 @@ def evaluate_score(
     console.print_json(
         json.dumps({k: v for k, v in metrics.items() if k != "details"}, ensure_ascii=False)
     )
-
-
-@label_app.command("run")
-def label_run(
-    run_id: str = typer.Option("react_silver_v1", "--run-id"),
-    resume: bool = typer.Option(True, "--resume/--restart"),
-    limit: int | None = typer.Option(None, min=1),
-    metadata_dir: Path = typer.Option(
-        DEFAULT_METADATA_DIR,
-        exists=True,
-        file_okay=False,
-        readable=True,
-    ),
-    output_dir: Path = typer.Option(DEFAULT_SILVER_DATASET_DIR, file_okay=False),
-) -> None:
-    """Label source records with the video agent and preserve reviewed clip evidence."""
-    annotations = run_silver_labeling(
-        run_id,
-        metadata_dir=metadata_dir,
-        output_dir=output_dir,
-        resume=resume,
-        limit=limit,
-    )
-    console.print(f"annotations={annotations}")
 
 
 @train_app.command("run")
@@ -217,7 +193,7 @@ def review(
     end_sec: float | None = typer.Option(None),
     labels_path: Path = typer.Option(Path("outputs/reviews.jsonl")),
 ) -> None:
-    """Record human feedback as a training label."""
+    """Record an editor's decision on a recommended clip."""
     if status not in {"accepted", "rejected", "revised"}:
         raise typer.BadParameter("status must be accepted, rejected, or revised")
 

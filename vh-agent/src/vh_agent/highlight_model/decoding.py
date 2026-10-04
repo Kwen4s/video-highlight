@@ -6,7 +6,7 @@ from dataclasses import asdict, dataclass
 
 import torch
 
-from .dataset import SilverVideo
+from .dataset import VideoExample
 from .network import TransitionOutput
 
 
@@ -22,9 +22,6 @@ def decode_segments(
     duration_sec: float,
     threshold: float,
     nms_iou: float,
-    max_highlights: int | None,
-    min_duration_sec: float = 6.0,
-    max_duration_sec: float = 24.0,
 ) -> list[PredictedSegment]:
     scores = (
         torch.sigmoid(output.event_logits.detach())
@@ -41,37 +38,45 @@ def decode_segments(
         offset = output.offsets[index].detach().cpu()
         start = max(0.0, min(duration_sec, index + float(offset[0])))
         end = max(0.0, min(duration_sec, index + float(offset[1])))
-        start, end = _duration_bounds(
-            start,
-            end,
-            float(index),
-            duration_sec,
-            min_duration_sec,
-            max_duration_sec,
-        )
         if end > start:
             candidates.append(PredictedSegment(start, end, float(scores[index])))
     selected: list[PredictedSegment] = []
     for candidate in sorted(candidates, key=lambda item: item.score, reverse=True):
         if all(_temporal_iou(candidate, kept) < nms_iou for kept in selected):
             selected.append(candidate)
-        if max_highlights is not None and len(selected) >= max_highlights:
-            break
     return selected
 
 
 def segment_metrics(
     predictions: dict[str, list[PredictedSegment]],
-    videos: list[SilverVideo],
+    videos: list[VideoExample],
 ) -> dict[str, float]:
-    metrics: dict[str, float] = {}
+    evaluated = {}
+    ignored = 0
+    for video in videos:
+        known = [
+            *((h.start_sec, h.end_sec) for h in video.highlights),
+            *video.hard_negative_intervals,
+        ]
+        raw = predictions.get(video.video_id, [])
+        evaluated[video.video_id] = [
+            p
+            for p in raw
+            if any(min(p.end_sec, end) > max(p.start_sec, start) for start, end in known)
+        ]
+        ignored += len(raw) - len(evaluated[video.video_id])
+    candidates = sum(len(predictions.get(video.video_id, [])) for video in videos)
+    minutes = sum(video.duration_sec for video in videos) / 60
+    metrics: dict[str, float] = {
+        "ignored_unknown_predictions": float(ignored),
+        "candidates_per_minute": candidates / minutes if minutes else 0.0,
+    }
     for threshold in (0.3, 0.5, 0.7):
         tp = fp = fn = 0
         for video in videos:
-            predicted = predictions.get(video.video_id, [])
+            predicted = evaluated[video.video_id]
             target = [
-                PredictedSegment(item.start_sec, item.end_sec, item.confidence)
-                for item in video.highlights
+                PredictedSegment(item.start_sec, item.end_sec, 1.0) for item in video.highlights
             ]
             local_tp, local_fp, local_fn = _match(predicted, target, threshold)
             tp += local_tp
@@ -110,26 +115,6 @@ def _match(
             remaining.remove(best)
             true_positive += 1
     return true_positive, len(predicted) - true_positive, len(target) - true_positive
-
-
-def _duration_bounds(
-    start: float,
-    end: float,
-    center: float,
-    duration: float,
-    minimum: float,
-    maximum: float,
-) -> tuple[float, float]:
-    current = end - start
-    if current < minimum:
-        start = max(0.0, center - minimum / 2)
-        end = min(duration, start + minimum)
-        start = max(0.0, end - minimum)
-    elif current > maximum:
-        start = max(0.0, center - maximum / 2)
-        end = min(duration, start + maximum)
-        start = max(0.0, end - maximum)
-    return start, end
 
 
 def _temporal_iou(left: PredictedSegment, right: PredictedSegment) -> float:

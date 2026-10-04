@@ -41,8 +41,8 @@ class LocalProposals:
     def __call__(self):
         import torch
 
-        from ..highlight_model.config import HighlightModelConfig
-        from ..highlight_model.dataset import SilverVideo, feature_path
+        from ..highlight_model.config import CHECKPOINT_SCHEMA, HighlightModelConfig
+        from ..highlight_model.dataset import VideoExample, feature_path
         from ..highlight_model.decoding import decode_segments
         from ..highlight_model.encoders import FrozenMomentFeatureExtractor
         from ..highlight_model.network import NarrativeTransitionLocalizer
@@ -131,7 +131,7 @@ class LocalProposals:
                     "scenes": [s.model_dump(mode="json") for s in detect_scenes(info.path)],
                 },
             )
-        video = SilverVideo(video_id, video_id, info.path, info.duration_sec, self.language, (), ())
+        video = VideoExample(video_id, video_id, info.path, info.duration_sec, self.language, (), ())
         extractor = FrozenMomentFeatureExtractor(config)
         try:
             extractor.prepare([video])
@@ -151,9 +151,6 @@ class LocalProposals:
                 dropout=config.dropout,
                 max_before_sec=config.max_before_sec,
                 max_after_sec=config.max_after_sec,
-                max_center_offset_sec=config.max_center_offset_sec,
-                min_segment_duration_sec=config.min_segment_duration_sec,
-                max_segment_duration_sec=config.max_segment_duration_sec,
             )
             .to(config.device)
             .eval()
@@ -161,8 +158,8 @@ class LocalProposals:
         checkpoint = torch.load(
             settings.local_checkpoint, map_location=config.device, weights_only=True
         )
-        if checkpoint["schema"] != 4:
-            raise ValueError("Local checkpoint must use schema 4")
+        if checkpoint["schema"] != CHECKPOINT_SCHEMA:
+            raise ValueError(f"Local checkpoint must use schema {CHECKPOINT_SCHEMA}")
         model.load_state_dict(checkpoint["model"], strict=True)
         with torch.inference_mode():
             output = model(
@@ -179,8 +176,5 @@ class LocalProposals:
                 info.duration_sec,
                 threshold=config.score_threshold,
                 nms_iou=config.nms_iou,
-                max_highlights=None,
-                min_duration_sec=config.min_segment_duration_sec,
-                max_duration_sec=config.max_segment_duration_sec,
             )
         ]

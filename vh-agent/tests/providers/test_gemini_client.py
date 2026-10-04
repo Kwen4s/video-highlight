@@ -1,9 +1,12 @@
 import base64
 import json
+import socket
+import ssl
 
 import httpx
 import pytest
 
+from vh_agent.providers import gemini_client as module
 from vh_agent.providers.gemini_client import (
     GeminiClient,
     GeminiClientError,
@@ -66,6 +69,9 @@ def test_video_container_structured_schema_and_high_thinking_are_sent(tmp_path, 
     assert base64.b64decode(data.split(",", 1)[1]) == path.read_bytes()
     assert sent[0]["reasoning_effort"] == "high" and sent[0]["seed"] == 7
     assert sent[0]["response_format"]["json_schema"]["schema"] == schema
+    instructions = sent[0]["messages"][0]["content"]
+    assert json.loads(instructions.split("JSON 结构：\n", 1)[1]) == schema
+    assert "不加 Markdown 代码围栏" in instructions
     assert result["json"] == {"answer": 1} and result["thinking_returned"]
     assert "private thought" not in json.dumps(result)
 
@@ -106,6 +112,56 @@ def test_network_error_is_sanitized():
     ):
         client.generate("", [text_part("hello")], schema={})
     assert error.value.retryable and "secret" not in str(error.value)
+
+
+def test_configured_gateway_is_reachable_with_unusable_environment_proxy(monkeypatch):
+    monkeypatch.setenv("HTTPS_PROXY", "http://127.0.0.1:1")
+    monkeypatch.setenv("HTTP_PROXY", "http://127.0.0.1:1")
+    monkeypatch.setenv("ALL_PROXY", "http://127.0.0.1:1")
+    monkeypatch.delenv("NO_PROXY", raising=False)
+    http_client = module.DefaultHttpxClient
+    monkeypatch.setattr(
+        module,
+        "DefaultHttpxClient",
+        lambda **kwargs: http_client(
+            transport=httpx.MockTransport(lambda _: httpx.Response(200, json=response())),
+            **kwargs,
+        ),
+    )
+    with GeminiClient("key", "https://example.test/v1", "test") as client:
+        assert client.generate("", [text_part("hello")], schema={})["json"] == {"answer": 1}
+
+
+@pytest.mark.parametrize(
+    "cause,expected",
+    [
+        (socket.gaierror(-2, "secret"), "DNS resolution"),
+        (ssl.SSLError(1, "secret"), "TLS"),
+        (httpx.ProxyError("secret"), "proxy"),
+        (ConnectionRefusedError(111, "secret"), "connection refused"),
+        (httpx.ConnectTimeout("secret"), "connect timeout"),
+        (httpx.ReadTimeout("secret"), "read timeout"),
+    ],
+)
+def test_wrapped_connection_failure_retains_safe_root_cause(cause, expected):
+    def respond(request):
+        raise httpx.ConnectError("secret", request=request) from cause
+
+    with (
+        GeminiClient(
+            "secret",
+            "https://example.test/v1",
+            "test",
+            http_client=httpx.Client(transport=httpx.MockTransport(respond)),
+        ) as client,
+        pytest.raises(GeminiClientError) as error,
+    ):
+        client.generate("", [text_part("hello")], schema={})
+    message = str(error.value)
+    assert expected in message and "APIConnectionError -> ConnectError" in message
+    assert "secret" not in message
+    if isinstance(cause, OSError) and cause.errno is not None:
+        assert f"errno={cause.errno}" in message
 
 
 @pytest.mark.parametrize(

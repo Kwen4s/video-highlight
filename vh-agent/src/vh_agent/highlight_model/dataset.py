@@ -1,4 +1,4 @@
-"""Unchanged silver annotations and event-centered supervision targets."""
+"""Versioned interval annotations with explicit positives, negatives and unknown regions."""
 
 from __future__ import annotations
 
@@ -7,7 +7,6 @@ import json
 import math
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any
 
 import torch
 from torch import Tensor
@@ -20,14 +19,10 @@ from .config import HighlightModelConfig
 class HighlightAnnotation:
     start_sec: float
     end_sec: float
-    confidence: float
-    setup_times_sec: tuple[float, ...]
-    decisive_times_sec: tuple[float, ...]
-    reaction_times_sec: tuple[float, ...]
 
 
 @dataclass(frozen=True)
-class SilverVideo:
+class VideoExample:
     video_id: str
     drama_id: str
     path: Path
@@ -35,6 +30,7 @@ class SilverVideo:
     language: str
     highlights: tuple[HighlightAnnotation, ...]
     hard_negative_intervals: tuple[tuple[float, float], ...]
+    split: str | None = None
 
 
 @dataclass(frozen=True)
@@ -43,18 +39,14 @@ class EpisodeTargets:
     sample_weight: Tensor
     offsets: Tensor
     boundary_mask: Tensor
-    anchor_positions: Tensor
-    anchor_mask: Tensor
     segments: Tensor
-    event_peaks: Tensor
-    event_peak_gt: Tensor
     ignore_mask: Tensor
     hard_negative_mask: Tensor
 
 
 @dataclass(frozen=True)
 class EpisodeBatch:
-    video: SilverVideo
+    video: VideoExample
     vision: Tensor
     audio: Tensor
     audio_prior: Tensor
@@ -63,49 +55,48 @@ class EpisodeBatch:
     targets: EpisodeTargets
 
 
-def load_silver_videos(path: Path) -> list[SilverVideo]:
-    """Load every completed annotation without filtering or rewriting the source file."""
-    videos: list[SilverVideo] = []
-    seen: set[str] = set()
+def load_videos(path: Path) -> list[VideoExample]:
+    """Read vh-data snapshots; never infer negative labels or resplit episodes."""
+    videos, ids, hashes = [], set(), set()
     for line in path.read_text(encoding="utf-8").splitlines():
         if not line.strip():
             continue
         row = json.loads(line)
         video_id = str(row["video_id"])
-        if video_id in seen:
-            raise ValueError(f"duplicate silver annotation: {video_id}")
-        seen.add(video_id)
-        source = Path(str(row["path"]))
+        if video_id in ids or row["sha256"] in hashes:
+            raise ValueError(f"duplicate source video: {video_id}")
+        ids.add(video_id)
+        hashes.add(row["sha256"])
+        source = Path(row["path"])
         if not source.is_file():
-            raise FileNotFoundError(f"missing source video for {video_id}: {source}")
-        highlights = tuple(
-            HighlightAnnotation(
-                start_sec=float(item["start_sec"]),
-                end_sec=float(item["end_sec"]),
-                confidence=float(item.get("confidence", 1.0)),
-                setup_times_sec=_times(item.get("setup_times_sec", [])),
-                decisive_times_sec=_times(item.get("decisive_times_sec", [])),
-                reaction_times_sec=_times(item.get("reaction_times_sec", [])),
-            )
-            for item in row.get("highlights", [])
-        )
-        hard_negatives = tuple(
-            (
-                float(item["scene"]["start_sec"]),
-                float(item["scene"]["end_sec"]),
-            )
-            for item in row.get("scene_labels", [])
-            if item.get("label") == 0 and isinstance(item.get("scene"), dict)
-        )
+            raise FileNotFoundError(source)
+        with source.open("rb") as stream:
+            if hashlib.file_digest(stream, "sha256").hexdigest() != row["sha256"]:
+                raise ValueError(f"source content changed: {video_id}")
+        duration = float(row["duration_sec"])
+        if not math.isfinite(duration) or duration <= 0:
+            raise ValueError(f"invalid duration: {video_id}")
+        split = row["split"]
+        if split not in {"train", "val", "test"}:
+            raise ValueError(f"invalid split: {video_id}")
+        if row["label_source"] != "model_reviewed":
+            raise ValueError(f"unreviewed annotation: {video_id}")
+        positive = _intervals(row["highlights"], duration, video_id)
+        negative = _intervals(row["negative_intervals"], duration, video_id)
+        if any(min(b, d) > max(a, c) for a, b in positive for c, d in negative):
+            raise ValueError(f"positive/negative conflict: {video_id}")
+        if not positive and not negative:
+            raise ValueError(f"no supervised region: {video_id}")
         videos.append(
-            SilverVideo(
+            VideoExample(
                 video_id=video_id,
                 drama_id=str(row["drama_id"]),
                 path=source,
-                duration_sec=float(row["duration_sec"]),
-                language=str(row.get("language") or "zh"),
-                highlights=highlights,
-                hard_negative_intervals=hard_negatives,
+                duration_sec=duration,
+                language=str(row["language"]),
+                highlights=tuple(HighlightAnnotation(a, b) for a, b in positive),
+                hard_negative_intervals=negative,
+                split=split,
             )
         )
     if not videos:
@@ -113,24 +104,35 @@ def load_silver_videos(path: Path) -> list[SilverVideo]:
     return videos
 
 
-def split_by_video(videos: list[SilverVideo], seed: int) -> dict[str, list[SilverVideo]]:
-    if len(videos) < 2:
-        raise ValueError("at least two videos are required")
-    shuffled = sorted(
-        videos,
-        key=lambda video: hashlib.sha256(f"{seed}:{video.video_id}".encode()).hexdigest(),
-    )
-    train_end = min(len(shuffled) - 1, max(1, round(len(shuffled) * 0.9)))
-    return {
-        "train": shuffled[:train_end],
-        "test": shuffled[train_end:],
-    }
+def _intervals(items: list[dict], duration: float, video_id: str):
+    values = tuple((float(item["start_sec"]), float(item["end_sec"])) for item in items)
+    if any(
+        not (math.isfinite(a) and math.isfinite(b) and 0 <= a < b <= duration) for a, b in values
+    ):
+        raise ValueError(f"invalid interval: {video_id}")
+    return values
+
+
+def split_dataset(videos: list[VideoExample]) -> dict[str, list[VideoExample]]:
+    """Honor the persistent drama split and reject any group leakage."""
+    splits = {name: [] for name in ("train", "val", "test")}
+    groups = {}
+    for video in sorted(videos, key=lambda item: item.video_id):
+        if video.split not in splits:
+            raise ValueError(f"missing split: {video.video_id}")
+        if video.drama_id in groups and groups[video.drama_id] != video.split:
+            raise ValueError(f"drama appears in multiple splits: {video.drama_id}")
+        groups[video.drama_id] = video.split
+        splits[video.split].append(video)
+    if not splits["train"] or not splits["val"]:
+        raise ValueError("training needs a train group and a reviewed validation group")
+    return splits
 
 
 class EpisodeDataset(Dataset[EpisodeBatch]):
     def __init__(
         self,
-        videos: list[SilverVideo],
+        videos: list[VideoExample],
         feature_cache_dir: Path,
         config: HighlightModelConfig,
     ) -> None:
@@ -142,11 +144,15 @@ class EpisodeDataset(Dataset[EpisodeBatch]):
         return len(self.videos)
 
     def __getitem__(self, index: int) -> EpisodeBatch:
+        from .encoders import feature_signature
+
         video = self.videos[index]
         path = feature_path(self.feature_cache_dir, video.video_id)
         if not path.is_file():
             raise FileNotFoundError(f"missing moment feature cache: {path}")
-        cached = torch.load(path, map_location="cpu", weights_only=False)
+        cached = torch.load(path, map_location="cpu", weights_only=True)
+        if cached["signature"] != feature_signature(video, self.config):
+            raise ValueError(f"stale feature cache for {video.video_id}; run --stage features")
         targets = build_targets(video, self.config)
         expected_length = len(targets.eventness)
         tensors = {
@@ -166,23 +172,19 @@ class EpisodeDataset(Dataset[EpisodeBatch]):
         )
 
 
-def build_targets(video: SilverVideo, config: HighlightModelConfig) -> EpisodeTargets:
-    """Center supervision on one decisive peak per highlight; ignore the rest of the clip."""
+def build_targets(video: VideoExample, config: HighlightModelConfig) -> EpisodeTargets:
+    """Use geometric proposal centers; only explicitly labeled negatives receive negative loss."""
     length = max(1, math.ceil(video.duration_sec))
     grid = torch.arange(length, dtype=torch.float32)
     eventness = torch.zeros(length)
     sample_weight = torch.ones(length)
     offsets = torch.zeros((length, 2))
     boundary_mask = torch.zeros(length, dtype=torch.bool)
-    anchor_positions = torch.zeros((length, 3))
-    anchor_mask = torch.zeros((length, 3), dtype=torch.bool)
     assignment_quality = torch.full((length,), -1.0)
     segments = torch.tensor(
         [[item.start_sec, item.end_sec] for item in video.highlights],
         dtype=torch.float32,
     ).reshape(-1, 2)
-    event_peaks = torch.zeros(length, dtype=torch.bool)
-    event_peak_gt = torch.full((length,), -1, dtype=torch.long)
     inside_highlight = torch.zeros(length, dtype=torch.bool)
 
     for highlight in video.highlights:
@@ -192,53 +194,42 @@ def build_targets(video: SilverVideo, config: HighlightModelConfig) -> EpisodeTa
 
     hard_negative_mask = torch.zeros(length, dtype=torch.bool)
     for start, end in video.hard_negative_intervals:
-        negative = (grid >= start) & (grid <= end) & ~inside_highlight
+        negative = (grid >= start) & (grid < end) & ~inside_highlight
         hard_negative_mask |= negative
         sample_weight[negative] = torch.maximum(
             sample_weight[negative],
             torch.full_like(sample_weight[negative], config.hard_negative_weight),
         )
 
-    for highlight_index, highlight in enumerate(video.highlights):
-        decisive = highlight.decisive_times_sec or ((highlight.start_sec + highlight.end_sec) / 2,)
-        for event_time in decisive:
-            gaussian = torch.exp(-0.5 * ((grid - event_time) / config.event_sigma_sec).square())
-            quality = max(0.05, min(1.0, highlight.confidence))
-            eventness = torch.maximum(eventness, gaussian * quality)
-            center = min(length - 1, max(0, round(event_time)))
-            event_peaks[center] = True
-            event_peak_gt[center] = highlight_index
-            sample_weight[center] = max(float(sample_weight[center]), config.event_peak_weight)
-            for index in range(
-                max(0, center - config.center_sampling_radius_sec),
-                min(length, center + config.center_sampling_radius_sec + 1),
-            ):
-                distance = abs(index - event_time)
-                assignment = quality * (1.0 - distance / (config.center_sampling_radius_sec + 1.0))
-                if assignment < assignment_quality[index]:
-                    continue
-                assignment_quality[index] = assignment
-                boundary_mask[index] = True
-                offsets[index, 0] = highlight.start_sec - index
-                offsets[index, 1] = highlight.end_sec - index
-                _assign_anchors(
-                    anchor_positions,
-                    anchor_mask,
-                    index,
-                    event_time,
-                    highlight,
-                )
-    ignore_mask = inside_highlight & (eventness < 0.3)
+    for highlight in video.highlights:
+        event_time = (highlight.start_sec + highlight.end_sec) / 2
+        gaussian = torch.exp(-0.5 * ((grid - event_time) / config.event_sigma_sec).square())
+        eventness = torch.maximum(
+            eventness, gaussian * ((grid >= highlight.start_sec) & (grid < highlight.end_sec))
+        )
+        center = min(length - 1, max(0, round(event_time)))
+        sample_weight[center] = max(float(sample_weight[center]), config.event_peak_weight)
+        for index in range(
+            max(0, center - config.center_sampling_radius_sec),
+            min(length, center + config.center_sampling_radius_sec + 1),
+        ):
+            if not highlight.start_sec <= index < highlight.end_sec:
+                continue
+            distance = abs(index - event_time)
+            assignment = 1.0 - distance / (config.center_sampling_radius_sec + 1.0)
+            if assignment < assignment_quality[index]:
+                continue
+            assignment_quality[index] = assignment
+            boundary_mask[index] = True
+            offsets[index, 0] = highlight.start_sec - index
+            offsets[index, 1] = highlight.end_sec - index
+    ignore_mask = ~hard_negative_mask & (eventness < 0.3)
     return EpisodeTargets(
         eventness=eventness,
         sample_weight=sample_weight,
         offsets=offsets,
         boundary_mask=boundary_mask,
-        anchor_positions=anchor_positions,
-        anchor_mask=anchor_mask,
         segments=segments,
-        event_peaks=event_peaks,
-        event_peak_gt=event_peak_gt,
         ignore_mask=ignore_mask,
         hard_negative_mask=hard_negative_mask,
     )
@@ -246,26 +237,3 @@ def build_targets(video: SilverVideo, config: HighlightModelConfig) -> EpisodeTa
 
 def feature_path(root: Path, video_id: str) -> Path:
     return root / video_id / "moments.pt"
-
-
-def _assign_anchors(
-    positions: Tensor,
-    mask: Tensor,
-    index: int,
-    event_time: float,
-    highlight: HighlightAnnotation,
-) -> None:
-    setup = [value for value in highlight.setup_times_sec if value <= event_time]
-    reaction = [value for value in highlight.reaction_times_sec if value >= event_time]
-    if setup:
-        positions[index, 0] = max(setup)
-        mask[index, 0] = True
-    positions[index, 1] = event_time
-    mask[index, 1] = True
-    if reaction:
-        positions[index, 2] = min(reaction)
-        mask[index, 2] = True
-
-
-def _times(values: list[Any]) -> tuple[float, ...]:
-    return tuple(sorted(float(value) for value in values))

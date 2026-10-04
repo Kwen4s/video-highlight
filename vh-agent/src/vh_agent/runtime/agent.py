@@ -15,7 +15,7 @@ from uuid import uuid4
 
 from pydantic import ValidationError
 
-from ..prompts import ANALYSIS_PROMPT, DEFAULT_TASK, SCAN_QUESTION, SELECTION_PROMPT
+from ..prompts import ANALYSIS_PROMPT, DEFAULT_TASK, REVIEW_PROMPT, SCAN_QUESTION, SELECTION_PROMPT
 from ..providers.gemini_client import GeminiClientError
 from ..providers.openai_client import OpenAIClient, OpenAIClientError
 from ..storage import write_json
@@ -114,29 +114,11 @@ class VideoAgent:
             "max_request_attempts": max_request_attempts,
             "retrieval": transcript.profile if transcript else None,
             "local_proposals": local_proposals.profile if local_proposals else None,
-            "implementation_hash": hashlib.sha256(
-                b"".join(
-                    (Path(__file__).parents[1] / name).read_bytes()
-                    for name in (
-                        "prompts.py",
-                        "runtime/agent.py",
-                        "runtime/tools.py",
-                        "runtime/evidence.py",
-                        "runtime/finalization.py",
-                        "providers/gemini_client.py",
-                        "providers/openai_client.py",
-                        "providers/video_perception.py",
-                        "providers/video_search.py",
-                        "providers/frame_text.py",
-                        "providers/retrieval.py",
-                        "providers/local_proposals.py",
-                        "storage.py",
-                        "runtime/contracts.py",
-                        "runtime/state.py",
-                        "runtime/context.py",
-                    )
-                )
-            ).hexdigest(),
+            "instructions": {
+                "analysis": ANALYSIS_PROMPT,
+                "selection": SELECTION_PROMPT,
+                "review": REVIEW_PROMPT,
+            },
             "model": client.model,
             "reasoning_effort": client.effort,
             "perception": perception.profile,
@@ -191,6 +173,8 @@ class VideoAgent:
 
     def _restore(self) -> None:
         state = json.loads((self.output_dir / "state.json").read_text(encoding="utf-8"))
+        # Compare the inputs that determine evidence and decisions. Transport or
+        # logging code changes do not invalidate already committed observations.
         if state["profile"] != self.profile:
             raise ValueError("Resume requires the same video, model, prompt and task constraints")
         self.tools.restore(state["tools"])
@@ -492,6 +476,7 @@ class VideoAgent:
                     model=client.model,
                     **context,
                 )
+            started = time.perf_counter()
             try:
                 return client.generate(*args, **kwargs)
             except (OpenAIClientError, GeminiClientError) as exc:
@@ -499,6 +484,7 @@ class VideoAgent:
                     self._trace(
                         "request_error",
                         model_call=model_call,
+                        elapsed_sec=time.perf_counter() - started,
                         retryable=exc.retryable,
                         message=str(exc),
                         **context,

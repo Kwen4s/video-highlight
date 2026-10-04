@@ -1,13 +1,16 @@
 # Video Highlight
 
-短剧高光检测桌面应用。三个目录保持独立部署边界：
+短剧高光检测桌面应用。各目录保持独立部署边界：
 
 ```text
 video-highlight/
 ├── vh-frontend/   # Electron 任务归档、审阅、编辑与导出
 ├── vh-backend/    # FastAPI 持久化任务、媒体存储与会话编排
-└── vh-agent/      # 原生视频 ReAct Agent、本地候选工具与离线评测
+├── vh-agent/      # 原生视频 ReAct Agent、本地候选工具与离线评测
+└── vh-data/       # 视频标注、模型复核、训练数据快照与小模型反馈
 ```
+
+检测小模型的数据生产见 [vh-data/README.md](vh-data/README.md)。标注网关单独配置，按短剧划分训练、验证、测试；模型复核后导出数据，漏检反馈进入下一轮复核。
 
 ## 数据流
 

@@ -36,12 +36,14 @@ class FasterWhisperTranscriber:
             compute_type=compute_type,
         )
 
-    def transcribe(self, audio_path: Path, language: str | None = None) -> list[TranscriptSegment]:
+    def transcribe(
+        self, audio_path: Path, language: str | None = None, *, beam_size: int = 1
+    ) -> list[TranscriptSegment]:
         segments, _ = self.model.transcribe(
             str(audio_path),
             language=language if language in {"zh", "en"} else None,
             vad_filter=True,
-            beam_size=1,
+            beam_size=beam_size,
             best_of=1,
             condition_on_previous_text=False,
             word_timestamps=False,

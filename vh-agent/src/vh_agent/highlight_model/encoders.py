@@ -19,11 +19,11 @@ from torch import Tensor
 from ..preprocessing.media import video_fingerprint
 from ..preprocessing.sensevoice import EMOTIONS, EVENTS
 from .config import HighlightModelConfig
-from .dataset import SilverVideo, feature_path
+from .dataset import VideoExample, feature_path
 
 FEATURE_SCHEMA = 1
 VISION_INSTRUCTION = (
-    "Represent this short-drama moment for locating decisive narrative state changes."
+    "Represent the people, actions, dialogue, emotions, and setting of this short-drama moment."
 )
 EVENT_NAMES = tuple(value.lower() for value in EVENTS)
 EMOTION_NAMES = tuple(value.lower() for value in EMOTIONS)
@@ -36,13 +36,13 @@ class FrozenMomentFeatureExtractor:
         self._vision_embedder: Any | None = None
         self._audio_bundle: Any | None = None
 
-    def prepare(self, videos: list[SilverVideo]) -> dict[str, int]:
+    def prepare(self, videos: list[VideoExample]) -> dict[str, int]:
         reused = created = 0
         for index, video in enumerate(videos, start=1):
             target = feature_path(self.config.feature_cache_dir, video.video_id)
-            expected = self._signature(video)
+            expected = feature_signature(video, self.config)
             if target.is_file():
-                cached = torch.load(target, map_location="cpu", weights_only=False)
+                cached = torch.load(target, map_location="cpu", weights_only=True)
                 if cached.get("signature") == expected:
                     reused += 1
                     continue
@@ -59,7 +59,7 @@ class FrozenMomentFeatureExtractor:
         if torch.cuda.is_available():
             torch.cuda.empty_cache()
 
-    def _extract(self, video: SilverVideo, target: Path, signature: str) -> None:
+    def _extract(self, video: VideoExample, target: Path, signature: str) -> None:
         cache_dir = self.config.media_cache_dir / video_fingerprint(video.path)
         preprocess_path = cache_dir / "preprocess.json"
         audio_path = cache_dir / "audio.wav"
@@ -218,21 +218,25 @@ class FrozenMomentFeatureExtractor:
             parameter.requires_grad_(False)
         return self._audio_bundle
 
-    def _signature(self, video: SilverVideo) -> str:
-        cache_dir = self.config.media_cache_dir / video_fingerprint(video.path)
-        preprocess = json.loads((cache_dir / "preprocess.json").read_text(encoding="utf-8"))
-        payload = {
-            "schema": FEATURE_SCHEMA,
-            "video": video_fingerprint(video.path),
-            "preprocess": preprocess.get("signature"),
-            "vision_model": str(self.config.vision_model_path.resolve()),
-            "audio_model": str(self.config.audio_model_path.resolve()),
-            "audio_window_sec": self.config.audio_window_sec,
-            "audio_overlap_sec": self.config.audio_overlap_sec,
-        }
-        return hashlib.sha256(
-            json.dumps(payload, sort_keys=True, separators=(",", ":")).encode()
-        ).hexdigest()
+
+def feature_signature(video: VideoExample, config: HighlightModelConfig) -> str:
+    cache_dir = config.media_cache_dir / video_fingerprint(video.path)
+    preprocess = json.loads((cache_dir / "preprocess.json").read_text(encoding="utf-8"))
+    payload = {
+        "schema": FEATURE_SCHEMA,
+        "video": video_fingerprint(video.path),
+        "duration_sec": video.duration_sec,
+        "language": video.language,
+        "vision_instruction": VISION_INSTRUCTION,
+        "preprocess": preprocess["signature"],
+        "vision_model": str(config.vision_model_path.resolve()),
+        "audio_model": str(config.audio_model_path.resolve()),
+        "audio_window_sec": config.audio_window_sec,
+        "audio_overlap_sec": config.audio_overlap_sec,
+    }
+    return hashlib.sha256(
+        json.dumps(payload, sort_keys=True, separators=(",", ":")).encode()
+    ).hexdigest()
 
 
 def _moment_frame_paths(

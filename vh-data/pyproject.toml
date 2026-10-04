@@ -1,0 +1,38 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "vh-data"
+version = "0.1.0"
+description = "Video annotation, review and training-data production"
+readme = "README.md"
+requires-python = ">=3.11,<3.13"
+dependencies = [
+  "vh-agent",
+  "filelock>=3,<4",
+  "faster-whisper>=1.1,<2",
+]
+
+[dependency-groups]
+dev = ["pytest>=8,<10", "ruff>=0.12,<1"]
+
+[project.scripts]
+vh-data = "vh_data.cli:app"
+
+[tool.uv.sources]
+vh-agent = { path = "../vh-agent", editable = true }
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/vh_data"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "SIM"]
+ignore = ["B008"]
