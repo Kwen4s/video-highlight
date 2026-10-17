@@ -46,12 +46,6 @@ class Settings(BaseSettings):
     )
     max_request_attempts: int = Field(default=3, gt=0, validation_alias="VH_MAX_REQUEST_ATTEMPTS")
     max_stagnant_steps: int = Field(default=8, gt=0, validation_alias="VH_MAX_STAGNANT_STEPS")
-    local_checkpoint: Path | None = Field(default=None, validation_alias="VH_LOCAL_CHECKPOINT")
-    local_device: str = Field(default="cpu", validation_alias="VH_LOCAL_DEVICE")
-    local_feature_cache_dir: Path = Field(
-        default=Path("/data1/video-highlight-model-features"),
-        validation_alias="VH_LOCAL_FEATURE_CACHE_DIR",
-    )
     asr_model: Path = Field(
         default=Path(
             "/data1/video-highlight-models/faster-whisper/models--Systran--faster-whisper-large-v3/snapshots/edaa852ec7e145841d8ffdb056a99866b5f0a478"
@@ -60,18 +54,5 @@ class Settings(BaseSettings):
     )
     asr_device: str = Field(default="cuda:1", validation_alias="VH_ASR_DEVICE")
     asr_compute_type: str = Field(default="float16", validation_alias="VH_ASR_COMPUTE_TYPE")
-    sensevoice_model: Path = Field(
-        default=Path(
-            "/data1/video-highlight-models/modelscope/models/iic--SenseVoiceSmall/snapshots/master"
-        ),
-        validation_alias="VH_SENSEVOICE_MODEL",
-    )
-    sensevoice_vad_model: Path = Field(
-        default=Path(
-            "/data1/video-highlight-models/modelscope/models/iic--speech_fsmn_vad_zh-cn-16k-common-pytorch/snapshots/master"
-        ),
-        validation_alias="VH_SENSEVOICE_VAD_MODEL",
-    )
-    sensevoice_device: str = Field(default="cuda:0", validation_alias="VH_SENSEVOICE_DEVICE")
     ocr_device: str = Field(default="cpu", validation_alias="VH_OCR_DEVICE")
     ocr_version: str = Field(default="PP-OCRv6", validation_alias="VH_OCR_VERSION")

@@ -21,9 +21,7 @@ app = typer.Typer(
     pretty_exceptions_show_locals=False,
 )
 evaluation_app = typer.Typer(no_args_is_help=True, help="Run and score the test dataset")
-train_app = typer.Typer(no_args_is_help=True, help="Train the local multimodal highlighter")
 app.add_typer(evaluation_app, name="evaluate")
-app.add_typer(train_app, name="train")
 console = Console()
 
 
@@ -113,75 +111,6 @@ def evaluate_score(
     console.print_json(
         json.dumps({k: v for k, v in metrics.items() if k != "details"}, ensure_ascii=False)
     )
-
-
-@train_app.command("run")
-def train_run(
-    annotations: Path = typer.Option(
-        ..., "--annotations", exists=True, dir_okay=False, readable=True
-    ),
-    output_dir: Path = typer.Option(Path("outputs/highlight_model"), "--output-dir"),
-    vision_model_path: Path = typer.Option(
-        Path("/data1/modelscope_models/Qwen3-VL-Embedding-2B"),
-        "--vision-model-path",
-        exists=True,
-    ),
-    audio_model_path: Path = typer.Option(
-        Path(
-            "/data1/video-highlight-models/modelscope/models/iic--SenseVoiceSmall/snapshots/master"
-        ),
-        "--audio-model-path",
-        exists=True,
-    ),
-    media_cache_dir: Path = typer.Option(
-        Path("/data1/video-highlight-cache"), "--media-cache-dir", exists=True
-    ),
-    feature_cache_dir: Path = typer.Option(
-        Path("/data1/video-highlight-model-features"), "--feature-cache-dir"
-    ),
-    stage: str = typer.Option("all", "--stage", help="features, train, or all"),
-    device: str = typer.Option("cuda:0", "--device"),
-    feature_device: str = typer.Option("cuda:0", "--feature-device"),
-    epochs: int = typer.Option(20, "--epochs", min=1),
-    learning_rate: float = typer.Option(2e-4, "--learning-rate", min=1e-7),
-    gradient_accumulation: int = typer.Option(4, "--gradient-accumulation", min=1),
-    model_dim: int = typer.Option(512, "--model-dim", min=128),
-    attention_heads: int = typer.Option(8, "--attention-heads", min=1),
-    temporal_layers_per_level: int = typer.Option(2, "--temporal-layers-per-level", min=1),
-    vision_batch_size: int = typer.Option(8, "--vision-batch-size", min=1),
-    seed: int = typer.Option(7, "--seed"),
-    init_checkpoint: Path | None = typer.Option(None, "--init-checkpoint"),
-    finetune_heads: bool = typer.Option(False, "--finetune-heads"),
-) -> None:
-    """Cache frozen multimodal moments and train the narrative-transition localizer."""
-    from .highlight_model import HighlightModelConfig, fit_highlight_model
-
-    if stage not in {"features", "train", "all"}:
-        raise typer.BadParameter("stage must be features, train, or all")
-    report = fit_highlight_model(
-        HighlightModelConfig(
-            annotations=annotations,
-            output_dir=output_dir,
-            vision_model_path=vision_model_path,
-            audio_model_path=audio_model_path,
-            media_cache_dir=media_cache_dir,
-            feature_cache_dir=feature_cache_dir,
-            stage=stage,
-            device=device,
-            feature_device=feature_device,
-            epochs=epochs,
-            learning_rate=learning_rate,
-            gradient_accumulation=gradient_accumulation,
-            model_dim=model_dim,
-            attention_heads=attention_heads,
-            temporal_layers_per_level=temporal_layers_per_level,
-            vision_batch_size=vision_batch_size,
-            seed=seed,
-            init_checkpoint=init_checkpoint,
-            finetune_heads=finetune_heads,
-        )
-    )
-    console.print_json(json.dumps(report, ensure_ascii=False))
 
 
 @app.command()

@@ -7,7 +7,6 @@ from typing import Annotated
 import typer
 
 from .config import Settings
-from .exporter import export
 from .labeler import run
 from .models import VideoPredictions
 from .store import Store
@@ -77,12 +76,6 @@ def models():
         output([model.id for model in client.models.list()])
 
 
-@app.command("export")
-def freeze(destination: Path):
-    """冻结模型复核通过的训练、验证和测试标注。"""
-    output(export(Store(Settings().root), destination.resolve()))
-
-
 @app.command()
 def feedback(
     predictions: Annotated[Path, typer.Argument(exists=True, dir_okay=False)], model_id: str
@@ -94,7 +87,33 @@ def feedback(
         for line in predictions.read_text().splitlines()
         if line.strip()
     ]
-    output(Store(settings.root).feedback(rows, model_id, settings.agreement_iou))
+    output(Store(settings.root).feedback(rows, model_id, settings.feedback_iou))
+
+
+@app.command("prepare-training")
+def prepare(
+    destination: Path,
+    window_sec: Annotated[float, typer.Option(min=0.001)] = 20,
+    context_sec: Annotated[float, typer.Option(min=0)] = 15,
+    dialogue_history_sec: Annotated[float, typer.Option(min=0)] = 90,
+    gspo_size: Annotated[int | None, typer.Option(min=1)] = None,
+    seed: int = 42,
+):
+    """一次生成 SFT、GSPO、共享验证/测试和完整来源。"""
+    from .training_data import prepare_training
+
+    result = prepare_training(
+        Store(Settings().root),
+        destination,
+        window_sec=window_sec,
+        context_sec=context_sec,
+        dialogue_history_sec=dialogue_history_sec,
+        gspo_size=gspo_size,
+        seed=seed,
+    )
+    output(
+        {key: result[key] for key in ("format", "sft", "gspo", "sft_gspo_overlap", "evaluation")}
+    )
 
 
 if __name__ == "__main__":

@@ -9,7 +9,6 @@ from .config import Settings
 from .models import AnalysisSummary, DetectionResult, DetectionTask, Highlight, VideoSummary
 from .providers.frame_text import FrameText
 from .providers.gemini_client import GeminiClient
-from .providers.local_proposals import LocalProposals
 from .providers.openai_client import OpenAIClient
 from .providers.retrieval import TranscriptSearch
 from .providers.video_perception import VideoPerception
@@ -37,11 +36,6 @@ class HighlightDetectionService:
             task.video_path, settings.media_cache_dir, page_sec=settings.page_sec
         )
         transcript = TranscriptSearch(evidence, settings, task.subtitle_path, task.language)
-        local_proposals = (
-            LocalProposals(evidence, settings, task.language, task.video_id)
-            if settings.local_checkpoint
-            else None
-        )
         with ExitStack() as stack:
             video_client = stack.enter_context(
                 GeminiClient(
@@ -97,7 +91,6 @@ class HighlightDetectionService:
                 max_request_attempts=settings.max_request_attempts,
                 on_progress=self.on_progress,
                 transcript=transcript if transcript.available else None,
-                local_proposals=local_proposals,
             )
             raw = agent.run(resume=task.resume)
         clips = {}

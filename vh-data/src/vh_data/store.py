@@ -128,6 +128,7 @@ class Store:
     ):
         with self.connect() as db:
             db.execute("UPDATE videos SET status='queued' WHERE status='labeling'")
+            db.execute("UPDATE videos SET priority=0 WHERE priority<0")
             if retry_failed:
                 selection = ""
                 parameters = [split, split]
@@ -187,6 +188,20 @@ class Store:
             db.execute(
                 "UPDATE videos SET status='failed',error=? WHERE video_id=? AND status='labeling'",
                 (error, video_id),
+            )
+
+    def defer(self, video_id: str, error: str):
+        """Return a transiently blocked video to the queue behind fresh work."""
+        with self.connect() as db:
+            db.execute("BEGIN IMMEDIATE")
+            floor = db.execute(
+                "SELECT MIN(priority) FROM videos WHERE status IN ('queued','review')"
+            ).fetchone()[0]
+            priority = min(float(floor or 0), 0) - 1
+            db.execute(
+                "UPDATE videos SET status='queued',priority=?,error=? "
+                "WHERE video_id=? AND status='labeling'",
+                (priority, error, video_id),
             )
 
     def save(

@@ -95,13 +95,6 @@ class TranscriptSegment(BaseModel):
     confidence: float | None = None
 
 
-class AudioEvent(BaseModel):
-    start_sec: float = 0.0
-    end_sec: float = 0.0
-    emotion: str = "neutral"
-    event: str = "speech"
-
-
 class SceneSegment(BaseModel):
     start_sec: float
     end_sec: float

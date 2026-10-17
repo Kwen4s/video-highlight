@@ -10,7 +10,7 @@ class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=ROOT / ".env", extra="ignore", env_prefix="VH_DATA_")
 
     api_key: SecretStr = SecretStr("")
-    base_url: str = "https://api.fishkj.site/v1"
+    base_url: str = "https://api.axionai.cc/v1"
     model: str = ""
     reasoning_effort: str = "high"
     root: Path = ROOT / "outputs/data"
@@ -24,9 +24,9 @@ class Settings(BaseSettings):
     page_sec: float = Field(default=30, gt=0)
     preferred_highlight_sec: float = Field(default=15, gt=0)
     frame_fps: float = Field(default=1, gt=0, le=24)
-    agreement_iou: float = Field(default=0.5, gt=0, le=1)
-    request_timeout_sec: float = Field(default=300, gt=0)
-    request_attempts: int = Field(default=3, ge=1, le=10)
+    feedback_iou: float = Field(default=0.5, gt=0, le=1)
+    idle_timeout_sec: float = Field(default=300, gt=0)
+    response_attempts: int = Field(default=3, ge=1, le=10)
     workers: int = Field(default=2, ge=1, le=8)
 
     @field_validator("root", "media_cache", "preprocess_cache", "asr_model", mode="after")

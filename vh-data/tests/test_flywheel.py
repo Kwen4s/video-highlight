@@ -7,7 +7,7 @@ from types import SimpleNamespace
 
 import httpx
 import pytest
-from openai import APIError, APIStatusError, AsyncOpenAI
+from openai import APIStatusError, AsyncOpenAI
 from pydantic import ValidationError
 from vh_agent.models import TranscriptSegment
 from vh_agent.preprocessing.media import video_fingerprint
@@ -16,9 +16,9 @@ from vh_agent.runtime.evidence import EvidenceStore, VideoPage
 from vh_data.config import Settings
 from vh_data.dialogue import DialogueLoader
 from vh_data.exporter import export
-from vh_data.labeler import Labeler, PageNeedsSplit, _run, run
+from vh_data.labeler import DeferredPage, Labeler, PageNeedsSplit, _run, run
 from vh_data.models import Annotation, Label, PageLabels, VideoPredictions, digest
-from vh_data.quality import overlapping_highlights, reconcile
+from vh_data.quality import overlapping_highlights
 from vh_data.store import ConflictError, Store
 
 
@@ -68,26 +68,6 @@ def approve(store, video_id):
         {"model": "teacher"},
         expected_label_id=store.get(video_id)["label_id"],
     )
-
-
-def test_consensus_keeps_unknown_and_never_makes_a_disputed_event_negative():
-    first = annotation()
-    second = Annotation(
-        duration_sec=40,
-        segments=[
-            Label(start_sec=11, end_sec=19, kind="positive", reason="秘密被发现"),
-            Label(start_sec=25, end_sec=30, kind="positive", reason="另一事件"),
-            Label(start_sec=1, end_sec=5, kind="negative", reason="铺垫"),
-        ],
-    )
-    merged, issues = reconcile(first.segments, second.segments, first.duration_sec, 0.5)
-    assert [(s.start_sec, s.end_sec) for s in merged.segments if s.kind == "positive"] == [(10, 20)]
-    assert [(s.start_sec, s.end_sec) for s in merged.segments if s.kind == "negative"] == [(1, 5)]
-    assert [(s.start_sec, s.end_sec) for s in merged.segments if s.kind == "uncertain"] == [
-        (25, 30)
-    ]
-    assert issues
-    assert not any(s.start_sec <= 35 < s.end_sec for s in merged.segments)
 
 
 @pytest.mark.parametrize(
@@ -214,10 +194,8 @@ def test_worker_persists_model_review_and_retries_only_when_requested(tmp_path, 
     assert export(store, tmp_path / "worker-snapshot")["videos"] == 1
 
 
-@pytest.mark.parametrize("status,attempted", [(401, 1), (503, 3)])
-def test_bad_gateway_stops_batch_without_consuming_whole_queue(
-    tmp_path, monkeypatch, status, attempted
-):
+@pytest.mark.parametrize("status,attempted", [(401, 1), (503, 5), (None, 5)])
+def test_only_configuration_errors_stop_the_batch(tmp_path, monkeypatch, status, attempted):
     store = Store(tmp_path / "data")
     for index in range(5):
         ingest_video(store, tmp_path, f"v{index}")
@@ -230,6 +208,8 @@ def test_bad_gateway_stops_batch_without_consuming_whole_queue(
             pass
 
         async def label(self, video):
+            if status is None:
+                raise ValueError("模型响应缺少有效的输出文本")
             response = httpx.Response(status, request=httpx.Request("POST", "https://teacher.test"))
             raise APIStatusError("gateway failure", response=response, body=None)
 
@@ -238,7 +218,10 @@ def test_bad_gateway_stops_batch_without_consuming_whole_queue(
         "completed": 0,
         "failed": attempted,
     }
-    assert store.stats()["status"] == {"failed": attempted, "queued": 5 - attempted}
+    expected = {"failed": attempted}
+    if attempted < 5:
+        expected["queued"] = 5 - attempted
+    assert store.stats()["status"] == expected
 
 
 @pytest.mark.parametrize("duration", [0.5, 65.5, 1583.5])
@@ -270,12 +253,12 @@ def test_short_and_long_videos_keep_full_coverage_after_split_and_resume(
         preprocess_cache=tmp_path / "preprocess",
     )
     labeler = Labeler(settings)
-    seen = {1: [], 2: []}
+    seen = {"scan": [], "review": []}
     split = False
 
     async def call(media, page, source_hash, pass_id, story, dialogue, notes=None):
         nonlocal split
-        if duration > 60 and not split and pass_id == 1 and page.core_start_sec == 30:
+        if duration > 60 and not split and pass_id == "scan" and page.core_start_sec == 30:
             split = True
             raise PageNeedsSplit("HTTP 413")
         seen[pass_id].append((page.core_start_sec, page.core_end_sec))
@@ -304,13 +287,13 @@ def test_short_and_long_videos_keep_full_coverage_after_split_and_resume(
         assert all(a[1] == b[0] for a, b in zip(ranges, ranges[1:], strict=False))
         assert sum(end - start for start, end in ranges) == pytest.approx(duration)
     assert annotation.duration_sec == pytest.approx(duration)
-    original = seen[1].copy()
-    seen = {1: [], 2: []}
+    original = seen["scan"].copy()
+    seen = {"scan": [], "review": []}
     asyncio.run(labeler.label(source))
-    assert seen[1] == seen[2] == original
+    assert seen["scan"] == seen["review"] == original
     if duration > 60:
         assert labeler._plan_path(source["sha256"]).is_file()
-        assert (30, 60) not in seen[1]
+        assert (30, 60) not in seen["scan"]
     media = EvidenceStore(video, settings.media_cache)
     assert media.frames([max(0, duration - 0.25)], width=32)
     labeler.close()
@@ -354,10 +337,6 @@ def test_selection_review_keeps_long_video_requests_local(tmp_path, monkeypatch)
             "test",
             annotation,
             list(annotation.segments),
-            [],
-            [],
-            {0: ""},
-            [],
             [],
         )
     )
@@ -435,7 +414,7 @@ def test_feedback_requeues_training_videos_for_model_review_without_self_labelin
     prediction = VideoPredictions(
         video_id="train",
         segments=[
-            {"start_sec": 30, "end_sec": 35, "score": 0.8},
+            {"start_sec": 30, "end_sec": 35},
         ],
     )
     assert store.feedback([prediction], "student-v1", 0.5)["queued_for_review"] == 1
@@ -511,25 +490,47 @@ def test_new_dialogue_uses_aligned_audio_and_tracks_recognition_profile(tmp_path
     "case",
     [
         "agree",
-        "agreed_ordinary",
+        "ordinary_candidate",
+        "missed",
+        "all_negative",
         "neighbor_owned",
-        "disagree",
         "contradiction",
         "resize",
         "feedback",
         "incomplete",
         "empty",
+        "failed_output",
+        "missing_output",
+        "malformed_content",
+        "failed_retry",
         "stream_error",
-        "timeout",
+        "read_timeout",
+        "slow_stream",
         "long_preference",
         "page_overlap",
         "transient",
         "rate_limit",
+        "retry_after",
+        "retry_date",
+        "gateway_wait",
+        "persistent_gateway",
         "stream_retry",
         "oversize",
     ],
 )
 def test_video_annotation_review_and_resume_use_real_sdk_requests(tmp_path, monkeypatch, case):
+    server_wait_cases = {"retry_after", "retry_date", "gateway_wait"}
+    retry_cases = {
+        "transient",
+        "rate_limit",
+        "stream_retry",
+        "empty",
+        "failed_output",
+        "missing_output",
+        "malformed_content",
+        "failed_retry",
+        "persistent_gateway",
+    } | server_wait_cases
     video = tmp_path / "sample.mp4"
     subprocess.run(
         [
@@ -561,8 +562,8 @@ def test_video_annotation_review_and_resume_use_real_sdk_requests(tmp_path, monk
         media_cache=tmp_path / "media",
         page_sec=4,
         preprocess_cache=tmp_path / "preprocess",
-        request_timeout_sec=0.1 if case == "timeout" else 300,
-        request_attempts=3 if case in {"transient", "rate_limit", "stream_retry", "empty"} else 1,
+        idle_timeout_sec=0.1 if case in {"read_timeout", "slow_stream"} else 300,
+        response_attempts=3 if case in retry_cases else 1,
         preferred_highlight_sec=1.5 if case == "long_preference" else 15,
     )
     cached = settings.preprocess_cache / video_fingerprint(video) / "preprocess.json"
@@ -578,11 +579,14 @@ def test_video_annotation_review_and_resume_use_real_sdk_requests(tmp_path, monk
     )
     labeler = Labeler(settings)
     call = labeler._call
+    current_page = None
 
     async def resized_call(media, page, source_hash, pass_id, story, dialogue, notes=None):
+        nonlocal current_page
+        current_page = page
         if (
             case == "resize"
-            and pass_id == 2
+            and pass_id == "review"
             and page.core_start_sec == 0
             and page.core_end_sec == 4
         ):
@@ -591,20 +595,31 @@ def test_video_annotation_review_and_resume_use_real_sdk_requests(tmp_path, monk
 
     monkeypatch.setattr(labeler, "_call", resized_call)
     contexts = []
+    delays = []
+    actual_sleep = asyncio.sleep
 
-    async def no_delay(_):
-        pass
+    async def no_delay(delay):
+        delays.append(delay)
 
-    if case != "timeout":
-        monkeypatch.setattr("vh_data.labeler.asyncio.sleep", no_delay)
+    monkeypatch.setattr("vh_data.labeler.asyncio.sleep", no_delay)
+    if case == "retry_date":
+        monkeypatch.setattr("vh_data.labeler.time.time", lambda: 1_700_000_000)
 
     blind_calls = []
 
     class SlowBody(httpx.AsyncByteStream):
+        def __init__(self, payload=None):
+            self.payload = payload
+
         async def __aiter__(self):
-            while True:
+            if self.payload is None:
+                await actual_sleep(settings.idle_timeout_sec)
+                raise httpx.ReadTimeout("server stopped sending data")
+            for _ in range(8):
                 yield b": heartbeat\n\n"
-                await asyncio.sleep(0.02)
+                await actual_sleep(0.02)
+            yield self.payload
+            raise AssertionError("完成事件后不应继续等待流关闭")
 
     def respond(request):
         body = json.loads(request.content)
@@ -612,6 +627,7 @@ def test_video_annotation_review_and_resume_use_real_sdk_requests(tmp_path, monk
         assert body["stream"] and not body["store"]
         assert body["reasoning"]["effort"] in {"high", "low"}
         assert body["max_output_tokens"] == 32768
+        assert request.extensions["timeout"]["read"] == settings.idle_timeout_sec
         assert "{preferred_highlight_sec}" not in body["instructions"]
         assert f"{settings.preferred_highlight_sec:g} 秒以内" in body["instructions"]
         parts = body["input"][0]["content"]
@@ -619,16 +635,15 @@ def test_video_annotation_review_and_resume_use_real_sdk_requests(tmp_path, monk
         contexts.append(context)
         assert parts[2]["image_url"].startswith("data:image/jpeg;base64,")
         assert all(t["source"] == "asr" for t in context["对白与字幕"])
-        if case == "resize" and context["负责范围"] == [0.0, 2.0] and "待核对意见" not in context:
-            assert context["对白与字幕"] == []
+        assert "负责范围" not in context and "前后文范围" not in context
         assert all(
-            context["前后文范围"][0] <= t["start_sec"] < t["end_sec"] <= context["前后文范围"][1]
+            context["观看范围"][0] <= t["start_sec"] < t["end_sec"] <= context["观看范围"][1]
             for t in context["对白与字幕"]
         )
         assert not any("data:video" in json.dumps(p) for p in parts)
         assert context["原片有音轨"]
         assert body["text"]["format"]["strict"]
-        if case == "timeout":
+        if case == "read_timeout" and len(contexts) == 1:
             return httpx.Response(
                 200, stream=SlowBody(), headers={"Content-Type": "text/event-stream"}
             )
@@ -636,38 +651,71 @@ def test_video_annotation_review_and_resume_use_real_sdk_requests(tmp_path, monk
             return httpx.Response(
                 429, json={"error": {"message": "slow down", "type": "rate_limit_error"}}
             )
-        first_page = context["负责范围"][0] == 0
-        reviewing = "待核对意见" in context
+        if case == "persistent_gateway" and len(contexts) <= 5:
+            return httpx.Response(502, json={"error": {"message": "gateway unavailable"}})
+        if case in server_wait_cases and len(contexts) == 1:
+            if case == "gateway_wait":
+                return httpx.Response(
+                    502,
+                    json={"error_name": "origin_bad_gateway", "retry_after": 60},
+                )
+            retry_after = "Tue, 14 Nov 2023 22:14:20 GMT" if case == "retry_date" else "60"
+            return httpx.Response(
+                502,
+                headers={"Retry-After": retry_after},
+                json={"error": {"message": "try later", "type": "server_error"}},
+            )
+        first_page = current_page.core_start_sec == 0
+        reviewing = "候选位置" in context
+        if reviewing:
+            assert all(set(s) == {"start_sec", "end_sec"} for s in context["候选位置"])
+            assert len(context["候选位置"]) == len(
+                {(s["start_sec"], s["end_sec"]) for s in context["候选位置"]}
+            )
+            if not current_page.page_id.startswith("review-conflict"):
+                assert context["之前的剧情"] == ("" if first_page else "复核确认的剧情")
         if not reviewing:
             blind_calls.append(context)
-        second_pass = (len(blind_calls) - 1) % 4 >= 2
-        if case == "oversize" and len(blind_calls) == 3 and not reviewing:
+        if case == "oversize" and len(contexts) == 3 and reviewing:
             return httpx.Response(
                 413, json={"error": {"message": "too large", "type": "invalid_request_error"}}
             )
-        reject_event = (case == "disagree" and (second_pass or reviewing)) or (
-            case == "agreed_ordinary" and reviewing
+        reject_event = (
+            case == "all_negative"
+            or (case == "ordinary_candidate" and reviewing)
+            or (case == "missed" and not reviewing)
         )
-        if case == "neighbor_owned":
+        if case == "ordinary_candidate":
+            segments = [
+                Label(
+                    start_sec=current_page.core_start_sec if reviewing else 2.8,
+                    end_sec=current_page.core_end_sec if reviewing else 5.2,
+                    kind="negative" if reviewing else "positive",
+                    reason="复核认为是普通剧情" if reviewing else "跨页候选",
+                )
+            ]
+        elif case == "neighbor_owned":
             segments = [Label(start_sec=4.5, end_sec=6.5, kind="positive", reason="反击奏效")]
             if first_page:
                 segments.append(Label(start_sec=1, end_sec=3, kind="negative", reason="普通交谈"))
         elif case == "page_overlap":
             start, end = (2.8, 5.0) if first_page else (3.0, 5.2)
-            if reviewing and context["待核对意见"].get("已有复核"):
+            if reviewing and current_page.page_id.startswith("review-conflict"):
                 start, end = 3.0, 5.0
             segments = [Label(start_sec=start, end_sec=end, kind="positive", reason="同一次反击")]
         elif first_page:
             kind = "negative" if reject_event else "positive"
-            start, end = (0.5, 1.5) if context["负责范围"][1] == 2 else (1, 3)
+            start, end = (0.5, 1.5) if current_page.core_end_sec == 2 else (1, 3)
             segments = [Label(start_sec=start, end_sec=end, kind=kind, reason="核对画面中的事情")]
-        elif context["负责范围"][0] == 2:
+        elif current_page.core_start_sec == 2:
             segments = [Label(start_sec=2.5, end_sec=3.5, kind="negative", reason="普通片段")]
         else:
             segments = [Label(start_sec=5, end_sec=7, kind="negative", reason="普通片段")]
-        if case == "contradiction" and first_page and second_pass and not reviewing:
+        if case == "contradiction" and first_page and not reviewing:
             segments.append(Label(start_sec=2, end_sec=3, kind="negative", reason="矛盾意见"))
-        result = PageLabels(story_so_far="已经发生的剧情", segments=segments)
+        result = PageLabels(
+            story_so_far="复核确认的剧情" if reviewing else "候选观看的剧情", segments=segments
+        )
         response = {
             "id": "annotation",
             "object": "response",
@@ -697,7 +745,19 @@ def test_video_annotation_review_and_resume_use_real_sdk_requests(tmp_path, monk
             response["status"] = "incomplete"
             response["incomplete_details"] = {"reason": "max_output_tokens"}
             response["output"] = []
-        elif case == "empty" or (case == "transient" and len(contexts) == 1):
+        elif case == "failed_output" or (case == "failed_retry" and len(contexts) == 1):
+            response["status"] = "failed"
+            response["output"] = None
+            response["error"] = {"code": "server_error", "message": "upstream failed"}
+        elif case == "missing_output":
+            del response["output"]
+        elif case == "malformed_content":
+            response["output"][0]["content"] = None
+        elif (
+            case == "empty"
+            or (case == "transient" and len(contexts) == 1)
+            or (case == "persistent_gateway" and len(contexts) == 6)
+        ):
             response["output"][0]["content"][0]["text"] = " "
         events = [
             {
@@ -706,12 +766,14 @@ def test_video_annotation_review_and_resume_use_real_sdk_requests(tmp_path, monk
                 "sequence_number": 0,
             },
             {
-                "type": "response.incomplete" if case == "incomplete" else "response.completed",
+                "type": f"response.{response['status']}",
                 "response": response,
                 "sequence_number": 1,
             },
         ]
-        if case == "stream_error" or (case == "stream_retry" and len(contexts) == 1):
+        if (case == "stream_error" and len(contexts) <= 4) or (
+            case == "stream_retry" and len(contexts) == 1
+        ):
             events = [
                 {
                     "type": "error",
@@ -723,6 +785,10 @@ def test_video_annotation_review_and_resume_use_real_sdk_requests(tmp_path, monk
                 }
             ]
         data = "".join(f"event: {e['type']}\ndata: {json.dumps(e)}\n\n" for e in events)
+        if case == "slow_stream":
+            return httpx.Response(
+                200, stream=SlowBody(data.encode()), headers={"Content-Type": "text/event-stream"}
+            )
         return httpx.Response(200, content=data, headers={"Content-Type": "text/event-stream"})
 
     monkeypatch.setattr(
@@ -733,86 +799,131 @@ def test_video_annotation_review_and_resume_use_real_sdk_requests(tmp_path, monk
         ),
     )
     source = {"path": str(video), "sha256": digest(video), "split": "train", "language": "zh"}
-    if case in {"incomplete", "empty", "stream_error", "timeout"}:
-        exception = (
-            TimeoutError
-            if case == "timeout"
-            else (APIError if case == "stream_error" else ValueError)
-        )
-        with pytest.raises(exception):
+    if case in {"incomplete", "empty", "failed_output", "missing_output", "malformed_content"}:
+        with pytest.raises(ValueError):
             asyncio.run(labeler.label(source))
         failures = list((settings.root / "failures").glob("*.json"))
-        assert len(failures) == settings.request_attempts
-        assert len(contexts) == settings.request_attempts
+        assert len(failures) == settings.response_attempts
+        assert len(contexts) == settings.response_attempts
         record = json.loads(failures[0].read_text())
-        if case in {"stream_error", "timeout"}:
-            assert record["status"] == "request_failed"
-            if case == "stream_error":
-                assert record["error_code"] == "upstream_failed"
-            else:
-                assert record["error_class"] == "TimeoutError"
-                assert record["elapsed_sec"] < 1
-        else:
-            assert record["usage"]["total_tokens"] == 120
-            assert record["status"] == ("incomplete" if case == "incomplete" else "completed")
+        assert record["usage"]["total_tokens"] == 120
+        assert record["status"] == {
+            "incomplete": "incomplete",
+            "failed_output": "failed",
+        }.get(case, "completed")
+        if case in {"failed_output", "missing_output", "malformed_content"}:
+            assert record["output_text"] is None
+        if case == "failed_output":
+            assert record["error_code"] == "server_error"
         assert not list((settings.root / "readings").glob("*.json"))
         labeler.close()
         return
     if case == "feedback":
         source["predictions"] = [
-            {"model_id": "student-v1", "segments": [{"start_sec": 5, "end_sec": 7, "score": 0.9}]}
+            {
+                "model_id": "student-v1",
+                "segments": [
+                    {"start_sec": 1, "end_sec": 3},
+                    {"start_sec": 5, "end_sec": 7},
+                ],
+            }
         ]
-    result, provenance = asyncio.run(labeler.label(source))
+    annotation = labeler.label(source)
+    if case == "slow_stream":
+        annotation = asyncio.wait_for(annotation, timeout=5)
+    result, provenance = asyncio.run(annotation)
     expected_calls = {
-        "agree": 5,
-        "agreed_ordinary": 5,
-        "neighbor_owned": 5,
-        "disagree": 5,
-        "contradiction": 5,
-        "resize": 7,
-        "feedback": 6,
-        "long_preference": 5,
-        "page_overlap": 7,
-        "transient": 6,
-        "rate_limit": 6,
-        "stream_retry": 6,
-        "oversize": 8,
+        "agree": 4,
+        "ordinary_candidate": 4,
+        "missed": 4,
+        "all_negative": 4,
+        "neighbor_owned": 4,
+        "contradiction": 4,
+        "resize": 5,
+        "feedback": 4,
+        "long_preference": 4,
+        "page_overlap": 5,
+        "transient": 5,
+        "rate_limit": 5,
+        "retry_after": 5,
+        "retry_date": 5,
+        "gateway_wait": 5,
+        "persistent_gateway": 10,
+        "stream_error": 8,
+        "read_timeout": 5,
+        "slow_stream": 4,
+        "failed_retry": 5,
+        "stream_retry": 5,
+        "oversize": 6,
     }[case]
-    blind_count = 5 if case in {"resize", "oversize"} else 4
+    blind_count = 2
     request_count = expected_calls
-    if case in {"transient", "rate_limit", "stream_retry", "oversize"}:
-        expected_calls -= 1
+    failure_count = {
+        "transient": 1,
+        "rate_limit": 1,
+        "retry_after": 1,
+        "retry_date": 1,
+        "gateway_wait": 1,
+        "stream_retry": 1,
+        "oversize": 1,
+        "persistent_gateway": 6,
+        "stream_error": 4,
+        "read_timeout": 1,
+        "failed_retry": 1,
+    }.get(case, 0)
+    expected_calls -= failure_count
     assert len(contexts) == request_count
     assert len(provenance["calls"]) == expected_calls
     assert len(provenance["review_calls"]) == expected_calls - blind_count
+    if case in server_wait_cases:
+        assert delays == [5]
+    elif case == "rate_limit":
+        assert delays == [2]
+    elif case == "persistent_gateway":
+        assert delays == [2, 4, 5, 5, 5, 5]
     initial_contexts = []
     for reference in provenance["calls"]:
         record = json.loads((settings.root / reference).read_text())
-        if record["input"]["pass"] in {1, 2} and record["input"]["page"]["core_start_sec"] == 0:
+        if case == "slow_stream":
+            assert record["elapsed_sec"] > settings.idle_timeout_sec
+        if record["input"]["page"]["core_start_sec"] == 0:
             initial_contexts.append(record["input"]["context"])
     assert len(initial_contexts) == 2
     assert all(c["之前的剧情"] == "" for c in initial_contexts)
-    assert not any("待核对意见" in c for c in blind_calls)
+    assert not any("候选位置" in c for c in blind_calls)
     expected_segments = 1 if case == "page_overlap" else 3 if case in {"resize", "oversize"} else 2
     assert len(result.segments) == expected_segments
-    if case in {"disagree", "agreed_ordinary"}:
+    if case in {"ordinary_candidate", "all_negative"}:
         assert all(s.kind == "negative" for s in result.segments)
+        if case == "ordinary_candidate":
+            assert sum(s.end_sec - s.start_sec for s in result.segments) == 8
     else:
         assert any(s.kind == "positive" for s in result.segments)
     for reference in provenance["calls"]:
         assert json.loads((settings.root / reference).read_text())["usage"]["total_tokens"] == 120
     asyncio.run(labeler.label(source))
-    assert len(contexts) == request_count + (3 if case in {"resize", "oversize"} else 0)
+    # Restored child pages change two scans and the resulting review cues.
+    assert len(contexts) == request_count + (4 if case in {"resize", "oversize"} else 0)
     cached_count = len(contexts)
     asyncio.run(labeler.label(source))
     assert len(contexts) == cached_count
     labeler.settings = settings.model_copy(update={"reasoning_effort": "low"})
     asyncio.run(labeler.label(source))
-    assert len(contexts) == cached_count + (7 if case in {"resize", "oversize"} else expected_calls)
-    if case in {"transient", "rate_limit", "stream_retry", "oversize"}:
+    assert len(contexts) == cached_count + (6 if case in {"resize", "oversize"} else expected_calls)
+    if failure_count:
         failures = list((settings.root / "failures").glob("*.json"))
-        assert len(failures) == 1
-        assert json.loads(failures[0].read_text())["attempt"] == 1
+        records = [json.loads(path.read_text()) for path in failures]
+        assert len(records) == failure_count
+        assert sorted(record["attempt"] for record in records) == list(range(1, failure_count + 1))
+        if case == "stream_error":
+            assert all(record["error_code"] == "upstream_failed" for record in records)
+        elif case == "read_timeout":
+            assert records[0]["error_class"] == "ReadTimeout"
+            assert records[0]["elapsed_sec"] < 1
+        elif case == "failed_retry":
+            assert records[0]["status"] == "failed"
+            assert records[0]["output_text"] is None
+            assert records[0]["error_code"] == "server_error"
     labeler.close()
 
 
@@ -849,6 +960,49 @@ def test_workers_are_bounded_and_claim_each_video_once(tmp_path, monkeypatch):
     assert result == {"completed": 4, "failed": 0}
     assert maximum == 2 and len(set(claimed)) == 4
     assert store.stats()["status"] == {"ready": 4, "queued": 2}
+
+
+def test_transiently_blocked_video_yields_its_worker_and_is_resumed(tmp_path, monkeypatch):
+    store = Store(tmp_path / "data")
+    for index in range(3):
+        ingest_video(store, tmp_path, f"v{index}")
+    calls = []
+
+    class Teacher:
+        def __init__(self, settings):
+            pass
+
+        def close(self):
+            pass
+
+        async def label(self, video):
+            calls.append(video["video_id"])
+            if video["video_id"] == "v0" and calls.count("v0") == 1:
+                raise DeferredPage("ReadTimeout 连续 3 次；暂缓当前视频以继续其他任务")
+            return annotation(), {"unresolved_segments": 0}
+
+    monkeypatch.setattr("vh_data.labeler.Labeler", Teacher)
+    assert run(store, Settings(_env_file=None, workers=1), 3, None, False) == {
+        "completed": 3,
+        "failed": 0,
+    }
+    assert calls == ["v0", "v1", "v2", "v0"]
+    assert store.stats()["status"] == {"ready": 3}
+
+
+def test_deferred_videos_keep_moving_behind_the_current_queue(tmp_path):
+    store = Store(tmp_path / "data")
+    for index in range(3):
+        ingest_video(store, tmp_path, f"v{index}")
+    assert store.claim()["video_id"] == "v0"
+    store.defer("v0", "gateway unavailable")
+    assert store.claim()["video_id"] == "v1"
+    store.defer("v1", "gateway unavailable")
+    assert store.get("v0")["priority"] == -1
+    assert store.get("v1")["priority"] == -2
+    assert store.claim()["video_id"] == "v2"
+    store.recover(False)
+    assert store.get("v0")["priority"] == store.get("v1")["priority"] == 0
 
 
 def test_page_edges_keep_valid_candidates_and_request_more_context():
@@ -890,13 +1044,6 @@ def test_redundant_tail_keeps_full_video_and_the_same_evidence(tmp_path):
     assert [(p.core_start_sec, p.core_end_sec) for p in media.pages] == [(0, 30), (30, 60.5)]
     assert media.pages[-1].read_start_sec == pages[1].read_start_sec
     assert media.pages[-1].read_end_sec == pages[1].read_end_sec
-
-
-def test_consensus_does_not_invent_a_longer_boundary():
-    first = [Label(start_sec=10, end_sec=18, kind="positive", reason="精彩动作")]
-    second = [Label(start_sec=12, end_sec=20, kind="positive", reason="同一精彩动作")]
-    result, _ = reconcile(first, second, 40, 0.5)
-    assert [(s.start_sec, s.end_sec) for s in result.segments] == [(10, 18)]
 
 
 def test_gateway_stop_preserves_an_inflight_success(tmp_path, monkeypatch):
@@ -972,16 +1119,18 @@ def test_requeued_old_labels_do_not_count_as_available_drama_data(tmp_path):
     assert store.claim()["drama_id"] == "drama-a"
 
 
-def test_cancel_stops_active_models_and_leaves_work_resumable(tmp_path, monkeypatch):
+@pytest.mark.parametrize("phase", ["request", "retry_wait"])
+def test_cancel_stops_active_models_and_leaves_work_resumable(tmp_path, monkeypatch, phase):
     store = Store(tmp_path / "data")
     for index in range(4):
         ingest_video(store, tmp_path, f"v{index}")
     started = asyncio.Event()
     active, closed = [], []
 
-    class Teacher:
+    class Teacher(Labeler):
         def __init__(self, settings):
             self.video_id = None
+            self.settings = settings
 
         def close(self):
             if self.video_id is not None:
@@ -992,7 +1141,14 @@ def test_cancel_stops_active_models_and_leaves_work_resumable(tmp_path, monkeypa
             active.append(self.video_id)
             if len(active) == 2:
                 started.set()
-            await asyncio.Event().wait()
+            if phase == "request":
+                await asyncio.Event().wait()
+            else:
+                await self._call(None, None, video["sha256"], "scan", "", [])
+
+        async def _call_once(self, *args):
+            response = httpx.Response(502, request=httpx.Request("POST", "https://teacher.test"))
+            raise APIStatusError("gateway failure", response=response, body={"retry_after": 60})
 
     async def cancel_batch():
         task = asyncio.create_task(

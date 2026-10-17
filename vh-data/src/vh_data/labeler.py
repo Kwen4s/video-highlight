@@ -1,4 +1,4 @@
-"""Independent video labeling, focused model review and resumable evidence records."""
+"""Video candidate discovery, independent review and resumable evidence records."""
 
 import asyncio
 import base64
@@ -7,6 +7,7 @@ import json
 import math
 import subprocess
 import time
+from email.utils import parsedate_to_datetime
 from pathlib import Path
 
 import httpx
@@ -17,7 +18,7 @@ from vh_agent.runtime.evidence import EvidenceStore, VideoPage
 from .config import Settings
 from .dialogue import DialogueLoader
 from .models import Annotation, Label, PageLabels, Span, digest, overlap
-from .quality import overlapping_highlights, reconcile, subtract
+from .quality import overlapping_highlights, subtract
 from .store import Store
 
 PROMPTS = Path(__file__).with_name("prompts")
@@ -26,6 +27,8 @@ PROMPT = (PROMPTS / "label.md").read_text(encoding="utf-8") + "\n" + GUIDE
 REVIEW_PROMPT = (PROMPTS / "review.md").read_text(encoding="utf-8") + "\n" + GUIDE
 MAX_REQUEST_BYTES = 20 * 1024 * 1024
 MAX_OUTPUT_TOKENS = 32768
+TRANSIENT_ATTEMPTS_BEFORE_DEFER = 3
+MAX_RETRY_DELAY_SEC = 5
 
 
 def write_json(path: Path, value: dict):
@@ -39,10 +42,15 @@ class PageNeedsSplit(ValueError):
     """The actual multimodal request needs a smaller video page."""
 
 
+class DeferredPage(RuntimeError):
+    """A transiently unavailable page should yield its worker to other videos."""
+
+
 class Labeler:
     def __init__(self, settings: Settings):
         self.settings = settings
         self.dialogues = DialogueLoader(settings)
+        self.yield_transient_pages = False
         if not settings.model or not settings.api_key.get_secret_value():
             raise ValueError("先在 vh-data/.env 配置已验证的视频模型和 API 密钥")
 
@@ -56,41 +64,37 @@ class Labeler:
         )
 
     async def _response(self, prompt, parts):
-        async with asyncio.timeout(self.settings.request_timeout_sec):
-            async with AsyncOpenAI(
-                api_key=self.settings.api_key.get_secret_value(),
-                base_url=self.settings.base_url,
-                timeout=self.settings.request_timeout_sec,
-                max_retries=0,
-            ) as client:
-                result = None
-                async with await client.responses.create(
-                    model=self.settings.model,
-                    instructions=prompt,
-                    input=[{"role": "user", "content": parts}],
-                    text={
-                        "format": {
-                            "type": "json_schema",
-                            "name": "PageLabels",
-                            "strict": True,
-                            "schema": PageLabels.model_json_schema(),
-                        }
-                    },
-                    reasoning={"effort": self.settings.reasoning_effort},
-                    max_output_tokens=MAX_OUTPUT_TOKENS,
-                    store=False,
-                    stream=True,
-                ) as stream:
-                    async for event in stream:
-                        if event.type in {
-                            "response.completed",
-                            "response.incomplete",
-                            "response.failed",
-                        }:
-                            result = event.response
-                if result is None:
-                    raise ValueError("视频标注流缺少完成事件")
-                return result
+        async with AsyncOpenAI(
+            api_key=self.settings.api_key.get_secret_value(),
+            base_url=self.settings.base_url,
+            timeout=httpx.Timeout(self.settings.idle_timeout_sec, connect=30),
+            max_retries=0,
+        ) as client:
+            async with await client.responses.create(
+                model=self.settings.model,
+                instructions=prompt,
+                input=[{"role": "user", "content": parts}],
+                text={
+                    "format": {
+                        "type": "json_schema",
+                        "name": "PageLabels",
+                        "strict": True,
+                        "schema": PageLabels.model_json_schema(),
+                    }
+                },
+                reasoning={"effort": self.settings.reasoning_effort},
+                max_output_tokens=MAX_OUTPUT_TOKENS,
+                store=False,
+                stream=True,
+            ) as stream:
+                async for event in stream:
+                    if event.type in {
+                        "response.completed",
+                        "response.incomplete",
+                        "response.failed",
+                    }:
+                        return event.response
+            raise ValueError("视频标注流缺少完成事件")
 
     async def label(self, video: dict) -> tuple[Annotation, dict]:
         source = Path(video["path"])
@@ -108,20 +112,17 @@ class Labeler:
             media.restore_pages(json.loads(plan.read_text())["pages"])
         self._compact_tail(media)
         dialogue, dialogue_ref = await asyncio.to_thread(self.dialogues.load, video, media)
-        first, first_calls, stories = await self._read(media, video["sha256"], 1, dialogue)
-        second, second_calls, _ = await self._read(media, video["sha256"], 2, dialogue)
-        merged, issues = reconcile(
-            first, second, media.video_info.duration_sec, self.settings.agreement_iou
-        )
+        draft, scan_calls = await self._read(media, video["sha256"], dialogue)
         predictions = video.get("predictions", [])
-        focus = [s for s in merged.segments if s.kind != "negative"]
+        focus = [s for s in draft if s.kind != "negative"]
         if predictions:
             focus.extend(
                 Span(start_sec=p["start_sec"], end_sec=p["end_sec"])
                 for p in predictions[0]["segments"]
             )
-        merged, review_calls = await self._review(
-            media, video["sha256"], merged, focus, first, second, stories, dialogue, predictions
+        annotation = Annotation(duration_sec=media.video_info.duration_sec, segments=[])
+        annotation, review_calls = await self._review(
+            media, video["sha256"], annotation, focus, dialogue
         )
         if digest(source) != video["sha256"]:
             raise ValueError("标注过程中原视频发生变化，本轮结果不能保存")
@@ -134,18 +135,16 @@ class Labeler:
             "prompt_sha256": hashlib.sha256(self._prompt().encode()).hexdigest(),
             "review_prompt_sha256": hashlib.sha256(self._prompt(review=True).encode()).hexdigest(),
             "preferred_highlight_sec": self.settings.preferred_highlight_sec,
-            "agreement_iou": self.settings.agreement_iou,
-            "initial_issues": issues,
-            "unresolved_segments": sum(s.kind == "uncertain" for s in merged.segments),
+            "unresolved_segments": sum(s.kind == "uncertain" for s in annotation.segments),
             "highlight_ratio": sum(
-                s.end_sec - s.start_sec for s in merged.segments if s.kind == "positive"
+                s.end_sec - s.start_sec for s in annotation.segments if s.kind == "positive"
             )
-            / merged.duration_sec,
+            / annotation.duration_sec,
             "feedback_model": predictions[0]["model_id"] if predictions else None,
-            "calls": [*first_calls, *second_calls, *review_calls],
+            "calls": [*scan_calls, *review_calls],
             "review_calls": review_calls,
         }
-        return merged, provenance
+        return annotation, provenance
 
     @staticmethod
     def _compact_tail(media):
@@ -162,42 +161,35 @@ class Labeler:
             pages[-2:] = [previous.model_copy(update={"core_end_sec": tail.core_end_sec})]
             media.restore_pages(pages)
 
-    async def _review(
-        self, media, source_hash, annotation, focus, first, second, stories, dialogue, predictions
-    ):
-        references = []
+    async def _review(self, media, source_hash, annotation, focus, dialogue):
+        references, stories, story = [], {0: ""}, ""
         index = 0
-        review_all = not annotation.segments
         while index < len(media.pages):
             page = media.pages[index]
             core = Span(start_sec=page.core_start_sec, end_sec=page.core_end_sec)
-            if not review_all and not any(overlap(core, span) for span in focus):
-                index += 1
-                continue
-            notes = {
-                "待选择的片段": [s.model_dump() for s in annotation.segments if overlap(core, s)],
-                "第一次观看": [s.model_dump() for s in first if overlap(core, s)],
-                "第二次观看": [s.model_dump() for s in second if overlap(core, s)],
-                "小模型候选": [
-                    p
-                    for prediction in predictions[:1]
-                    for p in prediction["segments"]
-                    if p["start_sec"] < core.end_sec and p["end_sec"] > core.start_sec
-                ],
-            }
+            # Candidate positions locate evidence; their judgments must
+            # not anchor the final selection. Keep only unique source ranges.
+            notes = [
+                {"start_sec": start, "end_sec": end}
+                for start, end in sorted(
+                    {(s.start_sec, s.end_sec) for s in focus if overlap(core, s)}
+                )
+            ]
             try:
                 result, reference = await self._call(
                     media,
                     page,
                     source_hash,
                     "review",
-                    stories[max(start for start in stories if start <= page.core_start_sec)],
+                    story,
                     dialogue,
                     notes=notes,
                 )
             except PageNeedsSplit:
                 self._split_page(media, page, source_hash)
                 continue
+            stories[page.core_start_sec] = story
+            story = result.story_so_far
             annotation = self._replace_review(annotation, core, result.segments)
             references.append(reference)
             index += 1
@@ -223,11 +215,11 @@ class Labeler:
                 "review",
                 stories[max(start for start in stories if start <= span.start_sec)],
                 dialogue,
-                notes={
-                    "待选择的片段": [
-                        s.model_dump() for s in annotation.segments if overlap(span, s)
-                    ]
-                },
+                notes=[
+                    {"start_sec": s.start_sec, "end_sec": s.end_sec}
+                    for s in annotation.segments
+                    if s.kind == "positive" and overlap(span, s)
+                ],
             )
             annotation = self._replace_review(annotation, span, result.segments)
             references.append(reference)
@@ -265,28 +257,25 @@ class Labeler:
                 )
         return cls._annotation(annotation.duration_sec, [*retained, *owned])
 
-    async def _read(
-        self, media: EvidenceStore, source_hash: str, pass_id: int, dialogue: list[dict]
-    ):
-        story, segments, references, stories = "", [], [], {}
+    async def _read(self, media: EvidenceStore, source_hash: str, dialogue: list[dict]):
+        story, segments, references = "", [], []
         index = 0
         while index < len(media.pages):
             page = media.pages[index]
             try:
                 result, reference = await self._call(
-                    media, page, source_hash, pass_id, story, dialogue
+                    media, page, source_hash, "scan", story, dialogue
                 )
             except PageNeedsSplit:
                 self._split_page(media, page, source_hash)
                 continue
-            stories[page.core_start_sec] = story
             # Keep complete candidates from the overlap too. Ownership is applied
             # to final review results, never by rejecting an entire response.
             segments.extend(s for s in result.segments if s not in segments)
             references.append(reference)
             story = result.story_so_far
             index += 1
-        return segments, references, stories
+        return segments, references
 
     def _plan_path(self, source_hash):
         return self.settings.root / "pages" / f"{source_hash}-{self.settings.page_sec:g}.json"
@@ -301,7 +290,12 @@ class Labeler:
         )
 
     async def _call(self, media, page, source_hash, pass_id, story, dialogue, notes=None):
-        for attempt in range(1, self.settings.request_attempts + 1):
+        attempt = invalid_responses = 0
+        while True:
+            attempt += 1
+            delay = min(2**attempt, MAX_RETRY_DELAY_SEC)
+            transient = False
+            transient_error = None
             try:
                 return await self._call_once(
                     media, page, source_hash, pass_id, story, dialogue, notes, attempt
@@ -313,19 +307,50 @@ class Labeler:
                     raise PageNeedsSplit("网关拒绝过大的图片请求") from error
                 if error.status_code not in {408, 409, 429} and error.status_code < 500:
                     raise
-                if attempt == self.settings.request_attempts:
-                    raise
                 reason = f"HTTP {error.status_code}"
-            except (OpenAIError, httpx.TransportError, TimeoutError, ValueError) as error:
-                reason = type(error).__name__
-                if attempt == self.settings.request_attempts:
+                delay = self._retry_delay(error, delay)
+                transient = True
+                transient_error = error
+            except ValueError as error:
+                invalid_responses += 1
+                if invalid_responses >= self.settings.response_attempts:
                     raise
-            delay = min(2**attempt, 30)
+                reason = type(error).__name__
+            except (OpenAIError, httpx.TransportError) as error:
+                reason = type(error).__name__
+                transient = True
+                transient_error = error
+            if (
+                self.yield_transient_pages
+                and transient
+                and attempt >= TRANSIENT_ATTEMPTS_BEFORE_DEFER
+            ):
+                raise DeferredPage(
+                    f"{reason} 连续 {attempt} 次；暂缓当前视频以继续其他任务"
+                ) from transient_error
             print(
-                f"  {reason}，{delay} 秒后重试 {attempt + 1}/{self.settings.request_attempts}",
+                f"  {reason}，{delay:g} 秒后重试，第 {attempt + 1} 次请求",
                 flush=True,
             )
             await asyncio.sleep(delay)
+
+    @staticmethod
+    def _retry_delay(error: APIStatusError, default: float) -> float:
+        value = error.response.headers.get("retry-after")
+        if value is None and isinstance(error.body, dict):
+            value = error.body.get("retry_after")
+        if value is None:
+            return default
+        try:
+            try:
+                requested = float(value)
+            except ValueError:
+                requested = parsedate_to_datetime(value).timestamp() - time.time()
+        except (TypeError, ValueError, OverflowError):
+            return default
+        if not math.isfinite(requested):
+            return default
+        return min(MAX_RETRY_DELAY_SEC, max(default, requested))
 
     async def _call_once(self, media, page, source_hash, pass_id, story, dialogue, notes, attempt):
         margin = (
@@ -346,8 +371,7 @@ class Labeler:
         frames = await asyncio.to_thread(media.frames, times, width=768)
         read_start = min(read_start, frames[0]["timestamp_sec"])
         context = {
-            "负责范围": [page.core_start_sec, page.core_end_sec],
-            "前后文范围": [read_start, read_end],
+            "观看范围": [read_start, read_end],
             "原片时长": media.video_info.duration_sec,
             "原片有音轨": media.video_info.has_audio,
             "之前的剧情": story,
@@ -356,7 +380,7 @@ class Labeler:
             ],
         }
         if notes is not None:
-            context["待核对意见"] = notes
+            context["候选位置"] = notes
         prompt = self._prompt(review=notes is not None)
         sizes = [Path(f["path"]).stat().st_size for f in frames]
         if sum(4 * ((size + 2) // 3) for size in sizes) + 100_000 >= MAX_REQUEST_BYTES:
@@ -402,7 +426,7 @@ class Labeler:
             ):
                 raise PageNeedsSplit("图片请求过大")
             started = time.monotonic()
-            stage = "重点复核" if notes is not None else f"独立观看 {pass_id}/2"
+            stage = "最终复核" if notes is not None else "候选观看"
             print(
                 f"  [{source_hash[:8]}] {stage}：{read_start:.1f}–{read_end:.1f} 秒，"
                 f"{len(frames)} 帧",
@@ -410,7 +434,7 @@ class Labeler:
             )
             try:
                 result = await self._response(prompt, parts)
-            except (OpenAIError, httpx.TransportError, ValueError, TimeoutError) as error:
+            except (OpenAIError, httpx.TransportError, ValueError) as error:
                 failure = self.settings.root / "failures" / f"{request_id}-{time.time_ns()}.json"
                 write_json(
                     failure,
@@ -455,17 +479,22 @@ class Labeler:
                 "video": str(media.video_info.path),
                 "frames": frames,
             }
+            output_text = None
             try:
+                try:
+                    output_text = result.output_text
+                except (AttributeError, TypeError) as error:
+                    raise ValueError("模型响应缺少有效的输出文本") from error
                 if result.status != "completed":
                     raise ValueError(
                         f"视频标注未完成：{result.status} {record['incomplete_details']}"
                     )
-                response = PageLabels.model_validate_json(result.output_text)
+                response = PageLabels.model_validate_json(output_text)
                 self._validate_page(response, read_start, read_end, media.video_info.duration_sec)
                 if notes is not None:
                     self._validate_review(response, media.video_info.duration_sec)
             except ValueError:
-                record["output_text"] = result.output_text
+                record["output_text"] = output_text
                 failure = self.settings.root / "failures" / f"{request_id}-{time.time_ns()}.json"
                 write_json(failure, record)
                 raise
@@ -486,8 +515,8 @@ class Labeler:
 
     @staticmethod
     def _annotation(duration, segments):
-        # A verified highlight includes its necessary context; background labels
-        # from neighboring pages must not turn that context into negative targets.
+        # A verified highlight owns its full source range; overlapping background
+        # labels must not turn it into negative training targets.
         positive = [s for s in segments if s.kind == "positive"]
         clean = list(positive)
         for kind in ("uncertain", "negative"):
@@ -528,10 +557,11 @@ async def _run(store, settings, limit, split, retry_failed, video_ids):
         video = store.get(video_id)
         if split is not None and video["split"] != split:
             raise ValueError(f"{video_id} 不属于 {split} 组")
-    completed = failed = gateway_failures = submitted = 0
+    completed = failed = submitted = 0
 
     async def produce(video):
         labeler = Labeler(settings)
+        labeler.yield_transient_pages = True
         try:
             return await labeler.label(video)
         finally:
@@ -572,7 +602,6 @@ async def _run(store, settings, limit, split, retry_failed, video_ids):
                             expected_label_id=video["label_id"],
                         )
                         completed += 1
-                        gateway_failures = 0
                         positive_sec = sum(
                             s.end_sec - s.start_sec
                             for s in annotation.segments
@@ -582,6 +611,14 @@ async def _run(store, settings, limit, split, retry_failed, video_ids):
                             f"已保存 {video['video_id']}：{len(annotation.segments)} 段，"
                             f"高光覆盖 {positive_sec / annotation.duration_sec:.1%}，"
                             f"未确认 {provenance['unresolved_segments']} 段",
+                            flush=True,
+                        )
+                    except DeferredPage as error:
+                        store.defer(video["video_id"], str(error))
+                        submitted -= 1
+                        print(
+                            f"暂缓 {video['video_id']}：{error}；已完成页面会复用，"
+                            "先继续其他视频。",
                             flush=True,
                         )
                     except (
@@ -606,14 +643,6 @@ async def _run(store, settings, limit, split, retry_failed, video_ids):
                             404,
                         }:
                             print("网关鉴权或模型配置有误，停止领取新视频。", flush=True)
-                            stopped = True
-                        gateway_failures = (
-                            gateway_failures + 1
-                            if isinstance(error, (OpenAIError, httpx.TransportError, TimeoutError))
-                            else 0
-                        )
-                        if gateway_failures >= 3:
-                            print("连续 3 条视频网关失败，停止领取新视频。", flush=True)
                             stopped = True
         finally:
             for task in pending:

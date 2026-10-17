@@ -24,7 +24,7 @@ class Span(BaseModel):
 
 class Label(Span):
     kind: Literal["positive", "negative", "uncertain"] = Field(
-        description="positive=值得单独看的精彩瞬间；negative=已看清的普通剧情；uncertain=证据不足"
+        description="positive=精彩核心实际发生的范围；negative=已看清的普通剧情；uncertain=证据不足"
     )
     reason: str = Field(min_length=1, description="一句说明具体发生了什么、为什么这样判断")
 
@@ -54,14 +54,10 @@ class Annotation(BaseModel):
         return self
 
 
-class Prediction(Span):
-    score: float = Field(ge=0, le=1)
-
-
 class VideoPredictions(BaseModel):
     model_config = ConfigDict(extra="forbid")
     video_id: str
-    segments: list[Prediction]
+    segments: list[Span]
 
 
 def overlap(a: Span, b: Span) -> float:
