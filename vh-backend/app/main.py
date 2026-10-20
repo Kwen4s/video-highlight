@@ -27,6 +27,7 @@ from .models import (
     JobResponse,
     parse_detection_result,
 )
+from .progress import public_progress, read_object, read_task_specification, workflow_snapshot
 from .repository import JobRepository
 
 JOB_ID_PATTERN = re.compile(r"^job_[A-Za-z0-9_-]{8,48}$")
@@ -129,9 +130,13 @@ def create_app(
 
     def serialize(row):
         response = serialize_job(row)
-        path = app_settings.jobs_dir / row["job_id"] / "progress.json"
-        if path.is_file():
-            response.progress = json.loads(path.read_text())
+        root = app_settings.jobs_dir / row["job_id"]
+        path = root / "progress.json"
+        progress = read_object(path)
+        if progress is not None:
+            response.workflow = workflow_snapshot(progress, path)
+            response.progress = public_progress(progress, response.workflow)
+        response.task = read_task_specification(root / "task.json")
         return response
 
     @application.get("/health")

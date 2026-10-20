@@ -124,4 +124,12 @@ uv run ruff check app tests
 uv run pytest -q
 ```
 
-上传表单支持 `options` JSON（提取目标、时长、数量、重叠约束）及可选 `subtitles` 文件。`GET/HEAD /api/jobs/{job_id}/clips/{highlight_id}` 返回已复核媒体；手工修改边界后不再提供旧媒体。任务响应 `progress` 来自 Agent 检查点进度。
+上传表单支持 `options` JSON（提取目标、时长、数量、重叠约束）及可选 `subtitles` 文件。`GET/HEAD /api/jobs/{job_id}/clips/{highlight_id}` 返回已复核媒体；手工修改边界后不再提供旧媒体。
+
+任务列表、详情及其他任务响应新增两个只读字段，均从既有输入与进度契约投影，不改变 Agent 调用、排队、恢复或推理流程：
+
+- `task`：原始提取目标、最短与最长片段、输出数量、总时长、重叠约束和 `subtitle_provided`。字幕仅返回是否提供，不返回物理路径；没有输入记录的历史任务返回 `null`。
+- `workflow`：`schema_version=1.0` 的处理快照，包含更新时间、原片时长、检查区间数、下一原片范围、事件量、候选量、就绪成片数、文字读取行数、模型调用次数和分析轮数。
+- `workflow.capabilities`：`transcript`（字幕 / ASR 检索）、`read_text`（OCR）、`read_frames`、`semantic_search`、`local_proposals`。`true` 只确认能力可用，不代表执行中或已经执行；`false` 表示本任务未启用，`null` 表示未回传。当前能力按问题调用，不重建旧版固定并行预处理阶段。
+
+`progress` 保留公开覆盖率、待处理数量、计数和能力字段，通过白名单排除内部事件 ID、下一步控制指令及任意未声明字段。未回传值保持缺失或 `null`，不补成 0。进度文件缺失或暂时不完整时，任务状态与结果仍可正常查询。前端不读取 trace、日志、模型配置或缓存文件。更新后端后，已有任务也可从已保存的公开进度获得快照；无需重新分析。

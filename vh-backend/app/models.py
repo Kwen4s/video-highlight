@@ -75,6 +75,53 @@ def parse_detection_result(value: str | dict[str, Any]) -> DetectionResult:
     return DetectionResult.model_validate(data)
 
 
+class DetectionOptions(BaseModel):
+    model_config = {"extra": "forbid", "allow_inf_nan": False}
+    instruction: str = Field(
+        default="挑选有看点、能独立看懂的短剧片段，保留必要铺垫和反应，剪辑简洁流畅。", min_length=1
+    )
+    max_highlights: int | None = Field(default=12, gt=0)
+    min_clip_sec: float = Field(default=3, gt=0)
+    max_clip_sec: float = Field(default=24, gt=0)
+    total_duration_sec: float | None = Field(default=None, gt=0)
+    allow_overlap: bool = True
+
+
+class TaskSpecification(DetectionOptions):
+    subtitle_provided: bool
+
+
+class SourceRange(BaseModel):
+    start_sec: float = Field(ge=0)
+    end_sec: float = Field(gt=0)
+
+
+class WorkflowCapabilities(BaseModel):
+    transcript: bool | None = None
+    semantic_search: bool | None = None
+    read_frames: bool | None = None
+    read_text: bool | None = None
+    local_proposals: bool | None = None
+
+
+class WorkflowSnapshot(BaseModel):
+    """Public progress facts; availability never implies tool execution."""
+
+    schema_version: Literal["1.0"] = "1.0"
+    updated_at: str | None = None
+    duration_sec: float | None = Field(default=None, gt=0)
+    completed_page_count: int | None = Field(default=None, ge=0)
+    page_count: int | None = Field(default=None, ge=0)
+    next_scan_range: SourceRange | None = None
+    event_count: int | None = Field(default=None, ge=0)
+    candidate_count: int | None = Field(default=None, ge=0)
+    ready_clip_count: int | None = Field(default=None, ge=0)
+    transcript_rows_read: int | None = Field(default=None, ge=0)
+    model_calls: int | None = Field(default=None, ge=0)
+    turn: int | None = Field(default=None, ge=0)
+    capabilities: WorkflowCapabilities = Field(default_factory=WorkflowCapabilities)
+
+
 class JobResponse(BaseModel):
     job_id: str
     status: JobStatus
@@ -87,6 +134,8 @@ class JobResponse(BaseModel):
     revision: int = 0
     attempt: int = Field(default=0, ge=0)
     progress: dict | None = None
+    workflow: WorkflowSnapshot | None = None
+    task: TaskSpecification | None = None
     source_url: str | None = None
     error_message: str | None = None
     result: DetectionResult | None = None
@@ -113,15 +162,3 @@ class HighlightRangeEditRequest(BaseModel):
     start_sec: float = Field(ge=0)
     end_sec: float = Field(gt=0)
     revision: int = Field(ge=0)
-
-
-class DetectionOptions(BaseModel):
-    model_config = {"extra": "forbid", "allow_inf_nan": False}
-    instruction: str = Field(
-        default="挑选有看点、能独立看懂的短剧片段，保留必要铺垫和反应，剪辑简洁流畅。", min_length=1
-    )
-    max_highlights: int | None = Field(default=12, gt=0)
-    min_clip_sec: float = Field(default=3, gt=0)
-    max_clip_sec: float = Field(default=24, gt=0)
-    total_duration_sec: float | None = Field(default=None, gt=0)
-    allow_overlap: bool = True
