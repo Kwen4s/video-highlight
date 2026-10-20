@@ -98,6 +98,90 @@ def test_upload_returns_public_media_url_without_exposing_server_path(tmp_path) 
         ).read_bytes() == b"video-bytes"
 
 
+def test_workflow_details_publish_counts_and_availability_without_agent_internals(tmp_path):
+    client, settings, repository, runner = make_client(tmp_path)
+    with client:
+        create_completed_job(settings, repository)
+        root = settings.jobs_dir / "job_abcdefgh"
+        (root / "task.json").write_text(
+            json.dumps(
+                {
+                    "instruction": "提取冲突反转",
+                    "max_highlights": None,
+                    "max_clip_sec": 45,
+                    "subtitle_path": str(root / "source" / "subtitles.srt"),
+                }
+            ),
+            encoding="utf-8",
+        )
+        (root / "progress.json").write_text(
+            json.dumps(
+                {
+                    **sample_result()["analysis"],
+                    "duration_sec": 60,
+                    "completed_page_count": 1,
+                    "page_count": 2,
+                    "event_count": 4,
+                    "candidate_count": 3,
+                    "ready_event_ids": ["private_event"],
+                    "transcript_rows_read": 12,
+                    "turn": 3,
+                    "capabilities": {"transcript": True, "read_text": False, "private": True},
+                    "next_page": {
+                        "core_start_sec": 30,
+                        "core_end_sec": 60,
+                        "path": "/private/video",
+                    },
+                    "next_action": "private controller instruction",
+                    "trace": "/private/trace.jsonl",
+                }
+            ),
+            encoding="utf-8",
+        )
+        detail = client.get("/api/jobs/job_abcdefgh").json()
+        listed = client.get("/api/jobs").json()[0]
+        assert detail["workflow"] == listed["workflow"]
+        assert detail["workflow"]["next_scan_range"] == {"start_sec": 30, "end_sec": 60}
+        assert detail["workflow"]["ready_clip_count"] == 1
+        assert detail["workflow"]["capabilities"]["transcript"] is True
+        assert detail["workflow"]["capabilities"]["read_text"] is False
+        assert detail["workflow"]["capabilities"]["semantic_search"] is None
+        assert detail["task"]["subtitle_provided"] is True
+        assert detail["task"]["max_highlights"] is None
+        assert detail["task"]["max_clip_sec"] == 45
+        assert "private" not in json.dumps(detail)
+        assert "subtitle_path" not in json.dumps(detail)
+        assert runner.enqueued == []
+        assert repository.get("job_abcdefgh")["status"] == "completed"
+
+
+def test_unavailable_or_incomplete_progress_does_not_break_task_queries(tmp_path):
+    client, settings, repository, _runner = make_client(tmp_path)
+    with client:
+        create_completed_job(settings, repository)
+        root = settings.jobs_dir / "job_abcdefgh"
+        (root / "progress.json").write_text('{"scan_coverage":', encoding="utf-8")
+        body = client.get("/api/jobs/job_abcdefgh").json()
+        assert body["status"] == "completed"
+        assert body["progress"] is None
+        assert body["workflow"] is None
+        assert body["task"] is None
+        (root / "progress.json").write_text(
+            json.dumps(
+                {
+                    "duration_sec": float("nan"),
+                    "page_count": -1,
+                    "capabilities": {"read_text": "false"},
+                }
+            ),
+            encoding="utf-8",
+        )
+        body = client.get("/api/jobs/job_abcdefgh").json()
+        assert body["workflow"]["duration_sec"] is None
+        assert body["workflow"]["page_count"] is None
+        assert body["workflow"]["capabilities"]["read_text"] is None
+
+
 def test_cors_allows_electron_origins_and_message_preflight(tmp_path) -> None:
     client, _settings, _repository, _runner = make_client(tmp_path)
 

@@ -1,11 +1,12 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type { DragEvent, PointerEvent as ReactPointerEvent, ReactNode, SVGProps } from 'react'
+import { DEFAULT_DETECTION_OPTIONS, analysisProgress, canResume, coveragePercent, isReviewReady, matchSubtitles, validateDetectionOptions, workflowStates } from './workflow'
+import type { AnalysisProgress, DetectionOptions, TaskSpecification, WorkflowSnapshot } from './workflow'
+import { WORKFLOW_STAGES, workflowDetailGroups, workflowReceipts } from './workflow-details'
 
 const API_BASE = (import.meta.env.VITE_API_BASE_URL?.trim() || 'http://122.193.22.119:8777').replace(/\/+$/, '')
 const API_ADDRESS = API_BASE.replace(/^https?:\/\//, '')
 const VIDEO_EXTENSIONS = ['.mp4', '.mov', '.mkv', '.webm', '.avi', '.m4v']
-
-type DetectionOptions = { instruction: string; max_clip_sec: number; max_highlights: number; allow_overlap: boolean }
 
 type View = 'workspace' | 'library' | 'ads'
 type Theme = 'dark' | 'light'
@@ -35,15 +36,6 @@ type DetectionResult = {
   highlights: Highlight[]
 }
 
-type AnalysisProgress = {
-  scan_coverage: number
-  pending_event_count: number
-  pending_observation_count: number
-  pending_proposal_count: number
-  pending_review_count: number
-  model_calls: number
-}
-
 type Job = {
   job_id: string
   status: JobStatus
@@ -56,6 +48,8 @@ type Job = {
   revision: number
   attempt: number
   progress: AnalysisProgress | null
+  workflow?: WorkflowSnapshot | null
+  task?: TaskSpecification | null
   source_url: string | null
   error_message: string | null
   result: DetectionResult | null
@@ -178,21 +172,47 @@ type EditMessageStreamEvent =
   | { type: 'error'; status: number; detail: string }
 
 type UploadState = {
-  phase: 'idle' | 'uploading'
+  phase: 'idle' | 'waiting' | 'uploading' | 'confirming' | 'failed' | 'cancelled'
   progress: number
   fileName?: string
+  jobId?: string
+  loaded?: number
+  total?: number
+  bytesPerSecond?: number
+  error?: string
+  task?: TaskSpecification
+  language?: 'zh' | 'en'
 }
 
-type UploadQueueStatus = 'waiting' | 'uploading' | 'submitted' | 'failed'
-
-type UploadQueueItem = {
-  queue_id: string
+type PendingUpload = {
   options: DetectionOptions
+  language: 'zh' | 'en'
+  subtitles: File | null
   job_id: string
   file: File
-  status: UploadQueueStatus
-  progress: number
-  error?: string
+}
+
+type IntakeTask = PendingUpload & {
+  upload: UploadState
+  created_at: string
+}
+
+type ArchiveRecord = Job | IntakeTask
+
+function isIntakeTask(record: ArchiveRecord): record is IntakeTask {
+  return 'upload' in record
+}
+
+function uploadStatusLabel(upload: UploadState) {
+  if (upload.phase === 'waiting') return '等待上传'
+  if (upload.phase === 'confirming') return '等待服务端确认'
+  if (upload.phase === 'failed') return '上传失败'
+  if (upload.phase === 'cancelled') return '上传已取消'
+  return `上传 ${upload.progress}%`
+}
+
+function isIntakeActive(task: IntakeTask) {
+  return ['waiting', 'uploading', 'confirming'].includes(task.upload.phase)
 }
 
 type IconName =
@@ -317,35 +337,46 @@ async function requestMessageStream(
 function uploadVideo(
   jobId: string,
   file: File,
-  onProgress: (value: number) => void,
+  onProgress: (value: Partial<UploadState>) => void,
   register: (request: XMLHttpRequest | null) => void,
   options: DetectionOptions,
+  language: 'zh' | 'en',
+  subtitles: File | null,
 ): Promise<RemoteJob> {
   return new Promise((resolve, reject) => {
     const request = new XMLHttpRequest()
     const form = new FormData()
     form.append('job_id', jobId)
     form.append('options', JSON.stringify(options))
-    form.append('language', 'zh')
+    form.append('language', language)
+    if (subtitles) form.append('subtitles', subtitles, subtitles.name)
     form.append('file', file, file.name)
     register(request)
     request.open('POST', `${API_BASE}/api/jobs`)
     request.responseType = 'json'
+    const startedAt = performance.now()
     request.upload.onprogress = (event) => {
-      if (event.lengthComputable) onProgress(Math.round((event.loaded / event.total) * 100))
+      if (event.lengthComputable) onProgress({
+        progress: Math.min(99, Math.floor((event.loaded / event.total) * 100)),
+        loaded: event.loaded,
+        total: event.total,
+        bytesPerSecond: event.loaded / Math.max(.001, (performance.now() - startedAt) / 1000),
+      })
     }
+    request.upload.onload = () => onProgress({ phase: 'confirming', progress: 100 })
     request.onload = () => {
       register(null)
       if (request.status >= 200 && request.status < 300) resolve(request.response as RemoteJob)
       else reject(new Error(request.response?.detail || `上传失败（${request.status}）`))
     }
     request.onerror = () => { register(null); reject(new Error(`无法连接后端服务（${API_ADDRESS}），请检查 API 地址、网络和后端状态`)) }
-    request.onabort = () => { register(null); reject(new Error('上传已取消')) }
+    request.onabort = () => { register(null); reject(new DOMException('上传已取消', 'AbortError')) }
     request.send(form)
   })
 }
 
 function mergeRemoteJob(local: Job, remote: RemoteJob): Job {
+  if (remote.revision < local.revision) return local
   const currentHighlights = new Map(
     (local.result?.highlights || []).map((item) => [item.highlight_id, item]),
   )
@@ -369,6 +400,7 @@ function mergeRemoteJob(local: Job, remote: RemoteJob): Job {
     ...local,
     ...remote,
     attempt: remote.attempt,
+    task: remote.task || local.task,
     result,
     source_url: resolveSourceUrl(remote.source_url),
     messages: local.messages,
@@ -411,7 +443,7 @@ const reviewStatusCopy: Record<ReviewStatus, string> = {
 }
 
 function jobStatusLabel(job: Job) {
-  return job.status === "completed" && job.result?.completion === "partial" ? "分析未完成" : statusCopy[job.status]
+  return job.status === 'completed' && job.result?.completion === 'partial' ? '分析未完成' : statusCopy[job.status]
 }
 
 function attemptLabel(job: Job) {
@@ -437,7 +469,7 @@ function WindowChrome({ theme, onToggleTheme }: { theme: Theme; onToggleTheme: (
   </div>
 }
 
-function Sidebar({ view, onView, online, jobs }: { view: View; onView: (view: View) => void; online: boolean; jobs: Job[] }) {
+function Sidebar({ view, onView, online, jobs, intakeCount }: { view: View; onView: (view: View) => void; online: boolean; jobs: Job[]; intakeCount: number }) {
   const completed = jobs.filter((job) => job.status === 'completed' && job.result?.completion === 'complete').length
   const accepted = jobs.reduce((total, item) => total + (item.result?.highlights.filter((highlight) => highlight.review_status === 'accepted').length || 0), 0)
   return <aside className="sidebar">
@@ -448,7 +480,7 @@ function Sidebar({ view, onView, online, jobs }: { view: View; onView: (view: Vi
       <button className={view === 'library' ? 'active' : ''} onClick={() => onView('library')}><Icon name="library" /><span>任务归档</span><b>02</b></button>
       <button className={view === 'ads' ? 'active' : ''} onClick={() => onView('ads')}><Icon name="ad" /><span>广告编排</span><b>03</b></button>
     </nav>
-    <div className="sidebar-metric"><span>服务端任务</span><strong>{String(jobs.length).padStart(2, '0')}</strong><small>{completed} 个已完成 · {accepted} 段已采用</small></div>
+    <div className="sidebar-metric"><span>全部任务</span><strong>{String(jobs.length + intakeCount).padStart(2, '0')}</strong><small>{completed} 个已完成 · {accepted} 段已采用</small></div>
     <div className={`service-state ${online ? 'online' : ''}`}><i /><div><b>{online ? '后端服务在线' : '后端服务离线'}</b><span>API · {API_ADDRESS}</span></div></div>
   </aside>
 }
@@ -474,62 +506,98 @@ function UploadDropzone({ onFiles, compact = false }: { onFiles: (files: File[])
     <div className="drop-icon"><Icon name="upload" size={27} /></div>
     <p className="overline">NEW SOURCE / 01</p>
     <h2>把一组原片放到这里</h2>
-    <p>可以一次选择多个视频；桌面端依次上传，后端按单 GPU 队列完成分析。</p>
+    <p>可以一次选择多个视频，按当前提取要求依次上传；在任务归档中查看分析进度与结果。</p>
     <button className="button primary" onClick={() => inputRef.current?.click()}><Icon name="film" size={17} />选择一个或多个视频</button>
-    <span>MP4 · MOV · MKV · WEBM · AVI · 最大 20 GB</span>
+    <span>MP4 · MOV · MKV · WEBM · AVI · M4V · 最大 20 GB</span>
   </div>
 }
 
-function UploadQueuePanel({ queue, jobs, onClear }: { queue: UploadQueueItem[]; jobs: Job[]; onClear: () => void }) {
-  if (!queue.length) return null
-  const jobsById = new Map(jobs.map((item) => [item.job_id, item]))
-  const activeCount = queue.filter((item) => {
-    const live = jobsById.get(item.job_id)
-    return item.status === 'waiting' || item.status === 'uploading' || Boolean(live && ['queued', 'processing'].includes(live.status))
-  }).length
-  return <section className="upload-queue-panel">
-    <header>
-      <div><p className="overline">BATCH INTAKE</p><h2>批量任务队列</h2></div>
-      <div><span><b>{activeCount}</b> 个进行中</span><button type="button" onClick={onClear}>清除已结束</button></div>
-    </header>
-    <div className="upload-queue-list">
-      {queue.map((item, index) => {
-        const live = jobsById.get(item.job_id)
-        const attempt = live ? attemptLabel(live) : null
-        const state = live?.status || item.status
-        const label = item.status === 'waiting'
-          ? '等待上传'
-          : item.status === 'uploading'
-            ? `上传 ${item.progress}%`
-            : item.status === 'failed'
-              ? '上传失败'
-              : live
-                ? jobStatusLabel(live)
-                : '已提交'
-        const detail = item.error || live?.error_message || (attempt ? `${attempt}执行` : '等待后端调度')
-        const progress = item.status === 'uploading' ? item.progress : item.status === 'waiting' ? 0 : 100
-        return <article className={`upload-queue-row ${state}`} key={item.queue_id}>
-          <span>{String(index + 1).padStart(2, '0')}</span>
-          <div className="queue-file"><b title={item.file.name}>{item.file.name}</b><small>{formatBytes(item.file.size)} · {item.job_id}</small></div>
-          <div className="queue-state"><b><i />{label}</b><small>{detail}</small></div>
-          <div className="queue-progress"><i><span style={{ width: `${progress}%` }} /></i><small>{attempt || (item.status === 'uploading' ? `${item.progress}%` : '—')}</small></div>
-        </article>
-      })}
+function TaskOptions({ options, language, subtitles, onChange, onLanguage, onSubtitles }: {
+  options: DetectionOptions
+  language: 'zh' | 'en'
+  subtitles: File[]
+  onChange: (options: DetectionOptions) => void
+  onLanguage: (language: 'zh' | 'en') => void
+  onSubtitles: (files: File[]) => void
+}) {
+  const subtitleInput = useRef<HTMLInputElement>(null)
+  return <details className="task-options">
+    <summary><span className="task-options-mark"><Icon name="spark" size={17} /></span><span><b>新任务要求</b><small>{options.min_clip_sec || '—'}–{options.max_clip_sec || '—'} 秒 / 段 · {options.max_highlights === null ? '数量不限' : `最多 ${options.max_highlights || '—'} 段`}{subtitles.length ? ` · ${subtitles.length} 份字幕` : ''}</small></span><em>调整提取目标与素材</em></summary>
+    <div className="task-options-body">
+      <label className="task-instruction"><span>提取目标</span><textarea value={options.instruction} onChange={(event) => onChange({ ...options, instruction: event.target.value })} placeholder="描述你想保留的剧情、事件或观看体验…" /><small>应用于下一批导入的视频。</small></label>
+      <div className="task-option-fields">
+        <label><span>最短片段 / 秒</span><input type="number" min="0.05" step="0.05" value={options.min_clip_sec || ''} onChange={(event) => onChange({ ...options, min_clip_sec: Number(event.target.value) })} /></label>
+        <label><span>最大片段 / 秒</span><input type="number" min="0.05" step="0.05" value={options.max_clip_sec || ''} onChange={(event) => onChange({ ...options, max_clip_sec: Number(event.target.value) })} /></label>
+        <label><span>最多输出 / 段</span><input type="number" min="1" step="1" placeholder="不限" value={options.max_highlights ?? ''} onChange={(event) => onChange({ ...options, max_highlights: event.target.value === '' ? null : Number(event.target.value) })} /></label>
+        <label><span>总时长上限 / 秒</span><input type="number" min="0.05" step="0.05" placeholder="不限" value={options.total_duration_sec ?? ''} onChange={(event) => onChange({ ...options, total_duration_sec: event.target.value === '' ? null : Number(event.target.value) })} /></label>
+        <label><span>视频语言</span><select value={language} onChange={(event) => onLanguage(event.target.value as 'zh' | 'en')}><option value="zh">中文</option><option value="en">英文</option></select></label>
+      </div>
+      <div className="task-options-footer"><label className="overlap-option"><input type="checkbox" checked={options.allow_overlap} onChange={(event) => onChange({ ...options, allow_overlap: event.target.checked })} /><span>允许不同事件共享上下文</span></label><button type="button" onClick={() => onChange({ ...DEFAULT_DETECTION_OPTIONS })}>恢复默认要求</button></div>
+      <section className="subtitle-intake" aria-label="配套字幕">
+        <div><b>配套字幕 <small>可选</small></b><p>批量导入按视频同名匹配；单个视频可搭配一份任意名称的字幕。</p></div>
+        <button type="button" onClick={() => subtitleInput.current?.click()}><Icon name="upload" size={14} />添加字幕</button>
+        <input ref={subtitleInput} type="file" hidden multiple accept=".srt,.vtt,.ass,.ssa,.sub" onChange={(event) => { onSubtitles([...subtitles, ...Array.from(event.target.files || [])]); event.target.value = '' }} />
+        {subtitles.length > 0 && <ul>{subtitles.map((file, index) => <li key={`${file.name}-${index}`}><span title={file.name}>{file.name}</span><button type="button" aria-label={`移除字幕 ${file.name}`} onClick={() => onSubtitles(subtitles.filter((_, itemIndex) => itemIndex !== index))}><Icon name="x" size={13} /></button></li>)}</ul>}
+      </section>
     </div>
-  </section>
+  </details>
 }
 
-function ProgressPanel({ upload, job, onCancel }: { upload: UploadState; job: Job | null; onCancel: () => void }) {
-  const progress = job?.progress || job?.result?.analysis
+function ProgressPanel({ upload, job, onCancel, onUploadRetry, resumeBusy, onResume }: { upload: UploadState; job: Job | null; onCancel: () => void; onUploadRetry: () => void; resumeBusy: boolean; onResume: () => void }) {
+  const progress = analysisProgress(job)
   const uploading = upload.phase === 'uploading'
-  return <section className="progress-panel">
-    <h2>{uploading ? '上传视频' : job?.result?.completion === 'complete' ? '分析完成' : '视频分析'}</h2>
-    {uploading ? <><p>已上传 {upload.progress}%</p><button onClick={onCancel}>取消上传</button></> : <>
-      <p>{job?.status === 'queued' ? '等待执行' : `全片检查 ${Math.round((progress?.scan_coverage || 0) * 100)}%`}</p>
-      <progress max={1} value={progress?.scan_coverage || 0} />
-      {progress && <p>待处理事件 {progress.pending_event_count} · 未确认本地线索 {progress.pending_proposal_count} · 待核验成片 {progress.pending_review_count}</p>}
-      <p>Agent 根据视频证据选择补查位置，完成全部事件处置和成片复核后交付结果。</p>
-    </>}
+  const waitingUpload = upload.phase === 'waiting'
+  const confirming = upload.phase === 'confirming'
+  const intakeFailed = upload.phase === 'failed' || upload.phase === 'cancelled'
+  const intakeActive = upload.phase !== 'idle'
+  const coverage = coveragePercent(progress)
+  const states = workflowStates(job, intakeActive)
+  if (intakeFailed) states[0] = 'failed'
+  const currentStage = Math.max(0, states.findIndex((state) => state === 'current' || state === 'failed'))
+  const [stageIndex, setStageIndex] = useState<number | null>(null)
+  useEffect(() => setStageIndex(null), [job?.job_id, job?.status, upload.jobId, intakeActive])
+  const activeIndex = stageIndex ?? currentStage
+  const stage = WORKFLOW_STAGES[activeIndex]
+  const state = states[activeIndex]
+  const [groupId, setGroupId] = useState<string | null>(null)
+  useEffect(() => setGroupId(null), [activeIndex, job?.job_id, upload.jobId])
+  const stageGroups = WORKFLOW_STAGES.map((_, index) => workflowDetailGroups(index, job, upload))
+  const groups = stageGroups[activeIndex]
+  const group = groups.find((item) => item.id === groupId) || groups[0]
+  const detailCount = stageGroups.reduce((total, items) => total + items.reduce((sum, item) => sum + item.nodes.length, 0), 0)
+  const snapshots = workflowReceipts(job)
+  const paused = intakeFailed || (!intakeActive && (job?.status === 'failed' || (job?.status === 'completed' && job.result?.completion === 'partial')))
+  const label = intakeFailed ? uploadStatusLabel(upload) : confirming ? '等待服务端确认' : waitingUpload ? '等待上传原片' : uploading ? '正在上传原片' : job?.status === 'queued' ? '等待分析' : paused ? '分析尚未完成' : '正在提取高光'
+  const stateLabel = (value: string) => value === 'done' ? '已完成' : value === 'current' ? waitingUpload ? '等待上传' : '进行中' : value === 'failed' ? '未完成' : '等待'
+  const counts = [
+    ['待整理观察', progress?.pending_observation_count],
+    ['待确认线索', progress?.pending_proposal_count],
+    ['待核验事件', progress?.pending_event_count],
+    ['待复核片段', progress?.pending_review_count],
+  ] as const
+  const receipts = [
+    ['当前任务', intakeActive ? upload.fileName : job?.original_name],
+    ['任务状态', intakeActive ? uploadStatusLabel(upload) : job ? jobStatusLabel(job) : '等待上传'],
+    ['任务编号', intakeActive ? upload.jobId : job?.job_id],
+    ['执行次数', intakeActive ? '—' : job ? `${job.attempt} 次` : '—'],
+    ['最近更新', confirming ? '传输完成，等待接入回执' : uploading ? '正在传输' : waitingUpload ? '等待传输' : job ? formatDate(job.workflow?.updated_at || job.updated_at) : '—'],
+  ]
+  return <section className={`progress-panel public-workflow${paused ? ' paused' : ''}`}>
+    <div className="progress-heading"><div><span className={paused ? 'paused-dot' : 'pulse'} /><div><b>{label}</b><small>{intakeActive ? upload.fileName : job?.original_name}</small></div></div><div className="progress-heading-actions">{uploading ? <><span>上传 {upload.progress}%</span><button onClick={onCancel}><Icon name="x" size={15} />取消上传</button></> : <span>{confirming ? '文件传输完成' : intakeFailed ? '原片尚未接入' : waitingUpload ? '等待传输' : coverage === null ? '等待进度回传' : `全片检查 ${coverage}%`}</span>}</div></div>
+    <div className={`progress-track${!intakeActive && !paused && (coverage === null || job?.status === 'queued') ? ' indeterminate' : ''}`} role="progressbar" aria-label={intakeActive ? '上传进度' : '全片检查覆盖率'} aria-valuemin={0} aria-valuemax={100} aria-valuenow={intakeActive ? upload.progress : coverage ?? undefined}><i style={{ width: `${intakeActive ? upload.progress : coverage ?? 0}%` }} /></div>
+    {intakeFailed && <div className="analysis-resume" role="status"><div><b>原片接入未完成</b><p>{upload.error}</p><small>该记录保留在任务归档中，重新上传后继续接入。</small></div><button type="button" className="button primary" onClick={onUploadRetry}><Icon name="retry" size={16} />重新上传</button></div>}
+    {paused && job && <div className="analysis-resume" role="status"><div><b>{job.status === 'failed' ? '本次分析已中断' : '结果尚未交付'}</b><p>{job.error_message || job.result?.message || '本次分析尚未完成，可以请求继续分析。'}</p><small>{job.revision > 0 ? '已有人工编辑，当前结果无法继续分析。' : '继续分析会保留已检查内容；可否恢复由服务端检查点决定。'}</small></div><button type="button" className="button primary" disabled={resumeBusy || !canResume(job)} onClick={onResume}><Icon name="retry" size={16} />{resumeBusy ? '正在继续…' : '继续分析'}</button></div>}
+    <nav className="workflow-flow" aria-label="高光提取流程">{WORKFLOW_STAGES.map((item, index) => <button type="button" key={item.title} className={`workflow-flow-step ${states[index]}${activeIndex === index ? ' selected' : ''}`} aria-pressed={activeIndex === index} aria-controls="workflow-stage-detail" onClick={() => setStageIndex(index)}><span className="workflow-flow-node">{String(index + 1).padStart(2, '0')}</span>{index < WORKFLOW_STAGES.length - 1 && <span className="workflow-transfer" title={item.output}>{item.output}</span>}<b>{item.title}</b><small>{stateLabel(states[index])} · {stageGroups[index].reduce((total, item) => total + item.nodes.length, 0)} 项详情</small></button>)}</nav>
+    <div className="workflow-summary" aria-label="分析流程摘要">{counts.map(([title, value]) => <span key={title}><b>{intakeActive ? '—' : value ?? '—'}</b>{title}</span>)}<em><span><b>{WORKFLOW_STAGES.length} 个主节点 · {detailCount} 项详情</b><small>点击节点查看输入、输出与处理快照</small></span></em></div>
+    <div className="workflow-layout">
+      <div className="workflow-graph"><div className="workflow-section-head"><div><span>INTERACTIVE WORKFLOW</span><b>任务流程</b></div><small>当前查看 · {group.title}</small></div><article id="workflow-stage-detail" className={`workflow-stage-detail ${state}`}><header><span>{String(activeIndex + 1).padStart(2, '0')}</span><div><small>{stage.subtitle}</small><h2>{stage.title}</h2><p>{stage.description}</p></div><aside><em>{stateLabel(state)}</em></aside></header>
+        {groups.length > 1 && <nav className="workflow-detail-tabs" role="tablist" aria-label="视频分析详情">{groups.map((item) => <button type="button" role="tab" id={`workflow-tab-${item.id}`} key={item.id} aria-selected={group.id === item.id} aria-controls="workflow-group-panel" onClick={() => setGroupId(item.id)}>{item.title}<span>{item.nodes.length}</span>{item.id === 'perception' && <small>ASR / OCR</small>}</button>)}</nav>}
+        <div id="workflow-group-panel" className="workflow-stage-contents" role={groups.length > 1 ? 'tabpanel' : undefined} aria-labelledby={groups.length > 1 ? `workflow-tab-${group.id}` : undefined}>{group.nodes.map((item, index) => <section className={`workflow-detail-node ${item.state}`} key={item.title}><span>{String(activeIndex + 1).padStart(2, '0')}.{String(index + 1).padStart(2, '0')}</span><div><div className="workflow-node-heading"><h3>{item.title}</h3><em><i />{item.label}</em></div><p>{item.description}</p><strong className="workflow-node-value">{item.value}</strong></div><dl className="workflow-node-io"><div><dt>输入</dt><dd>{item.input}</dd></div><div><dt>输出</dt><dd>{item.output}</dd></div></dl></section>)}</div>
+      </article></div>
+      <aside className="event-console" aria-label="任务回执"><div className="workflow-section-head"><div><span>TASK RECEIPT</span><b>任务回执</b></div><small>{uploading ? '上传中' : '最近状态'}</small></div><ol>{receipts.map(([title, value], index) => <li className="observed" key={title}><span>{String(index + 1).padStart(2, '0')}</span><div><b>{title}</b><small>{value || '—'}</small></div></li>)}</ol><div className="workflow-section-head workflow-snapshot-head"><div><span>PROCESS SNAPSHOT</span><b>处理快照</b></div><small>最近回传</small></div><ol className="workflow-snapshot">{snapshots.map(([title, value], index) => <li key={title}><span>{String(index + 1).padStart(2, '0')}</span><div><b>{title}</b><small>{value}</small></div></li>)}</ol></aside>
+    </div>
+    <p className="workflow-disclosure">{confirming ? '文件已传输完毕，正在等待服务端写入原片并返回接入回执；任务已显示在归档中。' : uploading ? `${formatBytes(upload.loaded || 0)} / ${formatBytes(upload.total || 0)}${upload.bytesPerSecond ? ` · ${formatBytes(upload.bytesPerSecond)}/s` : ''} · 上传到 ${API_ADDRESS}；可切换页面，上传会继续。` : intakeActive ? '本次导入已显示在任务归档中，原片完整接收后开始排队分析。' : '覆盖率反映全片检查范围；完成核验并交付高光后进入人工复核。'}</p>
+    {!intakeActive && <p className="workflow-disclosure workflow-capability-note">ASR、OCR 与检索按需调用；“可调用”表示能力可用，执行状态未回传时不标记完成。</p>}
   </section>
 }
 
@@ -668,7 +736,7 @@ function Player({ job, selected, reloadToken, rangeBusy, exportBusy, exportResul
     }
   }, [selected?.highlight_id, selected?.start_sec, selected?.end_sec, source])
   return <section className="player-card">
-    <div className="player-top"><div><span>VIDEO MONITOR · {selected ? 'HIGHLIGHT' : 'SOURCE'}</span><b>{selected?.description || job.original_name}</b></div><span className="media-chip">{selected ? `${formatTime(selected.start_sec)} — ${formatTime(selected.end_sec)}` : formatBytes(job.size_bytes)}</span></div>
+    <div className="player-top"><div><span>VIDEO MONITOR · {selected ? 'HIGHLIGHT' : 'SOURCE'}</span><b>{selected?.description || job.original_name}</b></div><span className="media-chip" title={selected ? frozen ? '播放已复核的片段' : '按当前范围预览原片' : '播放完整原片'}>{selected ? `${frozen ? '已复核成片' : '原片预览'} · ${formatTime(selected.start_sec)} — ${formatTime(selected.end_sec)}` : formatBytes(job.size_bytes)}</span></div>
     <div className="video-frame">
       <div className="video-stage"><video ref={videoRef} key={source} controls preload="metadata" onLoadedMetadata={() => onPlaybackError(null)} onError={() => onPlaybackError('视频流已返回，但 Electron 无法解码。请确认视频编码为 Chromium 支持的 H.264/AAC、VP9/Opus 或 AV1。')} /></div>
       <div className="monitor-timeline" aria-label="完整原片高光时间轴">
@@ -750,7 +818,7 @@ function HighlightList({ job, selectedId, configuredIds, onSelect, onReview, onA
         </button>
         <div className="review-actions"><button className={item.review_status === 'accepted' ? 'accepted' : ''} onClick={() => onReview(item, item.review_status === 'accepted' ? 'pending' : 'accepted')}><Icon name="check" size={13} />{item.review_status === 'accepted' ? '已采用' : '采用'}</button><button className={item.review_status === 'rejected' ? 'rejected' : ''} onClick={() => onReview(item, item.review_status === 'rejected' ? 'pending' : 'rejected')}><Icon name="x" size={13} />{item.review_status === 'rejected' ? '已排除' : '排除'}</button><button className={configuredIds.has(item.highlight_id) ? 'ad-action configured' : 'ad-action'} disabled={item.review_status !== 'accepted'} title={item.review_status === 'accepted' ? '为这段高光添加片尾广告' : '先采用这段高光'} onClick={() => onAd(item)}><Icon name="ad" size={13} />{configuredIds.has(item.highlight_id) ? '已加广告' : '加广告'}</button></div>
       </article>)}
-      {!highlights.length && <div className="empty-results"><Icon name="spark" size={22} /><b>没有生成高光片段</b><p>原片仍已安全保存在任务目录中。</p></div>}
+      {!highlights.length && <div className="empty-results"><Icon name="spark" size={22} /><b>本次没有入选高光</b><p>{job.result?.message || '分析已完成，可以预览原片或调整要求后重新导入。'}</p></div>}
     </div>
   </aside>
 }
@@ -1009,10 +1077,14 @@ function AdWorkspace({ jobs, assignments, assets, onOpen, onGoReview }: { jobs: 
 
 type WorkspaceProps = {
   onResume: () => void
-
+  resumeBusy: boolean
+  options: DetectionOptions
+  language: 'zh' | 'en'
+  subtitles: File[]
+  onOptions: (options: DetectionOptions) => void
+  onLanguage: (language: 'zh' | 'en') => void
+  onSubtitles: (files: File[]) => void
   upload: UploadState
-  uploadQueue: UploadQueueItem[]
-  jobs: Job[]
   job: Job | null
   selected: Highlight | null
   error: string | null
@@ -1029,42 +1101,54 @@ type WorkspaceProps = {
   onChat: (message: string) => Promise<void>
   onRangeEdit: (item: Highlight, startSec: number, endSec: number) => Promise<void>
   onExport: (item: Highlight) => Promise<void>
-  onClearQueue: () => void
   onCancel: () => void
   onRetry: () => void
   onPlaybackError: (message: string | null) => void
 }
 
-function Workspace({ upload, uploadQueue, jobs, job, selected, error, chatBusy, rangeBusy, exportBusy, exportResult, playerReloadToken, configuredAdIds, onFiles, onSelect, onReview, onAd, onChat, onRangeEdit, onExport, onClearQueue, onCancel, onRetry, onPlaybackError, onResume }: WorkspaceProps) {
-  const busy = upload.phase !== 'idle' || job?.status === 'queued' || job?.status === 'processing'
-  const reviewing = job?.status === 'completed'
+function Workspace({ upload, job, selected, error, chatBusy, rangeBusy, exportBusy, exportResult, playerReloadToken, configuredAdIds, onFiles, onSelect, onReview, onAd, onChat, onRangeEdit, onExport, onCancel, onRetry, onPlaybackError, onResume, resumeBusy, options, language, subtitles, onOptions, onLanguage, onSubtitles }: WorkspaceProps) {
+  const reviewing = isReviewReady(job)
+  const hasTask = Boolean(job) || upload.phase !== 'idle'
   return <div className={`view workspace-view${reviewing ? ' task-review' : ''}`}>
-    {!reviewing && <header className="view-header"><div><p className="overline">VIDEO INTELLIGENCE</p><h1>高光提取</h1><p>批量导入视频，Agent 检查全片、核验事件并复核成片；中断后可继续分析。</p></div><UploadDropzone compact onFiles={onFiles} /></header>}
+    {!reviewing && <header className="view-header"><div><p className="overline">VIDEO INTELLIGENCE</p><h1>高光提取</h1><p>导入原片并设置提取目标，实时查看分析流程；所有任务同步保留在任务归档中。</p></div>{hasTask && <UploadDropzone compact onFiles={onFiles} />}</header>}
     {error && <div className="error-banner"><span><Icon name="close" size={16} /></span><div><b>流程没有完成</b><p>{error}</p></div><button onClick={onRetry}><Icon name="retry" size={15} />重新载入</button></div>}
-    <UploadQueuePanel queue={uploadQueue} jobs={jobs} onClear={onClearQueue} />
-    {!job && upload.phase === 'idle' && !uploadQueue.length && <UploadDropzone onFiles={onFiles} />}
-    {(job?.result?.completion === 'partial' || job?.status === 'failed') && <div className="error-banner"><div><b>分析尚未完成</b><p>{job.result?.message || job.error_message}</p></div><button disabled={busy || job.revision > 0} onClick={onResume}>继续分析</button></div>}
-    {busy && <ProgressPanel upload={upload} job={job} onCancel={onCancel} />}
-    {job?.status === 'failed' && <div className="failed-state"><Icon name="close" size={22} /><div><h2>分析已中断</h2><p>{job.error_message || '后端未能完成当前任务。'}</p></div></div>}
-    {job?.status === 'completed' && <div className="review-grid"><HighlightList job={job} selectedId={selected?.highlight_id || null} configuredIds={configuredAdIds} onSelect={onSelect} onReview={onReview} onAd={onAd} /><Player job={job} selected={selected} reloadToken={playerReloadToken} rangeBusy={rangeBusy} exportBusy={exportBusy} exportResult={exportResult} onSelect={onSelect} onRangeEdit={onRangeEdit} onExport={onExport} onPlaybackError={onPlaybackError} /><HighlightAssistant job={job} selected={selected} busy={chatBusy} onSend={onChat} /></div>}
+    {!reviewing && <TaskOptions options={options} language={language} subtitles={subtitles} onChange={onOptions} onLanguage={onLanguage} onSubtitles={onSubtitles} />}
+    {!hasTask && <UploadDropzone onFiles={onFiles} />}
+    {!reviewing && hasTask && <ProgressPanel upload={upload} job={job} onCancel={onCancel} onUploadRetry={onRetry} resumeBusy={resumeBusy} onResume={onResume} />}
+    {reviewing && job && <div className="review-grid"><HighlightList job={job} selectedId={selected?.highlight_id || null} configuredIds={configuredAdIds} onSelect={onSelect} onReview={onReview} onAd={onAd} /><Player job={job} selected={selected} reloadToken={playerReloadToken} rangeBusy={rangeBusy} exportBusy={exportBusy} exportResult={exportResult} onSelect={onSelect} onRangeEdit={onRangeEdit} onExport={onExport} onPlaybackError={onPlaybackError} /><HighlightAssistant job={job} selected={selected} busy={chatBusy} onSend={onChat} /></div>}
   </div>
 }
 
-function Library({ jobs, onOpen, onFiles, onDelete }: { jobs: Job[]; onOpen: (job: Job) => void; onFiles: (files: File[]) => void; onDelete: (job: Job) => void }) {
+function Library({ jobs, intakeTasks, onOpen, onFiles, onDelete }: { jobs: Job[]; intakeTasks: IntakeTask[]; onOpen: (record: ArchiveRecord) => void; onFiles: (files: File[]) => void; onDelete: (record: ArchiveRecord) => void }) {
   const [query, setQuery] = useState('')
   const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'completed' | 'partial' | 'failed'>('all')
   const [sort, setSort] = useState<'newest' | 'oldest' | 'name'>('newest')
+  const entries = useMemo(() => [
+    ...jobs.map((record) => ({
+      record, job_id: record.job_id, original_name: record.original_name, size_bytes: record.size_bytes, created_at: record.created_at,
+      active: ['queued', 'processing'].includes(record.status), complete: isReviewReady(record),
+      partial: record.status === 'completed' && record.result?.completion === 'partial', failed: record.status === 'failed',
+      status: record.status === 'completed' && record.result?.completion === 'partial' ? 'partial' : record.status,
+      label: jobStatusLabel(record), detail: attemptLabel(record), highlights: record.result?.highlights || [],
+    })),
+    ...intakeTasks.filter((task) => !jobs.some((record) => record.job_id === task.job_id)).map((record) => ({
+      record, job_id: record.job_id, original_name: record.file.name, size_bytes: record.file.size, created_at: record.created_at,
+      active: isIntakeActive(record), complete: false, partial: false, failed: !isIntakeActive(record),
+      status: isIntakeActive(record) ? 'processing' : 'failed', label: uploadStatusLabel(record.upload),
+      detail: record.upload.error || '尚未收到服务端接入回执', highlights: [] as Highlight[],
+    })),
+  ], [jobs, intakeTasks])
   const filteredJobs = useMemo(() => {
     const keyword = query.trim().toLocaleLowerCase()
-    const matches = jobs.filter((item) => {
+    const matches = entries.filter((item) => {
       const statusMatches = statusFilter === 'all'
-        || (statusFilter === 'active' && ['queued', 'processing'].includes(item.status))
-        || (statusFilter === 'completed' && item.status === 'completed' && item.result?.completion === 'complete')
-        || (statusFilter === 'partial' && item.status === 'completed' && item.result?.completion === 'partial')
-        || (statusFilter === 'failed' && item.status === 'failed')
+        || (statusFilter === 'active' && item.active)
+        || (statusFilter === 'completed' && item.complete)
+        || (statusFilter === 'partial' && item.partial)
+        || (statusFilter === 'failed' && item.failed)
       if (!statusMatches) return false
       if (!keyword) return true
-      const highlightText = item.result?.highlights.map((highlight) => `${highlight.description} ${highlight.reason} ${highlight.highlight_type}`).join(' ') || ''
+      const highlightText = item.highlights.map((highlight) => `${highlight.description} ${highlight.reason} ${highlight.highlight_type}`).join(' ')
       return `${item.original_name} ${item.job_id} ${highlightText}`.toLocaleLowerCase().includes(keyword)
     })
     return [...matches].sort((left, right) => sort === 'name'
@@ -1072,31 +1156,31 @@ function Library({ jobs, onOpen, onFiles, onDelete }: { jobs: Job[]; onOpen: (jo
       : sort === 'oldest'
         ? left.created_at.localeCompare(right.created_at)
         : right.created_at.localeCompare(left.created_at))
-  }, [jobs, query, sort, statusFilter])
+  }, [entries, query, sort, statusFilter])
   return <div className="view library-view">
     <header className="view-header"><div><p className="overline">SERVER TASKS</p><h1>任务归档</h1><p>搜索原片、任务编号或高光内容，快速定位历史分析结果。</p></div><UploadDropzone compact onFiles={onFiles} /></header>
-    <section className="archive-summary"><div><small>全部任务</small><b>{jobs.length}</b></div><div><small>提取完成</small><b>{jobs.filter((item) => item.status === 'completed' && item.result?.completion === 'complete').length}</b></div><div><small>处理中</small><b>{jobs.filter((item) => ['queued', 'processing'].includes(item.status)).length}</b></div><div><small>高光片段</small><b>{jobs.reduce((sum, item) => sum + (item.result?.highlights.length || 0), 0)}</b></div></section>
+    <section className="archive-summary"><div><small>全部任务</small><b>{entries.length}</b></div><div><small>提取完成</small><b>{entries.filter((item) => item.complete).length}</b></div><div><small>处理中</small><b>{entries.filter((item) => item.active).length}</b></div><div><small>高光片段</small><b>{entries.reduce((sum, item) => sum + item.highlights.length, 0)}</b></div></section>
     <section className="archive-search" aria-label="归档检索">
       <label><span>SEARCH ARCHIVE</span><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="搜索文件名、任务 ID、高光标题或理由…" /></label>
       <select value={statusFilter} onChange={(event) => setStatusFilter(event.target.value as typeof statusFilter)} aria-label="按任务状态筛选"><option value="all">全部状态</option><option value="active">正在处理</option><option value="completed">提取完成</option><option value="partial">分析未完成</option><option value="failed">提取失败</option></select>
       <select value={sort} onChange={(event) => setSort(event.target.value as typeof sort)} aria-label="归档排序"><option value="newest">最新创建</option><option value="oldest">最早创建</option><option value="name">按文件名</option></select>
-      <span><b>{filteredJobs.length}</b> / {jobs.length} 条结果</span>
+      <span><b>{filteredJobs.length}</b> / {entries.length} 条结果</span>
     </section>
     <section className="job-list">
       <div className="job-list-head"><span>视频 / 任务</span><span>大小</span><span>状态</span><span>创建时间</span><span>操作</span></div>
       {filteredJobs.map((item) => {
-        const active = item.status === 'queued' || item.status === 'processing'
-        const attempt = attemptLabel(item)
+        const active = item.active
+        const attempt = item.detail
         return <div className="job-row" key={item.job_id}>
-          <button className="job-title" onClick={() => onOpen(item)} aria-label={`打开任务 ${item.original_name}`}><i><Icon name="film" size={17} /></i><span><b>{item.original_name}</b><small>{item.job_id}</small></span></button>
+          <button className="job-title" onClick={() => onOpen(item.record)} aria-label={`打开任务 ${item.original_name}`}><i><Icon name="film" size={17} /></i><span><b>{item.original_name}</b><small>{item.job_id}</small></span></button>
           <span>{formatBytes(item.size_bytes)}</span>
-          <span className="job-status-stack"><b><i className={`status-dot ${item.status}`} />{jobStatusLabel(item)}</b>{attempt && <small>{attempt}</small>}</span>
+          <span className="job-status-stack"><b><i className={`status-dot ${item.status}`} />{item.label}</b>{attempt && <small title={attempt}>{attempt}</small>}</span>
           <span>{formatDate(item.created_at)}</span>
-          <div className="job-actions"><button className="open-job" onClick={() => onOpen(item)} aria-label={`打开任务 ${item.original_name}`}>→</button><button className="delete-job" disabled={active} title={active ? '分析中的任务不能删除' : '删除任务'} onClick={() => onDelete(item)} aria-label={`删除任务 ${item.original_name}`}><Icon name="trash" size={15} /></button></div>
+          <div className="job-actions"><button className="open-job" onClick={() => onOpen(item.record)} aria-label={`打开任务 ${item.original_name}`}>→</button><button className="delete-job" disabled={active} title={active ? '上传或分析中的任务不能删除' : '删除任务'} onClick={() => onDelete(item.record)} aria-label={`删除任务 ${item.original_name}`}><Icon name="trash" size={15} /></button></div>
         </div>
       })}
-      {!jobs.length && <div className="empty-archive"><Icon name="folder" size={25} /><h2>还没有导入记录</h2><p>从第一条视频开始建立高光任务库。</p></div>}
-      {jobs.length > 0 && !filteredJobs.length && <div className="empty-archive"><Icon name="folder" size={25} /><h2>没有匹配的任务</h2><p>换一个关键词或状态条件再试。</p></div>}
+      {!entries.length && <div className="empty-archive"><Icon name="folder" size={25} /><h2>还没有导入记录</h2><p>从第一条视频开始建立高光任务库。</p></div>}
+      {entries.length > 0 && !filteredJobs.length && <div className="empty-archive"><Icon name="folder" size={25} /><h2>没有匹配的任务</h2><p>换一个关键词或状态条件再试。</p></div>}
     </section>
   </div>
 }
@@ -1116,7 +1200,11 @@ function DeleteDialog({ job, busy, error, onCancel, onConfirm }: { job: Job; bus
 }
 
 export default function App() {
-  const [detectionOptions, setDetectionOptions] = useState<DetectionOptions>({ instruction: '挑选有看点、能独立看懂的短剧片段，保留必要铺垫和反应，剪辑简洁流畅。', max_clip_sec: 24, max_highlights: 12, allow_overlap: true })
+  const [detectionOptions, setDetectionOptions] = useState<DetectionOptions>({ ...DEFAULT_DETECTION_OPTIONS })
+  const [language, setLanguage] = useState<'zh' | 'en'>('zh')
+  const [subtitles, setSubtitles] = useState<File[]>([])
+  const [resumeBusy, setResumeBusy] = useState(false)
+  const resumeRequest = useRef(false)
   const [theme, setTheme] = useState<Theme>(() => {
     try {
       return window.localStorage.getItem('frame-theme') === 'light' ? 'light' : 'dark'
@@ -1128,8 +1216,9 @@ export default function App() {
   const [jobs, setJobs] = useState<Job[]>([])
   const [job, setJob] = useState<Job | null>(null)
   const [selected, setSelected] = useState<Highlight | null>(null)
-  const [upload, setUpload] = useState<UploadState>({ phase: 'idle', progress: 0 })
-  const [uploadQueue, setUploadQueue] = useState<UploadQueueItem[]>([])
+  const [intakeTasks, setIntakeTasks] = useState<IntakeTask[]>([])
+  const [importTarget, setImportTarget] = useState<string | null>(null)
+  const focusedJobId = useRef<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [online, setOnline] = useState(false)
   const [deleteCandidate, setDeleteCandidate] = useState<Job | null>(null)
@@ -1151,7 +1240,9 @@ export default function App() {
   const [adAssets, setAdAssets] = useState<AdAsset[]>([])
   const [adStudioTarget, setAdStudioTarget] = useState<Highlight | null>(null)
   const uploadRequest = useRef<XMLHttpRequest | null>(null)
-  const pendingUploads = useRef<UploadQueueItem[]>([])
+  const activeUploadId = useRef<string | null>(null)
+  const localJobWrites = useRef(new Map<string, number>())
+  const pendingUploads = useRef<PendingUpload[]>([])
   const uploadWorkerRunning = useRef(false)
 
   useEffect(() => {
@@ -1176,15 +1267,29 @@ export default function App() {
   }, [])
 
   const refreshJobs = useCallback(async () => {
+    const requestedAt = performance.now()
     try {
       const remoteJobs = await requestJson<RemoteJob[]>('/api/jobs')
       const records = remoteJobs.map(withSourceUrl)
-      setJobs(records)
+      setJobs((current) => {
+        const records = remoteJobs.map((remote) => {
+          const local = current.find((item) => item.job_id === remote.job_id)
+          return local ? mergeRemoteJob(local, remote) : withSourceUrl(remote)
+        })
+        // A list requested before an upload receipt cannot remove that new task.
+        const receivedMeanwhile = current.filter((item) => (localJobWrites.current.get(item.job_id) ?? -Infinity) > requestedAt
+          && !remoteJobs.some((remote) => remote.job_id === item.job_id))
+        return [...records, ...receivedMeanwhile].sort((left, right) => right.created_at.localeCompare(left.created_at))
+      })
       setJob((current) => {
-        if (!current) return current
+        if (!current) {
+          const focused = remoteJobs.find((record) => record.job_id === focusedJobId.current)
+          return focused ? withSourceUrl(focused) : current
+        }
         const latest = remoteJobs.find((record) => record.job_id === current.job_id)
         return latest ? mergeRemoteJob(current, latest) : current
       })
+      setIntakeTasks((current) => current.filter((item) => !remoteJobs.some((remote) => remote.job_id === item.job_id)))
       setOnline(true)
       return records
     } catch (reason) {
@@ -1194,9 +1299,10 @@ export default function App() {
     }
   }, [])
 
-  const persistJob = useCallback(async (record: Job) => {
+  const persistJob = useCallback(async (record: Job, activate = true) => {
     const saved = record
-    setJob(saved)
+    localJobWrites.current.set(saved.job_id, performance.now())
+    setJob((current) => activate || current?.job_id === saved.job_id ? saved : current)
     setJobs((current) => {
       const exists = current.some((item) => item.job_id === saved.job_id)
       const next = exists
@@ -1209,18 +1315,24 @@ export default function App() {
 
   useEffect(() => { void refreshJobs() }, [refreshJobs])
 
+  const hasActiveJobs = jobs.some((item) => ['queued', 'processing'].includes(item.status)) || intakeTasks.some(isIntakeActive)
   useEffect(() => {
-    if (!jobs.some((item) => ['queued', 'processing'].includes(item.status))) return
-    const timer = window.setTimeout(() => { void refreshJobs() }, 1800)
-    return () => window.clearTimeout(timer)
-  }, [jobs, refreshJobs])
+    if (!hasActiveJobs) return
+    let requesting = false
+    const timer = window.setInterval(async () => {
+      if (requesting) return
+      requesting = true
+      try { await refreshJobs() } finally { requesting = false }
+    }, 1800)
+    return () => window.clearInterval(timer)
+  }, [hasActiveJobs, refreshJobs])
 
   useEffect(() => {
     if (!job?.result?.highlights.length) setSelected(null)
     else if (selected) setSelected(job.result.highlights.find((item) => item.highlight_id === selected.highlight_id) || null)
-  }, [job?.updated_at])
+  }, [job?.job_id, job?.result])
 
-  useEffect(() => setCleanExportResult(null), [job?.job_id, selected?.highlight_id])
+  useEffect(() => setCleanExportResult(null), [job?.job_id, selected?.highlight_id, selected?.start_sec, selected?.end_sec, selected?.clip_url])
 
   const drainUploadQueue = useCallback(async () => {
     if (uploadWorkerRunning.current) return
@@ -1229,28 +1341,44 @@ export default function App() {
       while (pendingUploads.current.length) {
         const item = pendingUploads.current.shift()
         if (!item) break
-        setUploadQueue((current) => current.map((entry) => entry.queue_id === item.queue_id ? { ...entry, status: 'uploading', progress: 0, error: undefined } : entry))
-        setUpload({ phase: 'uploading', progress: 0, fileName: item.file.name })
+        activeUploadId.current = item.job_id
+        const updateUpload = (update: Partial<UploadState>) => setIntakeTasks((current) => current.map((task) => task.job_id === item.job_id ? { ...task, upload: { ...task.upload, ...update } } : task))
+        updateUpload({ phase: 'uploading', progress: 0, loaded: 0, error: undefined })
         try {
           const created = await uploadVideo(
             item.job_id,
             item.file,
-            (progress) => {
-              setUpload({ phase: 'uploading', progress, fileName: item.file.name })
-              setUploadQueue((current) => current.map((entry) => entry.queue_id === item.queue_id ? { ...entry, progress } : entry))
-            },
+            updateUpload,
             (request) => { uploadRequest.current = request },
             item.options,
+            item.language,
+            item.subtitles,
           )
-          await persistJob(withSourceUrl(created))
-          setUploadQueue((current) => current.map((entry) => entry.queue_id === item.queue_id ? { ...entry, status: 'submitted', progress: 100 } : entry))
+          const record = withSourceUrl({ ...created, task: created.task || { ...item.options, subtitle_provided: Boolean(item.subtitles) } })
+          await persistJob(record, false)
+          setIntakeTasks((current) => current.filter((task) => task.job_id !== item.job_id))
+          if (focusedJobId.current === item.job_id) {
+            setJob(record)
+            setImportTarget(null)
+          }
           setOnline(true)
         } catch (reason) {
           const message = reason instanceof Error ? reason.message : '视频导入失败'
-          setUploadQueue((current) => current.map((entry) => entry.queue_id === item.queue_id ? { ...entry, status: 'failed', error: message } : entry))
+          setError((current) => [current, `${item.file.name}：${message}`].filter(Boolean).join('\n'))
+          const cancelled = reason instanceof DOMException && reason.name === 'AbortError'
+          // A response can be lost after the backend has already accepted the file.
+          const accepted = cancelled ? null : await requestJson<RemoteJob>(`/api/jobs/${item.job_id}`, { signal: AbortSignal.timeout(8000) }).catch(() => null)
+          if (accepted) {
+            const record = withSourceUrl({ ...accepted, task: accepted.task || { ...item.options, subtitle_provided: Boolean(item.subtitles) } })
+            await persistJob(record, false)
+            setIntakeTasks((current) => current.filter((task) => task.job_id !== item.job_id))
+            if (focusedJobId.current === item.job_id) { setJob(record); setImportTarget(null); setError(null) }
+          } else {
+            updateUpload({ phase: cancelled ? 'cancelled' : 'failed', error: message })
+          }
         } finally {
           uploadRequest.current = null
-          setUpload({ phase: 'idle', progress: 0 })
+          activeUploadId.current = null
         }
       }
     } finally {
@@ -1259,42 +1387,83 @@ export default function App() {
   }, [persistJob])
 
   const handleFiles = useCallback((files: File[]) => {
-    const entries = files.map((file): UploadQueueItem => {
+    const optionError = validateDetectionOptions(detectionOptions)
+    if (optionError) { setError(optionError); setView('workspace'); return }
+    let matched: (File | null)[]
+    try {
+      matched = matchSubtitles(files, subtitles)
+    } catch (reason) {
+      setError(reason instanceof Error ? reason.message : '字幕匹配失败')
+      setView('workspace')
+      return
+    }
+    const invalidMessages: string[] = []
+    const entries = files.flatMap<PendingUpload>((file, index) => {
       const extension = file.name.includes('.') ? file.name.slice(file.name.lastIndexOf('.')).toLowerCase() : ''
       const errorMessage = !VIDEO_EXTENSIONS.includes(extension)
         ? '不支持的视频格式'
         : file.size > 20 * 1024 ** 3
           ? '视频不能超过 20 GB'
           : undefined
-      return {
-        queue_id: `queue_${crypto.randomUUID()}`,
-        options: { ...detectionOptions },
+      if (errorMessage) { invalidMessages.push(`${file.name}：${errorMessage}`); return [] }
+      return [{
+        options: { ...detectionOptions, instruction: detectionOptions.instruction.trim() },
+        language,
+        subtitles: matched[index],
         job_id: createJobId(),
         file,
-        status: errorMessage ? 'failed' : 'waiting',
-        progress: 0,
-        error: errorMessage,
-      }
+      }]
     })
-    const validEntries = entries.filter((item) => item.status === 'waiting')
-    pendingUploads.current.push(...validEntries)
-    setUploadQueue((current) => [...current, ...entries].slice(-100))
+    pendingUploads.current.push(...entries)
+    const createdAt = new Date().toISOString()
+    setIntakeTasks((current) => [...entries.map((item): IntakeTask => ({
+      ...item,
+      created_at: createdAt,
+      upload: { phase: 'waiting', progress: 0, fileName: item.file.name, jobId: item.job_id, loaded: 0, total: item.file.size + (item.subtitles?.size || 0), task: { ...item.options, subtitle_provided: Boolean(item.subtitles) }, language: item.language },
+    })), ...current])
+    if (entries.length) setSubtitles([])
+    focusedJobId.current = entries[0]?.job_id || null
+    setImportTarget(entries[0]?.job_id || null)
     setView('workspace')
     setJob(null)
     setSelected(null)
     setCleanExportResult(null)
-    setError(null)
+    setError(invalidMessages.length ? invalidMessages.join('\n') : null)
     void drainUploadQueue()
-  }, [drainUploadQueue, detectionOptions])
+  }, [drainUploadQueue, detectionOptions, language, subtitles])
 
-  const clearFinishedQueue = () => {
-    const jobsById = new Map(jobs.map((item) => [item.job_id, item]))
-    setUploadQueue((current) => current.filter((item) => {
-      if (item.status === 'waiting' || item.status === 'uploading') return true
-      if (item.status !== 'submitted') return false
-      const live = jobsById.get(item.job_id)
-      return !live || ['queued', 'processing'].includes(live.status)
-    }))
+  const retryCurrentTask = () => {
+    const intake = intakeTasks.find((task) => task.job_id === importTarget)
+    if (intake && !isIntakeActive(intake)) {
+      if (activeUploadId.current === intake.job_id || pendingUploads.current.some((task) => task.job_id === intake.job_id)) return
+      pendingUploads.current.push(intake)
+      setIntakeTasks((current) => current.map((task) => task.job_id === intake.job_id ? { ...task, upload: { ...task.upload, phase: 'waiting', progress: 0, loaded: 0, bytesPerSecond: undefined, error: undefined } } : task))
+      setError(null)
+      void drainUploadQueue()
+      return
+    }
+    setError(null)
+    setPlayerReloadToken((value) => value + 1)
+    void refreshJobs()
+  }
+
+  const resumeAnalysis = async () => {
+    if (!job || !canResume(job) || resumeRequest.current) return
+    const currentJob = job
+    resumeRequest.current = true
+    setResumeBusy(true)
+    setError(null)
+    try {
+      const remote = await requestJson<RemoteJob>(`/api/jobs/${currentJob.job_id}/resume`, { method: 'POST' })
+      await persistJob(mergeRemoteJob(currentJob, remote), false)
+      setOnline(true)
+    } catch (reason) {
+      await refreshJobs()
+      setError(reason instanceof Error ? reason.message : '继续分析失败')
+    } finally {
+      resumeRequest.current = false
+      setResumeBusy(false)
+    }
   }
 
   const review = async (item: Highlight, reviewStatus: ReviewStatus) => {
@@ -1302,13 +1471,12 @@ export default function App() {
     try {
       const updated: Job = {
         ...job,
-        updated_at: new Date().toISOString(),
         result: {
           ...job.result,
           highlights: job.result.highlights.map((highlight) => highlight.highlight_id === item.highlight_id ? { ...highlight, review_status: reviewStatus } : highlight),
         },
       }
-      await persistJob(updated)
+      await persistJob(updated, false)
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : '复核状态保存失败')
     }
@@ -1332,7 +1500,7 @@ export default function App() {
           }),
         },
       )
-      await persistJob(mergeRemoteJob(currentJob, remote))
+      await persistJob(mergeRemoteJob(currentJob, remote), false)
       setOnline(true)
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : '时间范围保存失败')
@@ -1376,6 +1544,8 @@ export default function App() {
 
   const openAdStudioFromQueue = (record: Job, item: Highlight) => {
     if (item.review_status !== 'accepted') return
+    focusedJobId.current = record.job_id
+    setImportTarget(null)
     setJob(record)
     setSelected(item)
     setAdStudioTarget(item)
@@ -1433,7 +1603,7 @@ export default function App() {
           userMessage,
           { ...assistantMessage, content: response.reply },
         ],
-      })
+      }, false)
       setOnline(true)
     } catch (reason) {
       setJob((active) => active?.job_id === currentJob.job_id ? currentJob : active)
@@ -1444,14 +1614,24 @@ export default function App() {
     }
   }
 
-  const openJob = (record: Job) => {
-    setJob(record)
+  const openJob = (record: ArchiveRecord) => {
+    focusedJobId.current = record.job_id
+    setImportTarget(isIntakeTask(record) ? record.job_id : null)
+    setJob(isIntakeTask(record) ? null : record)
     setSelected(null)
     setError(null)
     setCleanExportResult(null)
     setView('workspace')
   }
-  const requestDelete = (record: Job) => { setDeleteCandidate(record); setDeleteError(null) }
+  const requestDelete = (record: ArchiveRecord) => {
+    if (isIntakeTask(record)) {
+      if (isIntakeActive(record)) return
+      setIntakeTasks((current) => current.filter((task) => task.job_id !== record.job_id))
+      if (focusedJobId.current === record.job_id) { focusedJobId.current = null; setImportTarget(null); setError(null) }
+      return
+    }
+    setDeleteCandidate(record); setDeleteError(null)
+  }
   const closeDelete = () => { if (!deleteBusy) { setDeleteCandidate(null); setDeleteError(null) } }
   const confirmDelete = async () => {
     if (!deleteCandidate) return
@@ -1477,24 +1657,15 @@ export default function App() {
     if (!job?.result) return new Set<string>()
     return new Set(job.result.highlights.filter((item) => Boolean(adAssignments[adAssignmentKey(job.job_id, item.highlight_id)])).map((item) => item.highlight_id))
   }, [adAssignments, job])
+  const displayedUpload = !job ? intakeTasks.find((task) => task.job_id === importTarget)?.upload || { phase: 'idle' as const, progress: 0 } : { phase: 'idle' as const, progress: 0 }
 
   return <div className="app-shell" data-theme={theme}>
     <WindowChrome theme={theme} onToggleTheme={() => setTheme((current) => current === 'dark' ? 'light' : 'dark')} />
-    <Sidebar view={view} onView={setView} online={online} jobs={jobs} />
+    <Sidebar view={view} onView={setView} online={online} jobs={jobs} intakeCount={intakeTasks.length} />
     <main>{view === 'workspace'
-      ? <><details className="task-options"><summary>新任务要求</summary>
-        <label>提取目标<textarea value={detectionOptions.instruction} onChange={event => setDetectionOptions({ ...detectionOptions, instruction: event.target.value })} /></label>
-        <label>单段时长上限（秒）<input type="number" min="3" value={detectionOptions.max_clip_sec} onChange={event => setDetectionOptions({ ...detectionOptions, max_clip_sec: Number(event.target.value) })} /></label>
-        <label>最多输出片段数<input type="number" min="1" value={detectionOptions.max_highlights} onChange={event => setDetectionOptions({ ...detectionOptions, max_highlights: Number(event.target.value) })} /></label>
-        <label><input type="checkbox" checked={detectionOptions.allow_overlap} onChange={event => setDetectionOptions({ ...detectionOptions, allow_overlap: event.target.checked })} />允许不同事件共享上下文</label>
-      </details><Workspace upload={upload} uploadQueue={uploadQueue} jobs={jobs} job={job} selected={activeHighlight} error={error} chatBusy={chatBusy} rangeBusy={rangeBusy} exportBusy={cleanExportBusy} exportResult={cleanExportResult} playerReloadToken={playerReloadToken} configuredAdIds={configuredAdIds} onFiles={handleFiles} onSelect={setSelected} onReview={review} onAd={openAdStudio} onChat={sendEditMessage} onRangeEdit={editHighlightRange} onExport={exportCleanHighlight} onClearQueue={clearFinishedQueue} onCancel={() => uploadRequest.current?.abort()} onRetry={() => { setError(null); setPlayerReloadToken((value) => value + 1); void refreshJobs() }} onPlaybackError={setError} onResume={() => {
-        if (!job) return
-        void fetch(`${API_BASE}/api/jobs/${job.job_id}/resume`, { method: 'POST' })
-          .then(async response => { if (!response.ok) throw new Error((await response.json()).detail); await refreshJobs() })
-          .catch(reason => setError(String(reason)))
-      }} /></>
+      ? <Workspace upload={displayedUpload} job={job} selected={activeHighlight} error={error} chatBusy={chatBusy} rangeBusy={rangeBusy} exportBusy={cleanExportBusy} exportResult={cleanExportResult} playerReloadToken={playerReloadToken} configuredAdIds={configuredAdIds} options={detectionOptions} language={language} subtitles={subtitles} onOptions={setDetectionOptions} onLanguage={setLanguage} onSubtitles={setSubtitles} resumeBusy={resumeBusy} onFiles={handleFiles} onSelect={setSelected} onReview={review} onAd={openAdStudio} onChat={sendEditMessage} onRangeEdit={editHighlightRange} onExport={exportCleanHighlight} onCancel={() => uploadRequest.current?.abort()} onRetry={retryCurrentTask} onPlaybackError={setError} onResume={() => { void resumeAnalysis() }} />
       : view === 'library'
-        ? <Library jobs={jobs} onOpen={openJob} onFiles={handleFiles} onDelete={requestDelete} />
+        ? <Library jobs={jobs} intakeTasks={intakeTasks} onOpen={openJob} onFiles={handleFiles} onDelete={requestDelete} />
         : <AdWorkspace jobs={jobs} assignments={adAssignments} assets={adAssets} onOpen={openAdStudioFromQueue} onGoReview={() => setView('workspace')} />}
     </main>
     {deleteCandidate && <DeleteDialog job={deleteCandidate} busy={deleteBusy} error={deleteError} onCancel={closeDelete} onConfirm={confirmDelete} />}
