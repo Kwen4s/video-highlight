@@ -17,6 +17,7 @@ class Settings(BaseSettings):
     openai_reasoning_effort: Literal["low", "medium", "high", "xhigh", "max"] = Field(
         default="high", validation_alias="OPENAI_REASONING_EFFORT"
     )
+    local_detector_url: str | None = Field(default=None, validation_alias="VH_LOCAL_DETECTOR_URL")
     qwen_embedding_url: str | None = Field(default=None, validation_alias="QWEN_EMBEDDING_URL")
     qwen_reranker_url: str | None = Field(default=None, validation_alias="QWEN_RERANKER_URL")
     gemini_api_key: str = Field(default="", validation_alias="GEMINI_API_KEY")
@@ -27,7 +28,7 @@ class Settings(BaseSettings):
         default="gemini-3.8-flash", validation_alias="GEMINI_VIDEO_MODEL"
     )
     gemini_thinking_level: Literal["low", "medium", "high"] = Field(
-        default="high", validation_alias="GEMINI_THINKING_LEVEL"
+        default="medium", validation_alias="GEMINI_THINKING_LEVEL"
     )
     generation_seed: int | None = Field(default=7, ge=0, validation_alias="VH_GENERATION_SEED")
     request_timeout_sec: float = Field(default=300, gt=0, validation_alias="VH_REQUEST_TIMEOUT_SEC")

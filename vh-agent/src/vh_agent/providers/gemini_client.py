@@ -15,6 +15,35 @@ from openai import APIConnectionError, APIStatusError, APITimeoutError, DefaultH
 MAX_INLINE_REQUEST_BYTES = 20_000_000
 
 
+class MediaBudgetError(ValueError):
+    """A request can be repaired by choosing a smaller source range."""
+
+
+def video_request_payload(
+    model, system, parts, schema, thinking_level, seed, max_output_tokens=8192
+):
+    instructions = (
+        f"{system}\n直接返回 JSON 对象，不加 Markdown 代码围栏。JSON 结构：\n"
+        + json.dumps(schema, ensure_ascii=False)
+    )
+    payload = {
+        "model": model,
+        "messages": [
+            {"role": "system", "content": instructions},
+            {"role": "user", "content": parts},
+        ],
+        "reasoning_effort": thinking_level,
+        "max_tokens": max_output_tokens,
+        "response_format": {
+            "type": "json_schema",
+            "json_schema": {"name": "video_result", "strict": True, "schema": schema},
+        },
+    }
+    if seed is not None:
+        payload["seed"] = seed
+    return payload
+
+
 class GeminiClientError(RuntimeError):
     def __init__(self, message: str, *, retryable: bool = False):
         super().__init__(message)
@@ -60,7 +89,7 @@ def text_part(text: str) -> dict[str, Any]:
 
 def _inline_part(path: Path, mime_type: str) -> dict[str, Any]:
     if 4 * ((path.stat().st_size + 2) // 3) >= MAX_INLINE_REQUEST_BYTES:
-        raise ValueError("Media exceeds the inline limit; use a shorter range")
+        raise MediaBudgetError("单份媒体超过请求上限，请缩短观看范围")
     return {
         "type": "image_url",
         "image_url": {
@@ -128,34 +157,22 @@ class GeminiClient:
     def generate(self, system, parts, *, schema, max_output_tokens=8192):
         if not parts or max_output_tokens <= 0:
             raise ValueError("Input parts and a positive output budget are required")
-        instructions = (
-            f"{system}\n直接返回 JSON 对象，不加 Markdown 代码围栏。JSON 结构：\n"
-            + json.dumps(schema, ensure_ascii=False)
+        payload = video_request_payload(
+            self.model, system, parts, schema, self.thinking_level, self.seed, max_output_tokens
         )
-        messages = [
-            {"role": "system", "content": instructions},
-            {"role": "user", "content": parts},
-        ]
-        payload = {
-            "model": self.model,
-            "messages": messages,
-            "reasoning_effort": self.thinking_level,
-            "max_tokens": max_output_tokens,
-            "response_format": {
-                "type": "json_schema",
-                "json_schema": {"name": "video_result", "strict": True, "schema": schema},
-            },
-        }
-        if self.seed is not None:
-            payload["seed"] = self.seed
         if len(json.dumps(payload, ensure_ascii=False).encode()) >= MAX_INLINE_REQUEST_BYTES:
-            raise ValueError("Request exceeds the 20 MB limit; use a shorter video range")
+            raise MediaBudgetError("视频、原帧和说明合计超过 20 MB，请缩短观看范围")
         try:
             response = self._client.chat.completions.create(**payload)
         except APIStatusError as exc:
+            unavailable = exc.code == "model_not_found"
+            detail = (
+                ": model_not_found（当前密钥或分组没有该模型的可用通道）" if unavailable else ""
+            )
             raise GeminiClientError(
-                f"Gemini request returned HTTP {exc.status_code}",
-                retryable=exc.status_code in {408, 429} or exc.status_code >= 500,
+                f"Gemini request returned HTTP {exc.status_code}{detail}",
+                retryable=not unavailable
+                and (exc.status_code in {408, 429} or exc.status_code >= 500),
             ) from None
         except (APIConnectionError, APITimeoutError, httpx.HTTPError) as exc:
             raise GeminiClientError(_connection_failure(exc), retryable=True) from None
@@ -167,7 +184,9 @@ class GeminiClient:
         try:
             reading = json.loads(choice.message.content)
         except (ValueError, TypeError):
-            raise GeminiClientError("Gemini response is not valid structured JSON") from None
+            raise GeminiClientError(
+                "Gemini response is not valid structured JSON", retryable=True
+            ) from None
         # Preserve usage and whether reasoning was returned, without persisting thought text.
         return {
             "json": reading,

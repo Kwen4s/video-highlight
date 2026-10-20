@@ -1,14 +1,3 @@
-"""Event-aware short-drama highlight detection."""
+"""Short-drama highlight detection and agent tools."""
 
-from .models import (
-    DetectionResult,
-    DetectionTask,
-)
-from .pipeline import HighlightDetectionService
-
-__all__ = [
-    "DetectionResult",
-    "DetectionTask",
-    "HighlightDetectionService",
-]
 __version__ = "0.21.0"

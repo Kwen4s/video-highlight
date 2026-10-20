@@ -43,7 +43,7 @@ class ReadMemory:
             "query_complete": previous["complete"],
             "reading_note": "本次有新材料。"
             if new_ids
-            else "本次没有新增材料；已读内容可从 read_state 获取。",
+            else "本次没有新增材料；已读内容可从 read_memory 获取。",
         }
 
     def checkpoint(self):

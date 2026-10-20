@@ -1,8 +1,5 @@
-def test_media_cache_reuses_matching_audio_and_frames(monkeypatch, tmp_path) -> None:
-    import json
+def test_audio_cache_reuses_matching_audio(monkeypatch, tmp_path) -> None:
     import wave
-
-    from PIL import Image
 
     from vh_agent.preprocessing import media
 
@@ -13,22 +10,11 @@ def test_media_cache_reuses_matching_audio_and_frames(monkeypatch, tmp_path) -> 
         output.setframerate(16000)
         output.writeframes(b"\x00\x00" * 160)
 
-    frame_dir = tmp_path / "frames"
-    frame_dir.mkdir()
-    Image.new("RGB", (32, 32), "black").save(frame_dir / "frame_000001.jpg")
-    (frame_dir / ".complete").write_text(
-        json.dumps({"sample_fps": 1.0, "frame_width": 480}, sort_keys=True),
-        encoding="utf-8",
-    )
-
     def fail_if_called(command):
         raise AssertionError(f"unexpected media extraction: {command}")
 
     monkeypatch.setattr(media, "_run", fail_if_called)
     assert media.extract_audio(tmp_path / "video.mp4", audio_path) == audio_path
-    frames = media.extract_frames(tmp_path / "video.mp4", frame_dir, 1.0, 480)
-    assert len(frames) == 1
-    assert frames[0].timestamp_sec == 0.0
 
 
 def test_subtitle_ocr_batches_frames_without_losing_timestamps(monkeypatch, tmp_path) -> None:
@@ -40,7 +26,7 @@ def test_subtitle_ocr_batches_frames_without_losing_timestamps(monkeypatch, tmp_
     frames = []
     for index in range(9):
         path = tmp_path / f"frame_{index:02d}.jpg"
-        Image.new("RGB", (32, 48), "black").save(path)
+        Image.new("RGB", (32, 48), (index * 24, 0, 0)).save(path)
         frames.append(FrameSample(timestamp_sec=float(index), path=path))
 
     class FakeOCR:
@@ -59,11 +45,18 @@ def test_subtitle_ocr_batches_frames_without_losing_timestamps(monkeypatch, tmp_
 
     ocr = FakeOCR()
     monkeypatch.setattr(subtitle_ocr, "_load_ocr", lambda **_kwargs: ocr)
-    segments = subtitle_ocr.extract_subtitle_segments(frames, "zh", "cpu")
+    segments = subtitle_ocr.extract_subtitle_segments(
+        frames, "zh", "cpu", cache_dir=tmp_path / "ocr"
+    )
 
     assert ocr.batch_sizes == [8, 1]
     assert len(segments) == 9
     assert [segment.start_sec for segment in segments] == [float(index) for index in range(9)]
+    repeated = subtitle_ocr.extract_subtitle_segments(
+        frames, "zh", "cpu", cache_dir=tmp_path / "ocr"
+    )
+    assert [s.model_dump() for s in repeated] == [s.model_dump() for s in segments]
+    assert ocr.batch_sizes == [8, 1]
 
 
 def test_whisper_uses_deterministic_greedy_decoding(tmp_path) -> None:
@@ -96,3 +89,15 @@ def test_whisper_uses_deterministic_greedy_decoding(tmp_path) -> None:
     assert requests[0][1]["beam_size"] == 1
     assert requests[0][1]["best_of"] == 1
     assert requests[0][1]["condition_on_previous_text"] is False
+
+
+def test_identical_subtitles_only_merge_when_time_ranges_touch():
+    from vh_agent.models import TranscriptSegment
+    from vh_agent.preprocessing.subtitle_ocr import _merge_repeated
+
+    rows = [
+        TranscriptSegment(start_sec=a, end_sec=b, text="老爷", source="ocr")
+        for a, b in [(0, 1.5), (1, 2.5), (30, 31.5)]
+    ]
+    result = _merge_repeated(rows)
+    assert [(s.start_sec, s.end_sec) for s in result] == [(0, 2.5), (30, 31.5)]

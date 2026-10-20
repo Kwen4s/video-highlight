@@ -30,7 +30,7 @@ vl-001/
 
 SFT 使用全部训练窗口。GSPO 包含 454 个历史易误选位置关联窗口和 454 个分层补充窗口，空／单／多高光比例接近 SFT，各类别内按剧轮流抽取，种子为 42。历史判断只决定采样优先级，答案沿用当前有效标签。GSPO 的 908 条均来自 SFT，是继续优化；验证和测试剧独立。
 
-`manifest.json` 记录参数、实际统计、重点样本 ID、阶段交集和文件指纹。`source/` 保存整视频标签、完整对白及来源，用于追溯和整集评估。不存在另一份根目录 `train.jsonl` 或单独的阶段目录。
+`manifest.json` 记录参数、统计、样本来源和文件指纹；`source/` 保存整视频标签、完整对白及来源。
 
 ## 生成数据
 
@@ -60,11 +60,11 @@ vh-agent/.venv/bin/vh-data prepare-training /data0/wkw/video-highlight/datasets/
 | `dialogue` | 带时间的文字与 `source=asr/ocr`；相对秒数，负数表示前情 |
 | `segments` | 完整高光核心的相对起止；空列表表示没有高光 |
 
-输入由视频、负责范围和对白构成。SFT 将 `segments` 作为回答；GSPO 仅将其交给奖励函数。标签、教师理由和历史判断不进入模型输入。
+输入由视频、负责范围和对白构成。SFT 将 `segments` 作为目标回答；GSPO 将其交给奖励函数。
 
 高光中点决定所属窗口，保留跨边界的完整核心。只有负责范围被明确正负标注完整覆盖、核心完整可见的窗口才进入训练；未知区域保持未知。原视频按路径和指纹引用，不复制重叠窗口。恢复原片时间时加上 `video.start_sec`。
 
-整集评估读取 `source/annotations.jsonl`，按视频 ID 关联 `source/dialogues.jsonl`；这两个文件均使用原片时间。评估覆盖所有目标视频，不能仅评价筛选后的完整监督窗口。训练加载器和模型训练尚未实现，方案见 [VL_TRAINING.md](../vh-agent/VL_TRAINING.md)。
+`source/annotations.jsonl` 和 `source/dialogues.jsonl` 按视频 ID 关联，使用原片时间，供后续整片评估。当前 SFT、GSPO 和固定窗口测试均已完成，模型与效果见 [VL_TRAINING.md](../vh-agent/VL_TRAINING.md)。
 
 ## 继续生产与反馈
 
@@ -84,7 +84,7 @@ vh-agent/.venv/bin/vh-data feedback /path/to/predictions.jsonl --model-id detect
 {"video_id":"vid_example","segments":[{"start_sec":12.5,"end_sec":18.2}]}
 ```
 
-反馈优先安排训练视频重新查看，不直接生成标签。当前没有已训练的新检测器；该入口供后续接入。
+反馈用于安排训练视频重新标注，随后由标注与复核流程生成新标签。反馈文件采用上面的原片区间格式；当前模型输出的窗口相对时间需先转换。
 
 标注先连续观看，再独立复核全片；候选只提供位置，复核依据原视频决定取舍和边界。只剩重叠问题时局部重看。精彩核心优先 15 秒以内，允许短至一两个动作；普通内容标负例，证据不足保持未知，没有固定高光配额。
 
@@ -94,8 +94,4 @@ vh-agent/.venv/bin/vh-data feedback /path/to/predictions.jsonl --model-id detect
 
 配置见 [.env.example](.env.example)，密钥仅保存在本机 `.env`。`outputs/data/data.sqlite3` 保存任务和标签；同目录 `readings/`、`dialogues/` 保存成功调用和带时间文字。成功页面可复用，长视频分页覆盖，过大请求拆页。网络错误最多等待 5 秒再重试，同页连续失败三次让出 worker 后重新排队；无效标注有次数限制。请求采用网络空闲超时，持续收到数据时继续等待。
 
-当前生产已停止在 952 条有效视频，没有后台标注任务。需要继续时主动运行上述命令；`status` 查看实时状态。历史失败日志和旧快照已清理，数据库、成功调用、对白和媒体缓存保留。
-
-```bash
-vh-agent/.venv/bin/python -m pytest vh-data/tests -q
-```
+当前固定数据来自 952 条有效视频。使用 `status` 查看任务状态，`run` 继续生产；数据库、成功调用、对白和媒体缓存用于复用与追溯。

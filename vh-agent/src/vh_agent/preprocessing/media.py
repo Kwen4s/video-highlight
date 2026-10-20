@@ -4,7 +4,7 @@ import subprocess
 import wave
 from pathlib import Path
 
-from ..models import FrameSample, VideoInfo
+from ..models import VideoInfo
 
 
 class MediaError(RuntimeError):
@@ -85,51 +85,6 @@ def extract_audio(video_path: Path, output_path: Path) -> Path:
         ]
     )
     return output_path
-
-
-def extract_frames(
-    video_path: Path,
-    output_dir: Path,
-    sample_fps: float,
-    frame_width: int,
-) -> list[FrameSample]:
-    output_dir.mkdir(parents=True, exist_ok=True)
-    marker = output_dir / ".complete"
-    cache_key = json.dumps({"sample_fps": sample_fps, "frame_width": frame_width}, sort_keys=True)
-    if marker.is_file() and marker.read_text(encoding="utf-8") == cache_key:
-        return load_frame_samples(output_dir, sample_fps)
-    frame_pattern = output_dir / "frame_%06d.jpg"
-    for stale_frame in output_dir.glob("frame_*.jpg"):
-        stale_frame.unlink()
-    _run(
-        [
-            "ffmpeg",
-            "-y",
-            "-v",
-            "error",
-            "-i",
-            str(video_path),
-            "-vf",
-            f"fps={sample_fps},scale={frame_width}:-2",
-            "-q:v",
-            "3",
-            str(frame_pattern),
-        ]
-    )
-
-    samples = load_frame_samples(output_dir, sample_fps)
-    marker.write_text(cache_key, encoding="utf-8")
-    return samples
-
-
-def load_frame_samples(output_dir: Path, sample_fps: float) -> list[FrameSample]:
-    samples = [
-        FrameSample(timestamp_sec=index / sample_fps, path=path)
-        for index, path in enumerate(sorted(output_dir.glob("frame_*.jpg")))
-    ]
-    if not samples:
-        raise MediaError(f"Frame cache contains no images: {output_dir}")
-    return samples
 
 
 def _valid_wav(path: Path) -> bool:

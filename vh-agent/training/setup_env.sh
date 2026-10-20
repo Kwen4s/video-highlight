@@ -6,6 +6,7 @@ VERL_REVISION=6093e007cc341973c9d9a6fb3867a85976c7c458
 VERL_ROOT="${TRAIN_ROOT}/envs/verl"
 ENV_ROOT="${TRAIN_ROOT}/envs/train"
 FLASH_WHEEL="${TRAIN_ROOT}/cache/wheels/flash_attn-2.8.3-cp312-cp312-linux_x86_64.whl"
+CONV_WHEEL="${TRAIN_ROOT}/cache/wheels/causal_conv1d-1.7.0-cp312-cp312-linux_x86_64.whl"
 MODULE_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 UV_BIN="${MODULE_ROOT}/.venv/bin/uv"
 
@@ -17,6 +18,7 @@ mkdir -p "${TRAIN_ROOT}/envs" "${UV_CACHE_DIR}" "${TMPDIR}" \
 
 # The upstream wheel URL is unavailable; use the verified local binary artifact.
 echo "28f1a5ecce89158519ad906dd75ab608dcb7c2daeed225f6ecca3c654f40e528  ${FLASH_WHEEL}" | sha256sum --check
+echo "e0ab29767d7c007c69183d51ecec98bcf4e4a712f2c7839ab6202bbb5c236b5a  ${CONV_WHEEL}" | sha256sum --check
 
 if [[ ! -d "${VERL_ROOT}/.git" ]]; then
   git init "${VERL_ROOT}"
@@ -46,7 +48,7 @@ UV_PROJECT_ENVIRONMENT="${ENV_ROOT}" "${UV_BIN}" sync \
 # Correct two dependency conflicts present in the reference environment.
 "${UV_BIN}" pip install --python "${ENV_ROOT}/bin/python" --link-mode copy \
   --index-url https://pypi.tuna.tsinghua.edu.cn/simple \
-  "numpy==2.3.5" "nvidia-cusparselt-cu13==0.8.1" "${FLASH_WHEEL}"
+  "numpy==2.3.5" "nvidia-cusparselt-cu13==0.8.1" "wheel==0.46.3" "swanlab==0.10.2" "${FLASH_WHEEL}" "${CONV_WHEEL}"
 "${UV_BIN}" pip check --python "${ENV_ROOT}/bin/python"
 
 echo "环境已安装：${ENV_ROOT}"

@@ -1,9 +1,13 @@
+import hashlib
+import json
 from functools import lru_cache
+from pathlib import Path
 
 import numpy as np
 from PIL import Image
 
 from ..models import FrameSample, TranscriptSegment
+from ..storage import write_json
 
 
 class OCRUnavailable(RuntimeError):
@@ -11,6 +15,7 @@ class OCRUnavailable(RuntimeError):
 
 
 OCR_BATCH_SIZE = 8
+OCR_MERGE_POLICY = "contiguous_v1"
 
 
 def extract_subtitle_segments(
@@ -19,17 +24,40 @@ def extract_subtitle_segments(
     device: str,
     ocr_version: str = "PP-OCRv6",
     min_confidence: float = 0.55,
+    cache_dir: Path | None = None,
 ) -> list[TranscriptSegment]:
-    ocr = _load_ocr(
-        lang="ch" if language.startswith("zh") else language.split("-", 1)[0],
-        ocr_version=ocr_version,
-        device=device,
-    )
     raw_segments: list[TranscriptSegment] = []
     for start in range(0, len(frames), OCR_BATCH_SIZE):
         batch_frames = frames[start : start + OCR_BATCH_SIZE]
-        images = [_subtitle_region(frame) for frame in batch_frames]
-        predictions = _predict_many(ocr, images)
+        paths = [
+            cache_dir
+            / (
+                hashlib.sha256(
+                    frame.path.read_bytes()
+                    + str([language, ocr_version, "subtitle_region_0.42"]).encode()
+                ).hexdigest()
+                + ".json"
+            )
+            if cache_dir is not None
+            else None
+            for frame in batch_frames
+        ]
+        predictions = [
+            json.loads(path.read_text()) if path is not None and path.is_file() else None
+            for path in paths
+        ]
+        missing = [i for i, result in enumerate(predictions) if result is None]
+        if missing:
+            ocr = _load_ocr(
+                lang="ch" if language.startswith("zh") else language.split("-", 1)[0],
+                ocr_version=ocr_version,
+                device=device,
+            )
+            fresh = _predict_many(ocr, [_subtitle_region(batch_frames[i]) for i in missing])
+            for i, result in zip(missing, fresh, strict=True):
+                predictions[i] = result
+                if paths[i] is not None:
+                    write_json(paths[i], result)
         for frame, (texts, scores) in zip(batch_frames, predictions, strict=True):
             kept_pairs = [
                 (text.strip(), score)
@@ -92,7 +120,11 @@ def _merge_repeated(segments: list[TranscriptSegment]) -> list[TranscriptSegment
     merged: list[TranscriptSegment] = []
     for segment in segments:
         normalized = "".join(segment.text.split())
-        if merged and normalized == "".join(merged[-1].text.split()):
+        if (
+            merged
+            and segment.start_sec <= merged[-1].end_sec + 1e-6
+            and normalized == "".join(merged[-1].text.split())
+        ):
             merged[-1].end_sec = segment.end_sec
             continue
         merged.append(segment)

@@ -114,6 +114,28 @@ def test_network_error_is_sanitized():
     assert error.value.retryable and "secret" not in str(error.value)
 
 
+def test_model_unavailable_is_not_retried_even_when_gateway_returns_503():
+    with (
+        GeminiClient(
+            "secret",
+            "https://example.test/v1",
+            "test",
+            http_client=httpx.Client(
+                transport=httpx.MockTransport(
+                    lambda _: httpx.Response(
+                        503,
+                        json={"error": {"code": "model_not_found", "message": "secret"}},
+                    )
+                )
+            ),
+        ) as client,
+        pytest.raises(GeminiClientError) as error,
+    ):
+        client.generate("", [text_part("hello")], schema={})
+    assert "503" in str(error.value) and "model_not_found" in str(error.value)
+    assert not error.value.retryable and "secret" not in str(error.value)
+
+
 def test_configured_gateway_is_reachable_with_unusable_environment_proxy(monkeypatch):
     monkeypatch.setenv("HTTPS_PROXY", "http://127.0.0.1:1")
     monkeypatch.setenv("HTTP_PROXY", "http://127.0.0.1:1")
@@ -165,15 +187,17 @@ def test_wrapped_connection_failure_retains_safe_root_cause(cause, expected):
 
 
 @pytest.mark.parametrize(
-    "raw",
+    "raw,retryable",
     [
-        response(finish="length"),
-        response(content=None),
-        response(content='```json\n{"ok":true}\n```'),
-        response(choices=[]),
+        (response(finish="length"), False),
+        (response(content=None), True),
+        (response(content='```json\n{"ok":true}\n```'), True),
+        (response(content='{"answer":"未完成'), True),
+        (response(content="server high overload, please retry"), True),
+        (response(choices=[]), False),
     ],
 )
-def test_incomplete_or_invalid_json_is_not_repaired(raw):
+def test_incomplete_or_invalid_json_is_not_repaired(raw, retryable):
     with (
         GeminiClient(
             "secret",
@@ -183,9 +207,10 @@ def test_incomplete_or_invalid_json_is_not_repaired(raw):
                 transport=httpx.MockTransport(lambda _: httpx.Response(200, json=raw))
             ),
         ) as client,
-        pytest.raises(GeminiClientError),
+        pytest.raises(GeminiClientError) as error,
     ):
         client.generate("", [text_part("hello")], schema={})
+    assert error.value.retryable is retryable
 
 
 @pytest.mark.parametrize(
@@ -199,3 +224,86 @@ def test_incomplete_or_invalid_json_is_not_repaired(raw):
 def test_endpoint_rejects_embedded_credentials_queries_and_fragments(url):
     with pytest.raises(ValueError):
         GeminiClient("key", url, "test")
+
+
+def test_observation_budget_measures_the_same_full_payload_as_generate(tmp_path):
+    from types import SimpleNamespace
+
+    from vh_agent.providers.video_perception import VideoPerception
+
+    video = tmp_path / "video.mp4"
+    video.write_bytes(b"video")
+    frame = tmp_path / "frame.jpg"
+    frame.write_bytes(b"image")
+    evidence = SimpleNamespace(
+        frames=lambda times, **kwargs: [{"path": str(frame), "timestamp_sec": t} for t in times]
+    )
+    observation = SimpleNamespace(
+        path=video,
+        src_start_sec=0,
+        src_end_sec=1,
+        duration_sec=1,
+        sampling_fps=None,
+        observation_id="obs_a",
+        timestamp_precision_sec=0.04,
+    )
+    payloads = []
+
+    def respond(request):
+        payloads.append(json.loads(request.content))
+        return httpx.Response(
+            200,
+            json=response(
+                content=json.dumps({"answer": "普通交谈", "items": [], "uncertainties": []})
+            ),
+        )
+
+    with GeminiClient(
+        "test-key",
+        "https://example.test/v1",
+        "test-video",
+        seed=7,
+        http_client=httpx.Client(transport=httpx.MockTransport(respond)),
+    ) as client:
+        perception = VideoPerception(client, 4, evidence)
+        measured = perception.encoded_size(observation, "发生了什么？")
+        perception.observe(observation, "发生了什么？")
+    assert measured == len(json.dumps(payloads[0], ensure_ascii=False).encode())
+
+
+def test_oversized_explicit_frames_are_rejected_before_network(tmp_path):
+    from types import SimpleNamespace
+
+    from vh_agent.providers.gemini_client import MediaBudgetError
+    from vh_agent.providers.video_perception import VideoPerception
+
+    video = tmp_path / "video.mp4"
+    video.write_bytes(b"video")
+    frame = tmp_path / "frame.jpg"
+    frame.write_bytes(b"x" * 350000)
+    evidence = SimpleNamespace(
+        frames=lambda times, **kwargs: [{"path": str(frame), "timestamp_sec": t} for t in times]
+    )
+    observation = SimpleNamespace(
+        path=video,
+        src_start_sec=0,
+        src_end_sec=12,
+        duration_sec=12,
+        sampling_fps=None,
+        observation_id="obs_a",
+        timestamp_precision_sec=0.04,
+    )
+
+    def unexpected(request):
+        raise AssertionError("oversized request reached network")
+
+    with GeminiClient(
+        "test-key",
+        "https://example.test/v1",
+        "test-video",
+        http_client=httpx.Client(transport=httpx.MockTransport(unexpected)),
+    ) as client:
+        perception = VideoPerception(client, 4, evidence)
+        assert perception.encoded_size(observation, "发生了什么？") > 20_000_000
+        with pytest.raises(MediaBudgetError):
+            perception.observe(observation, "发生了什么？")

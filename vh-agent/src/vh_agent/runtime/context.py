@@ -7,6 +7,10 @@ import json
 from pathlib import Path
 
 
+class ContextBudgetError(ValueError):
+    pass
+
+
 def text_part(text):
     return {"type": "input_text", "text": text}
 
@@ -94,7 +98,7 @@ class Conversation:
         )
         tokens, size = estimate(candidate)
         if tokens > token_budget or size > byte_budget:
-            raise ValueError("当前工作状态或媒体超过上下文预算，请缩小观察范围或提高预算。")
+            raise ContextBudgetError("当前工作状态或媒体超过上下文预算，请缩短观看范围后继续。")
         self.contents, self.phase = candidate, phase
         self.segment += int(rotated)
         return hydrate(candidate)

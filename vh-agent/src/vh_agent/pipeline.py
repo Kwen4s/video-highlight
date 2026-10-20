@@ -9,6 +9,7 @@ from .config import Settings
 from .models import AnalysisSummary, DetectionResult, DetectionTask, Highlight, VideoSummary
 from .providers.frame_text import FrameText
 from .providers.gemini_client import GeminiClient
+from .providers.local_detector import LocalDetector
 from .providers.openai_client import OpenAIClient
 from .providers.retrieval import TranscriptSearch
 from .providers.video_perception import VideoPerception
@@ -70,12 +71,22 @@ class HighlightDetectionService:
             if search:
                 stack.callback(search.close)
             frame_text = FrameText(settings, task.language)
+            detector = (
+                LocalDetector(
+                    evidence, settings, transcript if transcript.available else None, task.language
+                )
+                if settings.local_detector_url
+                else None
+            )
+            if detector is not None:
+                stack.callback(detector.close)
             agent = VideoAgent(
                 client,
                 evidence,
                 output,
                 perception=VideoPerception(video_client, settings.video_fps, evidence),
                 frame_fps=settings.agent_frame_fps,
+                detector=detector,
                 search=search,
                 frame_text=frame_text if frame_text.available else None,
                 task=task.instruction,

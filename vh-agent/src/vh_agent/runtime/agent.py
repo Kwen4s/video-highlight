@@ -15,18 +15,18 @@ from uuid import uuid4
 
 from pydantic import ValidationError
 
-from ..prompts import ANALYSIS_PROMPT, DEFAULT_TASK, REVIEW_PROMPT, SCAN_QUESTION, SELECTION_PROMPT
-from ..providers.gemini_client import GeminiClientError
+from ..prompts import ANALYSIS_PROMPT, DEFAULT_TASK, REVIEW_PROMPT, SELECTION_PROMPT
+from ..providers.gemini_client import MAX_INLINE_REQUEST_BYTES, GeminiClientError, MediaBudgetError
+from ..providers.local_detector import DetectorError
 from ..providers.openai_client import OpenAIClient, OpenAIClientError
 from ..storage import write_json
-from .context import Conversation, hydrate, image_part, text_part
+from .context import ContextBudgetError, Conversation, hydrate, image_part, text_part
 from .evidence import EvidenceStore, VideoObservation
 from .finalization import SelectionResult
-from .state import ProgressMemory
+from .state import ProgressMemory, identity
 from .tools import VideoTools
 
-MAX_PAGE_BATCH_ITEMS = 2
-MAX_PAGE_BATCH_ENCODED_BYTES = 36_000_000
+MAX_OBSERVATION_WORKERS = 2
 MAX_REVIEW_WORKERS = 4
 
 
@@ -50,7 +50,7 @@ class VideoAgent:
         video_fps: float = 4,
         on_progress: Callable[[str], None] | None = None,
         transcript=None,
-        local_proposals=None,
+        detector=None,
         context_token_budget: int = 100_000,
         context_byte_budget: int = 18_000_000,
         max_stagnant_steps: int = 8,
@@ -80,7 +80,7 @@ class VideoAgent:
             total_duration=total_duration,
             allow_overlap=allow_overlap,
             transcript=transcript,
-            local_proposals=local_proposals,
+            detector=detector,
             search=search,
             frame_text=frame_text,
         )
@@ -90,12 +90,12 @@ class VideoAgent:
         self.turn = 0
         self.model_calls = 0
         self.pending_media: list[VideoObservation] = []
-        self.focus_event_ids: list[str] = []
         self.conversation = Conversation()
         self.progress_memory = ProgressMemory(seen=self.tools.information_facts())
         self.pending_calls: list[dict] = []
         self.reject_pending_batch = False
         self.call_results: list[dict] = []
+        self.submission_result = None
         self.request_ready = False
         self.request_observation_ids: list[str] = []
         self.context_token_budget = context_token_budget
@@ -113,7 +113,7 @@ class VideoAgent:
             "max_stagnant_steps": max_stagnant_steps,
             "max_request_attempts": max_request_attempts,
             "retrieval": transcript.profile if transcript else None,
-            "local_proposals": local_proposals.profile if local_proposals else None,
+            "detector": detector.profile if detector else None,
             "instructions": {
                 "analysis": ANALYSIS_PROMPT,
                 "selection": SELECTION_PROMPT,
@@ -159,13 +159,13 @@ class VideoAgent:
                 "turn": self.turn,
                 "model_calls": self.model_calls,
                 "tools": self.tools.checkpoint(),
-                "focus_event_ids": self.focus_event_ids,
                 "pending_observation_ids": [o.observation_id for o in self.pending_media],
                 "conversation": self.conversation.checkpoint(),
                 "progress_memory": self.progress_memory.checkpoint(),
                 "pending_calls": self.pending_calls,
                 "reject_pending_batch": self.reject_pending_batch,
                 "call_results": self.call_results,
+                "submission_result": self.submission_result,
                 "request_ready": self.request_ready,
                 "request_observation_ids": self.request_observation_ids,
             },
@@ -180,22 +180,18 @@ class VideoAgent:
         self.tools.restore(state["tools"])
         self.turn = state["turn"]
         self.model_calls = state["model_calls"]
-        self.focus_event_ids = state["focus_event_ids"]
         self.pending_media = [self.tools.observations[k] for k in state["pending_observation_ids"]]
         self.conversation = Conversation(**state["conversation"])
         self.progress_memory = ProgressMemory.restore(state["progress_memory"])
         self.pending_calls = state["pending_calls"]
         self.reject_pending_batch = state["reject_pending_batch"]
         self.call_results = state["call_results"]
+        self.submission_result = state["submission_result"]
         self.request_ready = state["request_ready"]
         self.request_observation_ids = state["request_observation_ids"]
 
     def _context(self, transmitted_ids=()) -> dict:
-        phase = (
-            "selection"
-            if self.conversation.phase == "selection" or self.tools.selection_ready()
-            else "analysis"
-        )
+        phase = self.tools.phase
         candidates = self.tools.candidate_ledger()
         context = {
             "phase": phase,
@@ -208,140 +204,96 @@ class VideoAgent:
                     "max_clip_sec",
                     "total_duration",
                     "allow_overlap",
-                    "video_fps",
                 )
             },
-            "progress": self.tools.progress(),
-            "selection_ledger": {
-                "candidates": candidates,
-                "total": len(candidates),
-                "choices": [c.model_dump(mode="json") for c in self.tools.selection.decisions]
-                if self.tools.selection
-                else [],
+            "progress": {
+                k: v
+                for k, v in self.tools.progress().items()
+                if k not in {"event_count", "pending_event_count", "pending_proposal_count"}
             },
+            "story_so_far": self.tools.story_so_far,
+            "candidates": [
+                {
+                    k: c[k]
+                    for k in (
+                        "id",
+                        "description",
+                        "reason",
+                        "start_sec",
+                        "end_sec",
+                        "score",
+                        "highlight_type",
+                    )
+                }
+                for c in candidates
+            ],
+            "candidate_count": len(candidates),
+            "observations": [
+                {
+                    "id": key,
+                    "start_sec": self.tools.observations[key].src_start_sec,
+                    "end_sec": self.tools.observations[key].src_end_sec,
+                }
+                for key in sorted(self.tools.delivered | set(transmitted_ids))
+            ],
+            "submission": self.submission_result,
             "last_tool_results": [
                 {"tool": item["call"]["name"], "result": item["result"]}
                 for item in self.call_results
-            ]
-            if phase == self.conversation.phase
-            else [],
+            ],
             "stagnant_steps": self.progress_memory.stagnant_steps,
-            "story_so_far": self.tools.story_so_far,
-            "unrecorded_readings": [
-                self.tools.readings[o.observation_id]
-                for o in self.tools.unacknowledged_observations()
-                if o.observation_id in self.tools.readings
-                and o.observation_id not in transmitted_ids
-            ],
         }
-        if phase == "selection":
-            source_ids = dict.fromkeys(
-                span["evidence_id"]
-                for candidate in candidates
-                for span in candidate["required_spans"]
-            )
-            context["source_notes"] = [
-                {
-                    "observation_id": key,
-                    "src_start_sec": self.tools.observations[key].src_start_sec,
-                    "src_end_sec": self.tools.observations[key].src_end_sec,
-                    "uncertainties": self.tools.readings[key]["uncertainties"],
-                }
-                for key in source_ids
-                if key in self.tools.readings and self.tools.readings[key]["uncertainties"]
-            ]
-            context["repair_events"] = [
-                self.tools._event_view(self.tools.events[key])
-                for key in self.tools.unresolved_events()[:20]
-            ]
-            checks = [
-                {
-                    "observation_id": key,
-                    "src_start_sec": observation.src_start_sec,
-                    "src_end_sec": observation.src_end_sec,
-                    "record": record,
-                }
-                for key, record in self.tools.acknowledged.items()
-                if (observation := self.tools.observations[key]).page_id is None
-            ]
-            context["inspection_memory"] = {"records": checks[-20:], "total": len(checks)}
-            return context
-        keys = list(dict.fromkeys([*self.tools.unresolved_events(), *self.focus_event_ids]))
-        working_events = [
-            self.tools._event_view(self.tools.events[key])
-            for key in keys[:20]
-            if key in self.tools.events
-        ]
-        evidence_ids = {
-            span["evidence_id"]
-            for item in working_events
-            for span in item["event"]["required_spans"]
-        }
-        observations = [
-            self.tools.observations[key] for key in evidence_ids if key in self.tools.observations
-        ]
-        rows = list(self.tools.read_memory.rows.values())
-        relevant = [
-            row
-            for row in rows
-            if any(
-                row["end_sec"] > o.src_start_sec and row["start_sec"] < o.src_end_sec
-                for o in observations
-            )
-        ]
-        queries = [
-            {
-                "query_id": key,
-                "query": value["query"],
-                "read_count": len(value["row_ids"]),
-                "total": value["total"],
-                "complete": value["complete"],
-            }
-            for key, value in self.tools.read_memory.queries.items()
-        ]
-        return {
-            **context,
-            "working_events": working_events,
-            "event_index": {
-                "total": len(self.tools.events),
-                "working_count": len(working_events),
-                "remaining_count": max(0, len(self.tools.events) - len(working_events)),
-            },
-            "source_observations": [
-                {
-                    "observation_id": o.observation_id,
-                    "src_start_sec": o.src_start_sec,
-                    "src_end_sec": o.src_end_sec,
-                    "record": self.tools.acknowledged.get(o.observation_id),
-                }
-                for o in observations
-            ],
-            "recent_observations": [
-                {"observation_id": key, **value}
-                for key, value in list(self.tools.acknowledged.items())[-20:]
-            ],
-            "transcript_memory": {
-                "queries": queries[-20:],
-                "query_count": len(queries),
-                "rows": relevant[-100:],
-                "total_rows_read": len(rows),
-            },
-        }
+        if phase != "analysis":
+            context.update(self._candidate_sources())
+        return context
 
-    def _remember_events(self, result: dict) -> None:
-        """Keep records the model actually read or wrote, not a relevance-ranked subset."""
-        views = [result] if "event" in result else result.get("events", [])
-        if views:
-            self.focus_event_ids = list(
-                dict.fromkeys([*[view["event"]["id"] for view in views], *self.focus_event_ids])
-            )[:20]
+    def _candidate_sources(self):
+        by_observation = {}
+        references = []
+        for event in self.tools.events.values():
+            references.append(
+                {
+                    "candidate_id": event.id,
+                    "evidence": [span.model_dump(mode="json") for span in event.required_spans],
+                }
+            )
+            for span in event.required_spans:
+                by_observation.setdefault(span.evidence_id, []).append(span)
+        notes = []
+        for key, spans in by_observation.items():
+            reading = self.tools.readings[key]
+            notes.append(
+                {
+                    "observation_id": key,
+                    "answer": reading["answer"],
+                    "items": [
+                        item
+                        for item in reading["items"]
+                        if any(
+                            item["end_sec"] > span.start_sec and item["start_sec"] < span.end_sec
+                            for span in spans
+                        )
+                    ],
+                    "uncertainties": reading["uncertainties"],
+                }
+            )
+        frame_notes = [
+            record
+            for record in self.tools.frame_readings.values()
+            if any(
+                event.proposed_start_sec <= frame["timestamp_sec"] <= event.proposed_end_sec
+                for frame in record["frames"]
+                for event in self.tools.events.values()
+            )
+        ]
+        return {"candidate_evidence": references, "source_notes": notes, "frame_notes": frame_notes}
 
     def _media_parts(
         self, observations: list[VideoObservation]
     ) -> list[tuple[VideoObservation, list[dict]]]:
         def read(observation):
             key = observation.observation_id
-            question = self.tools.inspections.get(key, {}).get("question", SCAN_QUESTION)
+            question = self.tools.inspections[key]["question"]
             if key not in self.tools.readings:
                 reading = self.perception.observe(
                     observation,
@@ -354,7 +306,7 @@ class VideoAgent:
                     self._save()
             return observation, self._observation_frames(observation)
 
-        with ThreadPoolExecutor(max_workers=MAX_PAGE_BATCH_ITEMS) as pool:
+        with ThreadPoolExecutor(max_workers=MAX_OBSERVATION_WORKERS) as pool:
             materials = list(pool.map(read, observations))
         batches = []
         for observation, frames in materials:
@@ -427,7 +379,7 @@ class VideoAgent:
         return reply
 
     def _request_limits(self, context, observation_ids):
-        instructions = SELECTION_PROMPT if context["phase"] == "selection" else ANALYSIS_PROMPT
+        instructions = ANALYSIS_PROMPT if context["phase"] == "analysis" else SELECTION_PROMPT
         overhead = json.dumps(
             {"instructions": instructions, "tools": self.tools.declarations(observation_ids)},
             ensure_ascii=False,
@@ -448,7 +400,7 @@ class VideoAgent:
                 context, [*parts, *material], **self._request_limits(context, ids)
             ):
                 if not selected:
-                    raise ValueError("单段观察及当前状态超过请求预算，请缩短视频页面或提高预算。")
+                    raise ContextBudgetError("这段视频及原帧超过主模型请求预算，请缩短观看范围")
                 break
             selected.append(observation)
             parts.extend(material)
@@ -550,6 +502,12 @@ class VideoAgent:
                             information_added=review_information,
                         )
                         self._save()
+                    except MediaBudgetError as exc:
+                        self.tools.plans[plan.event_id] = self.tools.plans[
+                            plan.event_id
+                        ].model_copy(update={"issues": [str(exc)]})
+                        self._trace("clip_review_budget", plan_id=plan.id, message=str(exc))
+                        self._save()
                     except Exception as exc:
                         self._trace(
                             "clip_review_error",
@@ -593,25 +551,46 @@ class VideoAgent:
             name, args = call["name"], call.get("args", {})
             tool_started = time.perf_counter()
             labels = {
-                "record_observations": "保存剧情观察与变化",
-                "update_event": "整理候选片段与必要上下文",
-                "read_state": "回查已保存的剧情记录",
-                "read_frames": "查看原片画面细节",
-                "read_text": "读取画面文字",
-                "select_highlights": "比较全部候选并确定推荐",
-                "propose_highlights": "核对本地模型的位置线索",
+                "save_candidates": "保存候选与剧情记忆",
+                "read_memory": "回查已保存材料",
+                "search_video": "搜索原片材料",
+                "detect_highlights": "检测精彩位置",
+                "watch_video": "观看原片",
+                "read_frames": "查看原帧",
+                "submit_highlights": "制作并检查粗剪",
             }
             self.on_progress(
                 args.get("question") or args.get("query") or labels.get(name, "核对视频材料")
             )
             try:
                 result, observations = self.tools.execute(name, args)
+                for observation in observations:
+                    try:
+                        if (
+                            self.perception.encoded_size(observation, args["question"])
+                            >= MAX_INLINE_REQUEST_BYTES
+                        ):
+                            raise MediaBudgetError("视频、原帧和说明合计超过 20 MB，请缩短观看范围")
+                    except MediaBudgetError:
+                        self._discard_observation(observation.observation_id)
+                        raise
                 queued = {o.observation_id: o for o in [*self.pending_media, *observations]}
                 self.pending_media = list(queued.values())
-                self._remember_events(result)
+                if name == "detect_highlights":
+                    self._trace(
+                        "local_detection",
+                        model=self.tools.detector.profile["model"],
+                        **self.tools.detections[identity([args["start_sec"], args["end_sec"]])],
+                    )
+                if name == "save_candidates":
+                    self.submission_result = None
                 error = False
-            except (ValueError, KeyError) as exc:
-                if isinstance(exc, ValidationError):
+            except (ValueError, KeyError, DetectorError) as exc:
+                if isinstance(exc, MediaBudgetError):
+                    result = {"status": "request_too_large", "message": str(exc)}
+                elif isinstance(exc, DetectorError):
+                    result = {"status": "tool_error", "message": str(exc)}
+                elif isinstance(exc, ValidationError):
                     result = {
                         "status": "invalid_tool_request",
                         "message": "参数未通过校验，请按 fields 修正后重试。",
@@ -650,6 +629,29 @@ class VideoAgent:
                 elapsed_sec=time.perf_counter() - tool_started,
             )
 
+    def _discard_observation(self, key):
+        if key in self.tools.delivered:
+            return
+        self.pending_media = [o for o in self.pending_media if o.observation_id != key]
+        self.tools.observations.pop(key, None)
+        self.tools.inspections.pop(key, None)
+        self.tools.readings.pop(key, None)
+
+    def _recover_media_budget(self, error):
+        for observation in list(self.pending_media):
+            self._discard_observation(observation.observation_id)
+        for item in self.call_results:
+            if item["call"]["name"] == "watch_video":
+                item["result"] = {"status": "request_too_large", "message": str(error)}
+        self.tools.pending_frames = []
+        for item in self.call_results:
+            if item["call"]["name"] == "read_frames":
+                item["result"] = {"status": "request_too_large", "message": str(error)}
+        self.request_ready = False
+        self.request_observation_ids = []
+        self._trace("media_budget", message=str(error))
+        self._save()
+
     def _prepare_request(self) -> list[dict]:
         if not self.request_ready:
             parts = [
@@ -660,13 +662,11 @@ class VideoAgent:
                 }
                 for item in self.call_results
             ]
-            # Every observed video is digested before another evidence action.
-            outstanding = self.tools.unacknowledged_observations()
             for frame in self.tools.pending_frames:
                 parts.extend(
                     [text_part(json.dumps(frame, ensure_ascii=False)), image_part(frame["path"])]
                 )
-            transmitted = self._transmission_batch(outstanding or self.pending_media, parts)
+            transmitted = self._transmission_batch(self.pending_media, parts)
             ids = [o.observation_id for o in transmitted]
             context = self._context(ids)
             contents = self.conversation.prepare(
@@ -684,18 +684,10 @@ class VideoAgent:
             f"Agent 第 {self.turn + 1} 轮：全片检查 {self.tools.progress()['scan_coverage']:.0%}"
         )
         started = time.perf_counter()
-        required_ids = list(
-            dict.fromkeys(
-                [
-                    *[o.observation_id for o in self.tools.unacknowledged_observations()],
-                    *self.request_observation_ids,
-                ]
-            )
-        )
-        declarations = self.tools.declarations(required_ids or None)
+        declarations = self.tools.declarations(self.request_observation_ids)
         reply = self._invoke(
             self.client,
-            SELECTION_PROMPT if self.conversation.phase == "selection" else ANALYSIS_PROMPT,
+            ANALYSIS_PROMPT if self.conversation.phase == "analysis" else SELECTION_PROMPT,
             contents,
             tools=declarations,
             max_output_tokens=16384,
@@ -704,6 +696,7 @@ class VideoAgent:
         delivered_ids = list(self.request_observation_ids)
         delivered = [self.tools.observations[key] for key in delivered_ids]
         self.tools.mark_delivered(delivered)
+        self.tools.mark_reviews_presented(self.submission_result)
         delivered_information = (
             self.progress_memory.record(self.tools.information_facts(), count_stagnation=False)
             if delivered
@@ -755,29 +748,31 @@ class VideoAgent:
                 self.tools.prepare_reviews()
                 self._save()
                 self._review_pending()
+                if self.tools.selection is not None:
+                    self.submission_result = self.tools.finish_submission()
+                    for item in self.call_results:
+                        if item["call"]["name"] == "submit_highlights":
+                            item["result"] = self.submission_result
+                    self.progress_memory.record(
+                        self.tools.information_facts(), count_stagnation=False
+                    )
+                    self._trace("submission", result=self.submission_result)
+                    self._save()
+                    if self.tools.finished:
+                        break
                 if self.progress_memory.stagnant_steps >= self.max_stagnant_steps:
                     stop_reason = "repeated_action_without_progress"
                     break
                 if max_turns is not None and self.turn - start_turn >= max_turns:
                     stop_reason = "turn_limit"
                     break
-                if (
-                    not self.pending_media
-                    and not self.tools.unacknowledged_observations()
-                    and len(self.tools.completed_pages) < len(self.tools.evidence.pages)
-                ):
-                    observations = self.tools.scan_next_observations(
-                        max_items=MAX_PAGE_BATCH_ITEMS,
-                        max_encoded_bytes=MAX_PAGE_BATCH_ENCODED_BYTES,
-                        observation_size=self.perception.encoded_size,
-                    )
-                    self.pending_media.extend(observations)
-                    self._trace(
-                        "page_batch",
-                        observation_ids=[item.observation_id for item in observations],
-                    )
-                    self._save()
-                contents = self._prepare_request()
+                try:
+                    contents = self._prepare_request()
+                except (MediaBudgetError, ContextBudgetError) as exc:
+                    if not self.pending_media and not self.tools.pending_frames:
+                        raise
+                    self._recover_media_budget(exc)
+                    contents = self._prepare_request()
                 self._controller_turn(contents)
                 if not self.pending_calls:
                     self._trace("missing_tool_call")
@@ -804,11 +799,7 @@ class VideoAgent:
         selection_choices = {
             decision.event_id: decision for decision in selection.decisions if decision.selected
         }
-        selected = sorted(
-            selection.selected,
-            key=lambda plan: selection_choices[plan.event_id].score,
-            reverse=True,
-        )
+        selected = selection.selected
         result = {
             "completion": "complete" if complete else "partial",
             "message": "已检查全片，推荐片段已生成，等待人工复核。"

@@ -10,7 +10,7 @@ from pydantic import BaseModel, ConfigDict, Field
 from ..prompts import OBSERVATION_PROMPT, REVIEW_PROMPT
 from ..runtime.finalization import ReviewResult
 from ..storage import write_json
-from .gemini_client import inline_frame_part, inline_video_part, text_part
+from .gemini_client import inline_frame_part, inline_video_part, text_part, video_request_payload
 
 
 class PerceivedItem(BaseModel):
@@ -79,15 +79,39 @@ class VideoPerception:
             "thinking_returned": reply["thinking_returned"],
         }
 
-    def encoded_size(self, observation):
-        parts = self._media_parts(
-            observation.path,
-            observation.src_start_sec,
-            observation.src_end_sec,
-            observation.sampling_fps or self.fps,
-            source_time=True,
+    def _observation_parts(self, observation, question):
+        return [
+            text_part(
+                json.dumps(
+                    {
+                        "question": question,
+                        "duration_sec": observation.duration_sec,
+                        "src_start_sec": observation.src_start_sec,
+                        "src_end_sec": observation.src_end_sec,
+                        "time_coordinate": "原片秒数；本段视频 0 秒对应 src_start_sec",
+                    },
+                    ensure_ascii=False,
+                )
+            ),
+            *self._media_parts(
+                observation.path,
+                observation.src_start_sec,
+                observation.src_end_sec,
+                observation.sampling_fps or self.fps,
+                source_time=True,
+            ),
+        ]
+
+    def encoded_size(self, observation, question):
+        payload = video_request_payload(
+            self.client.model,
+            OBSERVATION_PROMPT,
+            self._observation_parts(observation, question),
+            VideoReading.model_json_schema(),
+            self.client.thinking_level,
+            self.client.seed,
         )
-        return len(json.dumps(parts, ensure_ascii=False).encode())
+        return len(json.dumps(payload, ensure_ascii=False).encode())
 
     def observe(self, observation, question, invoke=None):
         profile = {
@@ -106,27 +130,7 @@ class VideoPerception:
         else:
             reply = (invoke or self.client.generate)(
                 OBSERVATION_PROMPT,
-                [
-                    text_part(
-                        json.dumps(
-                            {
-                                "question": question,
-                                "duration_sec": observation.duration_sec,
-                                "src_start_sec": observation.src_start_sec,
-                                "src_end_sec": observation.src_end_sec,
-                                "time_coordinate": "原片秒数；本段视频 0 秒对应 src_start_sec",
-                            },
-                            ensure_ascii=False,
-                        )
-                    ),
-                    *self._media_parts(
-                        observation.path,
-                        observation.src_start_sec,
-                        observation.src_end_sec,
-                        observation.sampling_fps or self.fps,
-                        source_time=True,
-                    ),
-                ],
+                self._observation_parts(observation, question),
                 schema=VideoReading.model_json_schema(),
                 max_output_tokens=8192,
             )

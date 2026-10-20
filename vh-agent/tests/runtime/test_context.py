@@ -24,7 +24,12 @@ def test_native_encrypted_reasoning_and_call_ids_survive_checkpoint():
     conversation = Conversation(
         [
             {"type": "reasoning", "encrypted_content": "opaque"},
-            {"type": "function_call", "call_id": "call_1", "name": "read_state", "arguments": "{}"},
+            {
+                "type": "function_call",
+                "call_id": "call_1",
+                "name": "read_memory",
+                "arguments": "{}",
+            },
         ]
     )
     restored = Conversation(**json.loads(json.dumps(conversation.checkpoint())))
@@ -39,13 +44,13 @@ def test_native_encrypted_reasoning_and_call_ids_survive_checkpoint():
 
 def test_native_tool_result_is_sent_once_until_history_rotates():
     conversation = Conversation(
-        [{"type": "function_call", "call_id": "call_1", "name": "read_state", "arguments": "{}"}]
+        [{"type": "function_call", "call_id": "call_1", "name": "read_memory", "arguments": "{}"}]
     )
     result = {"events": [{"id": "event_1"}]}
     output = {"type": "function_call_output", "call_id": "call_1", "output": json.dumps(result)}
     context = {
         "story_so_far": "当前剧情",
-        "last_tool_results": [{"tool": "read_state", "result": result}],
+        "last_tool_results": [{"tool": "read_memory", "result": result}],
     }
     request = conversation.prepare(context, [output], token_budget=2000, byte_budget=2000)
     assert request[1] == output

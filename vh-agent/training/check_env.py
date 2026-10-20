@@ -29,8 +29,11 @@ def main():
 
     torch.set_num_threads(2)
     assert LoraConfig and SFTTrainer and Qwen3_5ForConditionalGeneration
-    for name in ("vllm", "flash_attn", "fla", "ray", "qwen_vl_utils"):
+    for name in ("vllm", "flash_attn", "fla", "ray", "qwen_vl_utils", "causal_conv1d"):
         importlib.import_module(name)
+    from transformers.models.qwen3_5.modeling_qwen3_5 import is_fast_path_available
+
+    assert is_fast_path_available, "Qwen3.5 加速扩展未就绪"
     verl = importlib.import_module("verl")
     assert Path(verl.__file__).resolve().is_relative_to(root / "envs/verl")
     print("训练模块和独立 verl 源码：通过", flush=True)
